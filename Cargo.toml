@@ -1,0 +1,22 @@
+[package]
+name = "ism330dhcx"
+version = "0.0.1"
+edition = "2018"
+authors = ["Andrei Sousa <sousandrei@gmail.com>"]
+categories = ["embedded", "hardware-support", "no-std"]
+repository = "https://github.com/sousandrei/ism330dhcx"
+description = "Interface to ST Micro BlueNRG Bluetooth radios"
+license = "MIT/Apache-2.0"
+readme = "README.md"
+keywords = [
+    "spi",
+    "bare-metal",
+    "embedded-hal-driver",
+    "ism330dhcx",
+    "gyroscope",
+    "accelerometer",
+]
+
+[dependencies]
+embedded-hal = "0.2.4"
+vcell = "0.1.3"
