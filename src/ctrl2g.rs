@@ -69,21 +69,21 @@ pub enum ODR {
 }
 
 impl Ctrl2G {
-    pub fn new<I2C>(sensor: &mut Device<I2C>) -> Result<Self, I2C::Error>
+    pub fn new<I2C>(device: &mut Device<I2C>) -> Result<Self, I2C::Error>
     where
         I2C: WriteRead,
     {
-        let bits = write_read(sensor, ADDR)?;
+        let bits = write_read(device, ADDR)?;
         let register = Ctrl2G(bits);
 
         Ok(register)
     }
 
-    pub fn modify<I2C>(&mut self, sensor: &mut Device<I2C>) -> Result<(), I2C::Error>
+    pub fn modify<I2C>(&mut self, device: &mut Device<I2C>) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        write(sensor, ADDR, self.0)
+        write(device, ADDR, self.0)
     }
 
     pub fn gyroscope_data_rate(&self) -> ODR {

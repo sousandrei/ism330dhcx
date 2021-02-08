@@ -73,21 +73,21 @@ pub const IF_INC: u8 = 2;
 pub const SW_RESET: u8 = 0;
 
 impl Ctrl3C {
-    /// Blocking read of the CTRL3_C register from `Sensor`.
-    pub fn new<I2C>(sensor: &mut Device<I2C>) -> Result<Self, I2C::Error>
+    /// Blocking read of the CTRL3_C register from `Device`.
+    pub fn new<I2C>(device: &mut Device<I2C>) -> Result<Self, I2C::Error>
     where
         I2C: WriteRead,
     {
-        let bits = write_read(sensor, ADDR)?;
+        let bits = write_read(device, ADDR)?;
         Ok(Ctrl3C(bits))
     }
 
     /// Updates the register using `f`, then writes the new value out to the chip.
-    pub fn modify<I2C>(&mut self, sensor: &mut Device<I2C>) -> Result<(), I2C::Error>
+    pub fn modify<I2C>(&mut self, device: &mut Device<I2C>) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        write(sensor, ADDR, self.0)
+        write(device, ADDR, self.0)
     }
 
     /// Returns true if the chip is active.
@@ -95,12 +95,12 @@ impl Ctrl3C {
         (self.0 & BOOT) > 0
     }
 
-    /// Clears the power-down bit. The Sensor is in power-down mode when BOOT = 0.
+    /// Clears the power-down bit. The device is in power-down mode when BOOT = 0.
     pub fn power_down(&mut self) {
         self.0 &= !(1 << BOOT);
     }
 
-    /// Sets the power-down bit. The Sensor is active when BOOT = 1.
+    /// Sets the power-down bit. The device is active when BOOT = 1.
     pub fn power_up(&mut self) {
         self.0 |= 1 << BOOT;
     }
