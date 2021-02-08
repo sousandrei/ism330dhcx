@@ -2,7 +2,7 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use super::sensor::{write, write_read, Sensor};
+use crate::device::{write, write_read, Device};
 
 /// The CTRL3_C register.
 #[derive(Debug)]
@@ -74,18 +74,18 @@ pub const SW_RESET: u8 = 0;
 
 impl Ctrl3C {
     /// Blocking read of the CTRL3_C register from `Sensor`.
-    pub fn new<Comm>(sensor: &mut Sensor<Comm>) -> Result<Self, Comm::Error>
+    pub fn new<I2C>(sensor: &mut Device<I2C>) -> Result<Self, I2C::Error>
     where
-        Comm: WriteRead,
+        I2C: WriteRead,
     {
         let bits = write_read(sensor, ADDR)?;
         Ok(Ctrl3C(bits))
     }
 
     /// Updates the register using `f`, then writes the new value out to the chip.
-    pub fn modify<Comm>(&mut self, sensor: &mut Sensor<Comm>) -> Result<(), Comm::Error>
+    pub fn modify<I2C>(&mut self, sensor: &mut Device<I2C>) -> Result<(), I2C::Error>
     where
-        Comm: Write,
+        I2C: Write,
     {
         write(sensor, ADDR, self.0)
     }

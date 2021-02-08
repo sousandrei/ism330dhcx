@@ -2,10 +2,10 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use super::sensor::{write, write_read, Sensor};
+use crate::device::{write, write_read, Device};
 
 /// The CTRL2_G register. Gyroscope control register 2. Contains the chain full-scale selection and output data rate selection
-#[derive(Debug)]
+// #[derive(Debug)]
 pub struct Ctrl2G(u8);
 
 impl fmt::Display for Ctrl2G {
@@ -69,9 +69,9 @@ pub enum ODR {
 }
 
 impl Ctrl2G {
-    pub fn new<Comm>(sensor: &mut Sensor<Comm>) -> Result<Self, Comm::Error>
+    pub fn new<I2C>(sensor: &mut Device<I2C>) -> Result<Self, I2C::Error>
     where
-        Comm: WriteRead,
+        I2C: WriteRead,
     {
         let bits = write_read(sensor, ADDR)?;
         let register = Ctrl2G(bits);
@@ -79,9 +79,9 @@ impl Ctrl2G {
         Ok(register)
     }
 
-    pub fn modify<Comm>(&mut self, sensor: &mut Sensor<Comm>) -> Result<(), Comm::Error>
+    pub fn modify<I2C>(&mut self, sensor: &mut Device<I2C>) -> Result<(), I2C::Error>
     where
-        Comm: Write,
+        I2C: Write,
     {
         write(sensor, ADDR, self.0)
     }
