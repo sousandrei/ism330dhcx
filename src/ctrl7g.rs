@@ -82,12 +82,12 @@ impl Ctrl7G {
         Ok(register)
     }
 
-    pub fn hpm_g(&self) -> HPM_G {
+    pub fn hpm_g(&self) -> f32 {
         match (self.0 >> HPM_G_OFFSET) & HPM_G_MASK {
-            0 => HPM_G::HPMG16,
-            1 => HPM_G::HPMG65,
-            2 => HPM_G::HPMG260,
-            3 => HPM_G::HPMG104,
+            0 => 250.0,
+            1 => 500.0,
+            2 => 1000.0,
+            3 => 4000.0,
             _ => panic!("Unreachable"),
         }
     }
