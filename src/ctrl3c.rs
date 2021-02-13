@@ -1,7 +1,7 @@
 use core::fmt;
-use embedded_hal::blocking::i2c::{Write, WriteRead};
+use embedded_hal::blocking::i2c::Write;
 
-use crate::{read, write};
+use crate::Register;
 
 /// The CTRL3_C register.
 ///
@@ -84,13 +84,11 @@ pub const IF_INC: u8 = 2;
 ///This bit is automatically cleared.
 pub const SW_RESET: u8 = 0;
 
+impl Register for Ctrl3C {}
+
 impl Ctrl3C {
-    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
-    where
-        I2C: WriteRead,
-    {
-        let bits = read(i2c, ADDR)?;
-        Ok(Ctrl3C(bits))
+    pub fn new(bits: u8) -> Self {
+        Ctrl3C(bits)
     }
 
     pub fn get(&mut self) -> u8 {
@@ -102,7 +100,7 @@ impl Ctrl3C {
         I2C: Write,
     {
         self.0 |= value << BOOT;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_bdu<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -110,7 +108,7 @@ impl Ctrl3C {
         I2C: Write,
     {
         self.0 |= value << BDU;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn sw_reset<I2C>(&mut self, i2c: &mut I2C) -> Result<(), I2C::Error>
@@ -118,7 +116,7 @@ impl Ctrl3C {
         I2C: Write,
     {
         self.0 |= 1 << SW_RESET;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_if_inc<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -126,6 +124,6 @@ impl Ctrl3C {
         I2C: Write,
     {
         self.0 |= value << IF_INC;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 }

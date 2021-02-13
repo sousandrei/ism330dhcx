@@ -20,6 +20,24 @@ pub const I2C_ADDRESS: u8 = 0x6bu8;
 const SENSORS_DPS_TO_RADS: f32 = 0.017453293;
 const SENSORS_GRAVITY_STANDARD: f32 = 9.80665;
 
+trait Register {
+    fn read<I2C>(&self, i2c: &mut I2C, reg_addr: u8) -> Result<u8, I2C::Error>
+    where
+        I2C: WriteRead,
+    {
+        let mut data: [u8; 1] = [0];
+        i2c.write_read(I2C_ADDRESS, &[reg_addr], &mut data)?;
+        Ok(data[0])
+    }
+
+    fn write<I2C>(&self, i2c: &mut I2C, reg_addr: u8, bits: u8) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        i2c.write(I2C_ADDRESS, &[reg_addr, bits])
+    }
+}
+
 pub struct ISM330DHCX {
     pub ctrl1xl: Ctrl1Xl,
     pub ctrl2g: Ctrl2G,
@@ -33,11 +51,14 @@ impl ISM330DHCX {
     where
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
-        let ctrl1xl = Ctrl1Xl::new(i2c)?;
-        let ctrl2g = Ctrl2G::new(i2c)?;
-        let ctrl3c = Ctrl3C::new(i2c)?;
-        let ctrl7g = Ctrl7G::new(i2c)?;
-        let ctrl9xl = Ctrl9Xl::new(i2c)?;
+        let mut registers = [0u8; 9];
+        i2c.write_read(I2C_ADDRESS, &[0x10], &mut registers)?;
+
+        let ctrl1xl = Ctrl1Xl::new(registers[0]);
+        let ctrl2g = Ctrl2G::new(registers[1]);
+        let ctrl3c = Ctrl3C::new(registers[2]);
+        let ctrl7g = Ctrl7G::new(registers[6]);
+        let ctrl9xl = Ctrl9Xl::new(registers[8]);
 
         let ism330dhcx = ISM330DHCX {
             ctrl1xl,
@@ -102,20 +123,4 @@ impl ISM330DHCX {
 
         Ok([acc_x, acc_y, acc_z])
     }
-}
-
-pub fn read<I2C>(i2c: &mut I2C, reg_addr: u8) -> Result<u8, I2C::Error>
-where
-    I2C: WriteRead,
-{
-    let mut data: [u8; 1] = [0];
-    i2c.write_read(I2C_ADDRESS, &[reg_addr], &mut data)?;
-    Ok(data[0])
-}
-
-pub fn write<I2C>(i2c: &mut I2C, reg_addr: u8, bits: u8) -> Result<(), I2C::Error>
-where
-    I2C: Write,
-{
-    i2c.write(I2C_ADDRESS, &[reg_addr, bits])
 }
