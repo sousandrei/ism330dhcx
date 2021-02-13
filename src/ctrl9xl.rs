@@ -1,8 +1,7 @@
 use core::fmt;
+use embedded_hal::blocking::i2c::Write;
 
-use embedded_hal::blocking::i2c::{Write, WriteRead};
-
-use crate::{read, write};
+use crate::Register;
 
 /// The CTRL9_XL (control 9) register
 // #[derive(Debug)]
@@ -79,15 +78,11 @@ pub const DEN_Y: u8 = 6;
 ///(0: DEN not stored in Z-axis LSB; 1: DEN stored in Z-axis LSB)
 pub const DEN_Z: u8 = 7;
 
-impl Ctrl9Xl {
-    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
-    where
-        I2C: WriteRead,
-    {
-        let bits = read(i2c, ADDR)?;
-        let register = Ctrl9Xl(bits);
+impl Register for Ctrl9Xl {}
 
-        Ok(register)
+impl Ctrl9Xl {
+    pub fn new(bits: u8) -> Self {
+        Ctrl9Xl(bits)
     }
 
     pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -95,7 +90,7 @@ impl Ctrl9Xl {
         I2C: Write,
     {
         self.0 |= value << DEVICE_CONF;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -103,7 +98,7 @@ impl Ctrl9Xl {
         I2C: Write,
     {
         self.0 |= value << DEN_X;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_den_y<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -111,7 +106,7 @@ impl Ctrl9Xl {
         I2C: Write,
     {
         self.0 |= value << DEN_Y;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_den_z<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -119,6 +114,6 @@ impl Ctrl9Xl {
         I2C: Write,
     {
         self.0 |= value << DEN_Z;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 }

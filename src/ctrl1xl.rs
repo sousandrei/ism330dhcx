@@ -1,8 +1,7 @@
 use core::fmt;
+use embedded_hal::blocking::i2c::Write;
 
-use embedded_hal::blocking::i2c::{Write, WriteRead};
-
-use crate::{read, write};
+use crate::Register;
 
 /// The CTRL1_XL register. Accelerometer control register 1 (r/w).
 ///
@@ -75,15 +74,11 @@ pub enum ODR_XL {
     Hz666, // 6.66 Hz
 }
 
-impl Ctrl1Xl {
-    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
-    where
-        I2C: WriteRead,
-    {
-        let bits = read(i2c, ADDR)?;
-        let register = Ctrl1Xl(bits);
+impl Register for Ctrl1Xl {}
 
-        Ok(register)
+impl Ctrl1Xl {
+    pub fn new(bits: u8) -> Self {
+        Ctrl1Xl(bits)
     }
 
     pub fn accelerometer_data_rate(&self) -> f32 {
@@ -113,7 +108,7 @@ impl Ctrl1Xl {
     {
         self.0 &= !(ODR_XL_MASK << ODR_XL_OFFSET);
         self.0 |= (value as u8) << ODR_XL_OFFSET;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn chain_full_scale(&self) -> f32 {
@@ -136,7 +131,7 @@ impl Ctrl1Xl {
     {
         self.0 &= !(FS_MASK << FS_OFFSET);
         self.0 |= (value as u8) << FS_OFFSET;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -144,6 +139,6 @@ impl Ctrl1Xl {
         I2C: Write,
     {
         self.0 |= value << LPF2_XL_EN;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 }
