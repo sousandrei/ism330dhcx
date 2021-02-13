@@ -2,7 +2,7 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::{write, write_read};
+use crate::{read, write};
 
 /// The CTRL9_XL (control 9) register
 // #[derive(Debug)]
@@ -28,39 +28,53 @@ impl fmt::LowerHex for Ctrl9Xl {
 
 pub const ADDR: u8 = 0x18u8;
 
-/// Enables the proper device configuration. Default value: 0
+/// Enables the proper device configuration.
+///
+/// Default value: 0
 ///
 /// (0: default; 1: enabled)
 ///
 /// It is recommended to always set this bit to 1 during device configuration.
 pub const DEVICE_CONF: u8 = 1;
 
-/// DEN active level configuration. Default value: 0
+/// DEN active level configuration.
+///
+/// Default value: 0
 ///
 /// (0: active low; 1: active high)
 pub const DEN_LH: u8 = 2;
 
-/// Extends DEN functionality to accelerometer sensor. Default value: 0
+/// Extends DEN functionality to accelerometer sensor.
+///
+/// Default value: 0
 ///
 /// (0: disabled; 1: enabled)
 pub const DEN_EN: u8 = 3;
 
-/// DEN stamping sensor selection. Default value: 0
+/// DEN stamping sensor selection.
+///
+/// Default value: 0
 ///
 /// (0: DEN pin info stamped in the gyroscope axis selected by bits \[7:5\]; 1: DEN pin info stamped in the accelerometer axis selected by bits \[7:5\])
 pub const DEN_XL_G: u8 = 4;
 
-/// DEN value stored in LSB of X-axis. Default value: 1
+/// DEN value stored in LSB of X-axis.
+///
+/// Default value: 1
 ///
 ///(0: DEN not stored in X-axis LSB; 1: DEN stored in X-axis LSB)
 pub const DEN_X: u8 = 5;
 
-/// DEN value stored in LSB of Y-axis. Default value: 1
+/// DEN value stored in LSB of Y-axis.
+///
+/// Default value: 1
 ///
 ///(0: DEN not stored in Y-axis LSB; 1: DEN stored in Y-axis LSB)
 pub const DEN_Y: u8 = 6;
 
-/// DEN value stored in LSB of Z-axis. Default value: 1
+/// DEN value stored in LSB of Z-axis.
+///
+/// Default value: 1
 ///
 ///(0: DEN not stored in Z-axis LSB; 1: DEN stored in Z-axis LSB)
 pub const DEN_Z: u8 = 7;
@@ -70,7 +84,7 @@ impl Ctrl9Xl {
     where
         I2C: WriteRead,
     {
-        let bits = write_read(i2c, ADDR)?;
+        let bits = read(i2c, ADDR)?;
         let register = Ctrl9Xl(bits);
 
         Ok(register)

@@ -2,7 +2,7 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::{write, write_read};
+use crate::{read, write};
 
 /// The CTRL7_G register. Control register 7.
 ///
@@ -33,19 +33,25 @@ impl fmt::LowerHex for Ctrl7G {
 /// Sub-address of the register.
 pub const ADDR: u8 = 0x16u8;
 
-/// Disables high-performance operating mode for gyroscope. Default: 0
+/// Disables high-performance operating mode for gyroscope.
+///
+/// Default: 0
 ///
 ///(0: high-performance operating mode enabled; 1: high-performance operating mode disabled)
 pub const G_HM_MODE: u8 = 7;
 
-/// Enables gyroscope digital high-pass filter. The filter is enabled only if the gyro is in HP mode. Default value: 0
+/// Enables gyroscope digital high-pass filter. The filter is enabled only if the gyro is in HP mode.
+///
+/// Default value: 0
 ///
 ///(0: HPF disabled; 1: HPF enabled)
 pub const HP_EN_G: u8 = 6;
 
 const HPM_G_MASK: u8 = 0b11;
 const HPM_G_OFFSET: u8 = 3;
-/// Gyroscope digital HP filter cutoff selection. Default: 00
+/// Gyroscope digital HP filter cutoff selection.
+///
+/// Default: 00
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HPM_G {
@@ -62,7 +68,9 @@ pub const OIS_ON_EN: u8 = 2;
 
 /// Enables accelerometer user offset correction block; it's valid for the low-pass path - see Figure 16. Accelerometer
 ///
-/// composite filter. Default value: 0
+/// composite filter.
+///
+/// Default value: 0
 /// (0: accelerometer user offset correction block bypassed; 1: accelerometer user offset correction block enabled)
 pub const USR_OFF_ON_OUT: u8 = 1;
 
@@ -76,7 +84,7 @@ impl Ctrl7G {
     where
         I2C: WriteRead,
     {
-        let bits = write_read(i2c, ADDR)?;
+        let bits = read(i2c, ADDR)?;
         let register = Ctrl7G(bits);
 
         Ok(register)
