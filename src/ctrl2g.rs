@@ -1,8 +1,7 @@
 use core::fmt;
+use embedded_hal::blocking::i2c::Write;
 
-use embedded_hal::blocking::i2c::{Write, WriteRead};
-
-use crate::{read, write};
+use crate::Register;
 
 /// The CTRL2_G register. Gyroscope control register 2.
 ///
@@ -76,15 +75,11 @@ pub enum ODR {
     Hz666, // 6.66 Hz
 }
 
-impl Ctrl2G {
-    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
-    where
-        I2C: WriteRead,
-    {
-        let bits = read(i2c, ADDR)?;
-        let register = Ctrl2G(bits);
+impl Register for Ctrl2G {}
 
-        Ok(register)
+impl Ctrl2G {
+    pub fn new(bits: u8) -> Self {
+        Ctrl2G(bits)
     }
 
     pub fn gyroscope_data_rate(&self) -> f32 {
@@ -114,7 +109,7 @@ impl Ctrl2G {
     {
         self.0 &= !(ODR_MASK << ODR_OFFSET);
         self.0 |= (value as u8) << ODR_OFFSET;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn chain_full_scale(&self) -> f32 {
@@ -148,6 +143,6 @@ impl Ctrl2G {
             self.0 |= (value as u8) << FS_OFFSET;
         }
 
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 }

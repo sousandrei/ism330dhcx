@@ -1,8 +1,7 @@
 use core::fmt;
+use embedded_hal::blocking::i2c::Write;
 
-use embedded_hal::blocking::i2c::{Write, WriteRead};
-
-use crate::{read, write};
+use crate::Register;
 
 /// The CTRL7_G register. Control register 7.
 ///
@@ -79,15 +78,11 @@ pub const USR_OFF_ON_OUT: u8 = 1;
 /// (0: OIS disabled; 1: OIS enabled)
 pub const OIS_ON: u8 = 0;
 
-impl Ctrl7G {
-    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
-    where
-        I2C: WriteRead,
-    {
-        let bits = read(i2c, ADDR)?;
-        let register = Ctrl7G(bits);
+impl Register for Ctrl7G {}
 
-        Ok(register)
+impl Ctrl7G {
+    pub fn new(bits: u8) -> Self {
+        Ctrl7G(bits)
     }
 
     pub fn hpm_g(&self) -> f32 {
@@ -106,7 +101,7 @@ impl Ctrl7G {
     {
         self.0 &= !(HPM_G_MASK << HPM_G_OFFSET);
         self.0 |= (value as u8) << HPM_G_OFFSET;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
@@ -114,6 +109,6 @@ impl Ctrl7G {
         I2C: Write,
     {
         self.0 |= value << G_HM_MODE;
-        write(i2c, ADDR, self.0)
+        self.write(i2c, ADDR, self.0)
     }
 }
