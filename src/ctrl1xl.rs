@@ -114,12 +114,12 @@ impl Ctrl1Xl {
         write(i2c, ADDR, self.0)
     }
 
-    pub fn chain_full_scale(&self) -> FS_XL {
+    pub fn chain_full_scale(&self) -> f32 {
         match (self.0 >> FS_OFFSET) & FS_MASK {
-            0 => FS_XL::G2,
-            1 => FS_XL::G16,
-            2 => FS_XL::G8,
-            3 => FS_XL::G4,
+            0 => 0.061,
+            1 => 0.488,
+            2 => 0.122,
+            3 => 0.244,
             _ => panic!("Unreachable"),
         }
     }
