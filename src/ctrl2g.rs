@@ -87,19 +87,19 @@ impl Ctrl2G {
         Ok(register)
     }
 
-    pub fn gyroscope_data_rate(&self) -> ODR {
+    pub fn gyroscope_data_rate(&self) -> f32 {
         match (self.0 >> ODR_OFFSET) & ODR_MASK {
-            0 => ODR::Off,
-            1 => ODR::Hz125,
-            2 => ODR::Hz26,
-            3 => ODR::Hz52,
-            4 => ODR::Hz104,
-            5 => ODR::Hz208,
-            6 => ODR::Hz416,
-            7 => ODR::Hz833,
-            8 => ODR::Hz166,
-            9 => ODR::Hz333,
-            10 => ODR::Hz666,
+            0 => 0.0,
+            1 => 12.5,
+            2 => 26.0,
+            3 => 52.2,
+            4 => 104.0,
+            5 => 208.0,
+            6 => 416.0,
+            7 => 833.0,
+            8 => 1.66,
+            9 => 3.33,
+            10 => 6.66,
             _ => panic!("Unreachable"),
         }
     }
@@ -117,20 +117,20 @@ impl Ctrl2G {
         write(i2c, ADDR, self.0)
     }
 
-    pub fn chain_full_scale(&self) -> FS {
+    pub fn chain_full_scale(&self) -> f32 {
         if (self.0 & FS4000) > 0 {
-            return FS::Dps4000;
+            return 140.0;
         }
 
         if (self.0 & FS125) > 0 {
-            return FS::Dps125;
+            return 4.375;
         }
 
         match (self.0 >> FS_OFFSET) & FS_MASK {
-            0 => FS::Dps250,
-            1 => FS::Dps500,
-            2 => FS::Dps1000,
-            3 => FS::Dps2000,
+            0 => 8.75,
+            1 => 17.5,
+            2 => 35.0,
+            3 => 70.0,
             _ => panic!("Unreachable"),
         }
     }
@@ -139,7 +139,7 @@ impl Ctrl2G {
     where
         I2C: Write,
     {
-        if value == FS::Dps4000 {
+        if value == FS::Dps4000.into() {
             self.0 |= (value as u8) << FS4000;
         } else if value == FS::Dps125 {
             self.0 |= (value as u8) << FS125;
