@@ -2,7 +2,7 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::{write, write_read};
+use crate::{read, write};
 
 /// The CTRL1_XL register. Accelerometer control register 1 (r/w).
 ///
@@ -34,12 +34,14 @@ pub const ADDR: u8 = 0x10u8;
 /// Accelerometer high-resolution selection
 ///
 /// (0: output from first stage digital filtering selected (default); 1: output from LPF2 second filtering stage selected)
-pub const LPF2_XL_EN: u8 = 1;
+const LPF2_XL_EN: u8 = 1;
 
 const FS_MASK: u8 = 0b11;
 const FS_OFFSET: u8 = 2;
 
-/// Accelerometer full-scale selection. Default value: 00
+/// Accelerometer full-scale selection.
+///
+/// Default value: 00
 ///
 /// (00: ±2 g; 01: ±16 g; 10: ±4 g; 11: ±8 g)
 #[allow(non_camel_case_types)]
@@ -78,25 +80,25 @@ impl Ctrl1Xl {
     where
         I2C: WriteRead,
     {
-        let bits = write_read(i2c, ADDR)?;
+        let bits = read(i2c, ADDR)?;
         let register = Ctrl1Xl(bits);
 
         Ok(register)
     }
 
-    pub fn accelerometer_data_rate(&self) -> ODR_XL {
+    pub fn accelerometer_data_rate(&self) -> f32 {
         match (self.0 >> ODR_XL_OFFSET) & ODR_XL_MASK {
-            0 => ODR_XL::Off,
-            1 => ODR_XL::Hz125,
-            2 => ODR_XL::Hz26,
-            3 => ODR_XL::Hz52,
-            4 => ODR_XL::Hz104,
-            5 => ODR_XL::Hz208,
-            6 => ODR_XL::Hz416,
-            7 => ODR_XL::Hz833,
-            8 => ODR_XL::Hz166,
-            9 => ODR_XL::Hz333,
-            10 => ODR_XL::Hz666,
+            0 => 0.0,
+            1 => 12.5,
+            2 => 26.0,
+            3 => 52.0,
+            4 => 104.0,
+            5 => 208.0,
+            6 => 416.0,
+            7 => 833.0,
+            8 => 1.66,
+            9 => 3.33,
+            10 => 6.66,
             _ => panic!("Unreachable"),
         }
     }

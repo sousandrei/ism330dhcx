@@ -1,7 +1,7 @@
 use core::fmt;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::{write, write_read};
+use crate::{read, write};
 
 /// The CTRL3_C register.
 ///
@@ -31,19 +31,25 @@ impl fmt::LowerHex for Ctrl3C {
 /// Sub-address of the register.
 pub const ADDR: u8 = 0x12;
 
-/// Reboots memory content. Default value: 0
+/// Reboots memory content.
+///
+/// Default value: 0
 ///
 /// (0: normal mode; 1: reboot memory content)
 ///
 /// Note: the accelerometer must be ON. This bit is automatically cleared.
 pub const BOOT: u8 = 7;
 
-/// Block Data Update. Default value: 0
+/// Block Data Update.
+///
+/// Default value: 0
 ///
 /// (0: continuous update; 1: output registers are not updated until MSB and LSB have been read)
 pub const BDU: u8 = 6;
 
-/// Interrupt activation level. Default value: 0
+/// Interrupt activation level.
+///
+/// Default value: 0
 ///
 /// (0: interrupt output pins active high; 1: interrupt output pins active low
 pub const H_LACTIVE: u8 = 5;
@@ -55,7 +61,9 @@ pub const H_LACTIVE: u8 = 5;
 /// (0: push-pull mode; 1: open-drain mode)
 pub const PP_OD: u8 = 4;
 
-/// SPI Serial Interface Mode selection. Default value: 0
+/// SPI Serial Interface Mode selection.
+///
+/// Default value: 0
 ///
 /// (0: 4-wire interface; 1: 3-wire interface)
 pub const SIM: u8 = 3;
@@ -67,7 +75,9 @@ pub const SIM: u8 = 3;
 /// (0: disabled; 1: enabled)
 pub const IF_INC: u8 = 2;
 
-///Software reset. Default value: 0
+///Software reset.
+///
+/// Default value: 0
 ///
 ///(0: normal mode; 1: reset device)
 ///
@@ -79,7 +89,7 @@ impl Ctrl3C {
     where
         I2C: WriteRead,
     {
-        let bits = write_read(i2c, ADDR)?;
+        let bits = read(i2c, ADDR)?;
         Ok(Ctrl3C(bits))
     }
 

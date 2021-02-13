@@ -2,7 +2,7 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::{write, write_read};
+use crate::{read, write};
 
 /// The CTRL2_G register. Gyroscope control register 2.
 ///
@@ -81,7 +81,7 @@ impl Ctrl2G {
     where
         I2C: WriteRead,
     {
-        let bits = write_read(i2c, ADDR)?;
+        let bits = read(i2c, ADDR)?;
         let register = Ctrl2G(bits);
 
         Ok(register)

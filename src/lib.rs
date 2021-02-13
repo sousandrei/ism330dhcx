@@ -104,7 +104,7 @@ impl ISM330DHCX {
     }
 }
 
-pub fn write_read<I2C>(i2c: &mut I2C, reg_addr: u8) -> Result<u8, I2C::Error>
+pub fn read<I2C>(i2c: &mut I2C, reg_addr: u8) -> Result<u8, I2C::Error>
 where
     I2C: WriteRead,
 {
