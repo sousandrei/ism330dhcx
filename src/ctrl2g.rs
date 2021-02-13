@@ -2,9 +2,11 @@ use core::fmt;
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::device::{write, write_read, Device};
+use crate::{write, write_read};
 
-/// The CTRL2_G register. Gyroscope control register 2. Contains the chain full-scale selection and output data rate selection
+/// The CTRL2_G register. Gyroscope control register 2.
+///
+/// Contains the chain full-scale selection and output data rate selection
 // #[derive(Debug)]
 pub struct Ctrl2G(u8);
 
@@ -26,19 +28,24 @@ impl fmt::LowerHex for Ctrl2G {
     }
 }
 
+/// Sub-address of the register.
 pub const ADDR: u8 = 0x11u8;
 
+///Selects gyro chain full-scale ±4000 dps
+///
+///(0: FS selected through bits FS\[1:0\]_G or FS_125; 1: FS set to ±4000 dps)
 pub const FS4000: u8 = 0;
-pub const FS4000_MASK: u8 = 0b1;
-pub const FS4000_OFFSET: u8 = 0;
 
-pub const FS125: u8 = 0;
-pub const FS125_MASK: u8 = 0b10;
-pub const FS125_OFFSET: u8 = 1;
+///Selects gyro chain full-scale ±125 dps
+///
+///(0: FS selected through bits FS\[1:0\]_G; 1: FS set to ±125 dps)
+pub const FS125: u8 = 1;
 
-pub const FS_MASK: u8 = 0b11;
-pub const FS_OFFSET: u8 = 2;
+const FS_MASK: u8 = 0b11;
+const FS_OFFSET: u8 = 2;
 
+/// Gyroscope chain full-scale selection in dps
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum FS {
     Dps250,  // ±250 dps
     Dps500,  // ±500 dps
@@ -51,9 +58,10 @@ pub enum FS {
 const ODR_MASK: u8 = 0b1111;
 const ODR_OFFSET: u8 = 4;
 
-/// Gyroscope output data rate selection
+/// Gyroscope ODR selection
 ///
 /// Default value: `Off`
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum ODR {
     Off,   // off
     Hz125, // 12.5 Hz
@@ -69,21 +77,14 @@ pub enum ODR {
 }
 
 impl Ctrl2G {
-    pub fn new<I2C>(device: &mut Device<I2C>) -> Result<Self, I2C::Error>
+    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
     where
         I2C: WriteRead,
     {
-        let bits = write_read(device, ADDR)?;
+        let bits = write_read(i2c, ADDR)?;
         let register = Ctrl2G(bits);
 
         Ok(register)
-    }
-
-    pub fn modify<I2C>(&mut self, device: &mut Device<I2C>) -> Result<(), I2C::Error>
-    where
-        I2C: Write,
-    {
-        write(device, ADDR, self.0)
     }
 
     pub fn gyroscope_data_rate(&self) -> ODR {
@@ -103,17 +104,25 @@ impl Ctrl2G {
         }
     }
 
-    pub fn set_gyroscope_data_rate(&mut self, samples: ODR) {
+    pub fn set_gyroscope_data_rate<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        value: ODR,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
         self.0 &= !(ODR_MASK << ODR_OFFSET);
-        self.0 |= (samples as u8) << ODR_OFFSET;
+        self.0 |= (value as u8) << ODR_OFFSET;
+        write(i2c, ADDR, self.0)
     }
 
     pub fn chain_full_scale(&self) -> FS {
-        if (self.0 >> FS4000_OFFSET) & FS4000_MASK == 1 {
+        if (self.0 & FS4000) > 0 {
             return FS::Dps4000;
         }
 
-        if (self.0 >> FS125_OFFSET) & FS125_MASK == 1 {
+        if (self.0 & FS125) > 0 {
             return FS::Dps125;
         }
 
@@ -126,8 +135,19 @@ impl Ctrl2G {
         }
     }
 
-    pub fn set_chain_full_scale(&mut self, samples: FS) {
-        self.0 &= !(FS_MASK << FS_OFFSET);
-        self.0 |= (samples as u8) << FS_OFFSET;
+    pub fn set_chain_full_scale<I2C>(&mut self, i2c: &mut I2C, value: FS) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        if value == FS::Dps4000 {
+            self.0 |= (value as u8) << FS4000;
+        } else if value == FS::Dps125 {
+            self.0 |= (value as u8) << FS125;
+        } else {
+            self.0 &= !(FS_MASK << FS_OFFSET);
+            self.0 |= (value as u8) << FS_OFFSET;
+        }
+
+        write(i2c, ADDR, self.0)
     }
 }
