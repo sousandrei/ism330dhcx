@@ -1,10 +1,12 @@
 use core::fmt;
-
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
-use crate::device::{write, write_read, Device};
+use crate::{write, write_read};
 
 /// The CTRL3_C register.
+///
+/// Contains memory reboot, block data update, interruct activation level, push-pull/open-drain selection on INT1 and INT2 pins
+/// SPI Serial Interface Mode selection, register address automatically incrementation and software reset
 #[derive(Debug)]
 pub struct Ctrl3C(u8);
 
@@ -73,55 +75,47 @@ pub const IF_INC: u8 = 2;
 pub const SW_RESET: u8 = 0;
 
 impl Ctrl3C {
-    /// Blocking read of the CTRL3_C register from `Device`.
-    pub fn new<I2C>(device: &mut Device<I2C>) -> Result<Self, I2C::Error>
+    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
     where
         I2C: WriteRead,
     {
-        let bits = write_read(device, ADDR)?;
+        let bits = write_read(i2c, ADDR)?;
         Ok(Ctrl3C(bits))
     }
 
-    /// Updates the register using `f`, then writes the new value out to the chip.
-    pub fn modify<I2C>(&mut self, device: &mut Device<I2C>) -> Result<(), I2C::Error>
+    pub fn get(&mut self) -> u8 {
+        self.0
+    }
+
+    pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        write(device, ADDR, self.0)
+        self.0 |= value << BOOT;
+        write(i2c, ADDR, self.0)
     }
 
-    /// Returns true if the chip is active.
-    pub fn is_powered_up(&self) -> bool {
-        (self.0 & BOOT) > 0
+    pub fn set_bdu<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= value << BDU;
+        write(i2c, ADDR, self.0)
     }
 
-    /// Clears the power-down bit. The device is in power-down mode when BOOT = 0.
-    pub fn power_down(&mut self) {
-        self.0 &= !(1 << BOOT);
+    pub fn sw_reset<I2C>(&mut self, i2c: &mut I2C) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= 1 << SW_RESET;
+        write(i2c, ADDR, self.0)
     }
 
-    /// Sets the power-down bit. The device is active when BOOT = 1.
-    pub fn power_up(&mut self) {
-        self.0 |= 1 << BOOT;
-    }
-
-    /// Returns true if the chip is using block-update mode.
-    pub fn is_block_update(&self) -> bool {
-        (self.0 & BDU) > 0
-    }
-
-    /// Clears the block-update mode bit. In default (continuous) mode, the lower and upper parts
-    /// of the output registers are updated continuously. If it is not certain whether the read will
-    /// be faster than output data rate, it is recommended to use block-update mode.
-    pub fn set_continuous_update(&mut self) {
-        self.0 &= !(1 << BDU);
-    }
-
-    /// Sets the block-update mode bit. In block-update mode, after the reading of the lower
-    /// (upper) register part, the content of that output register is not updated until the upper
-    /// (lower) part is read also. This feature prevents the reading of LSB and MSB related to
-    /// different samples.
-    pub fn set_block_update(&mut self) {
-        self.0 |= 1 << BDU;
+    pub fn set_if_inc<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= value << IF_INC;
+        write(i2c, ADDR, self.0)
     }
 }
