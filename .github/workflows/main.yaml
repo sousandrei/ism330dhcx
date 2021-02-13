@@ -24,14 +24,14 @@ jobs:
 
       - uses: actions-rs/toolchain@v1
         with:
-          profile: minimal
+          profile: default
           toolchain: ${{ matrix.rust }}
           override: true
           components: rustfmt, clippy
 
       - uses: actions-rs/cargo@v1
         with:
-          command: build
+          command: build --release
 
       - uses: actions-rs/cargo@v1
         with:
