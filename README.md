@@ -1,4 +1,6 @@
 [![Build Status](https://github.com/sousandrei/ism330dhcx/workflows/Main/badge.svg)](https://github.com/sousandrei/ism330dhcx/actions)
+[![Docs.rs](https://docs.rs/ism330dhcx/badge.svg)](https://docs.rs/ism330dhcx)
+![Crates.io](https://img.shields.io/crates/v/ism330dhcx)
 
 ## Table of Contents
 
