@@ -111,7 +111,7 @@ impl Ctrl1Xl {
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn chain_full_scale(&self) -> f32 {
+    pub fn chain_full_scale(&self) -> f64 {
         match (self.0 >> FS_OFFSET) & FS_MASK {
             0 => 0.061,
             1 => 0.488,

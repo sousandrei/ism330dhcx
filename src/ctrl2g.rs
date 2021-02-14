@@ -112,8 +112,7 @@ impl Ctrl2G {
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn chain_full_scale(&self) -> f32 {
-        if (self.0 & FS4000) > 0 {
+    pub fn chain_full_scale(&self) -> f64 {
             return 140.0;
         }
 
