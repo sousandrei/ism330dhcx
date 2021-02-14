@@ -53,11 +53,11 @@ const HPM_G_OFFSET: u8 = 3;
 /// Default: 00
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum HPM_G {
-    HPMG16,  // ±250 mHz
-    HPMG65,  // ±500 mHz
-    HPMG260, // ±1000 mHz
-    HPMG104, // ±4000 Hz
+pub enum Hpm_g {
+    Hpmg16,  // ±250 mHz
+    Hpmg65,  // ±500 mHz
+    Hpmg260, // ±1000 mHz
+    Hpmg104, // ±4000 Hz
 }
 
 /// Selects how to enable and disable the OIS chain, after first configuration and enabling through SPI2.
@@ -95,7 +95,7 @@ impl Ctrl7G {
         }
     }
 
-    pub fn set_hpm_g<I2C>(&mut self, i2c: &mut I2C, value: HPM_G) -> Result<(), I2C::Error>
+    pub fn set_hpm_g<I2C>(&mut self, i2c: &mut I2C, value: Hpm_g) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {

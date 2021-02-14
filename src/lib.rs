@@ -38,7 +38,7 @@ trait Register {
     }
 }
 
-pub struct ISM330DHCX {
+pub struct Ism330Dhcx {
     pub ctrl1xl: Ctrl1Xl,
     pub ctrl2g: Ctrl2G,
     pub ctrl7g: Ctrl7G,
@@ -46,8 +46,8 @@ pub struct ISM330DHCX {
     pub ctrl9xl: Ctrl9Xl,
 }
 
-impl ISM330DHCX {
-    pub fn new<I2C, E>(i2c: &mut I2C) -> Result<ISM330DHCX, E>
+impl Ism330Dhcx {
+    pub fn new<I2C, E>(i2c: &mut I2C) -> Result<Ism330Dhcx, E>
     where
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
@@ -60,7 +60,7 @@ impl ISM330DHCX {
         let ctrl7g = Ctrl7G::new(registers[6]);
         let ctrl9xl = Ctrl9Xl::new(registers[8]);
 
-        let ism330dhcx = ISM330DHCX {
+        let ism330dhcx = Ism330Dhcx {
             ctrl1xl,
             ctrl2g,
             ctrl3c,

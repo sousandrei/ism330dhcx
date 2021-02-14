@@ -45,7 +45,7 @@ const FS_OFFSET: u8 = 2;
 /// (00: ±2 g; 01: ±16 g; 10: ±4 g; 11: ±8 g)
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum FS_XL {
+pub enum Fs_Xl {
     G2,  // ±2  g
     G16, // ±16 g
     G4,  // ±4  g
@@ -60,7 +60,7 @@ const ODR_XL_OFFSET: u8 = 4;
 /// Default value: `Off`
 #[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ODR_XL {
+pub enum Odr_Xl {
     Off,   // off
     Hz125, // 12.5 Hz
     Hz26,  // 26   Hz
@@ -101,7 +101,7 @@ impl Ctrl1Xl {
     pub fn set_accelerometer_data_rate<I2C>(
         &mut self,
         i2c: &mut I2C,
-        value: ODR_XL,
+        value: Odr_Xl,
     ) -> Result<(), I2C::Error>
     where
         I2C: Write,
@@ -124,7 +124,7 @@ impl Ctrl1Xl {
     pub fn set_chain_full_scale<I2C>(
         &mut self,
         i2c: &mut I2C,
-        value: FS_XL,
+        value: Fs_Xl,
     ) -> Result<(), I2C::Error>
     where
         I2C: Write,
