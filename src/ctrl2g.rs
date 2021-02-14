@@ -50,8 +50,8 @@ pub enum FS {
     Dps500,  // ±500 dps
     Dps1000, // ±1000 dps
     Dps2000, // ±2000 dps
-    Dps125,  // ±125 dps
     Dps4000, // ±4000 dps
+    Dps125,  // ±125 dps
 }
 
 const ODR_MASK: u8 = 0b1111;
@@ -113,10 +113,11 @@ impl Ctrl2G {
     }
 
     pub fn chain_full_scale(&self) -> f64 {
+        if (self.0 & 1 << FS4000) > 0 {
             return 140.0;
         }
 
-        if (self.0 & FS125) > 0 {
+        if (self.0 & 1 << FS125) > 0 {
             return 4.375;
         }
 
@@ -133,12 +134,13 @@ impl Ctrl2G {
     where
         I2C: Write,
     {
-        if value == FS::Dps4000.into() {
-            self.0 |= (value as u8) << FS4000;
+        self.0 &= 0b1111_0000;
+
+        if value == FS::Dps4000 {
+            self.0 |= 1;
         } else if value == FS::Dps125 {
-            self.0 |= (value as u8) << FS125;
+            self.0 |= 2;
         } else {
-            self.0 &= !(FS_MASK << FS_OFFSET);
             self.0 |= (value as u8) << FS_OFFSET;
         }
 
