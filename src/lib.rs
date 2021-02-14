@@ -17,8 +17,8 @@ use ctrl9xl::Ctrl9Xl;
 /// Datasheed write address for the device. (D6h)
 pub const I2C_ADDRESS: u8 = 0x6bu8;
 
-const SENSORS_DPS_TO_RADS: f32 = 0.017453293;
-const SENSORS_GRAVITY_STANDARD: f32 = 9.80665;
+const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
+const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
 
 trait Register {
     fn read<I2C>(&self, i2c: &mut I2C, reg_addr: u8) -> Result<u8, I2C::Error>
@@ -84,7 +84,7 @@ impl ISM330DHCX {
         Ok(temp)
     }
 
-    pub fn get_gyroscope<I2C>(&mut self, i2c: &mut I2C) -> Result<[f32; 3], I2C::Error>
+    pub fn get_gyroscope<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
     where
         I2C: WriteRead,
     {
@@ -97,14 +97,14 @@ impl ISM330DHCX {
         let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
         let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
 
-        let gyro_x = raw_gyro_x as f32 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-        let gyro_y = raw_gyro_y as f32 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-        let gyro_z = raw_gyro_z as f32 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+        let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+        let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+        let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
 
         Ok([gyro_x, gyro_y, gyro_z])
     }
 
-    pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<[f32; 3], I2C::Error>
+    pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
     where
         I2C: WriteRead,
     {
@@ -117,9 +117,9 @@ impl ISM330DHCX {
         let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
         let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
 
-        let acc_x = raw_acc_x as f32 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-        let acc_y = raw_acc_y as f32 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-        let acc_z = raw_acc_z as f32 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+        let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+        let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+        let acc_z = raw_acc_z as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
 
         Ok([acc_x, acc_y, acc_z])
     }
