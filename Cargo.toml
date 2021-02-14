@@ -5,6 +5,7 @@ edition = "2018"
 authors = ["Andrei Sousa <sousandrei@gmail.com>"]
 categories = ["embedded", "hardware-support", "no-std"]
 repository = "https://github.com/sousandrei/ism330dhcx"
+documentation = "https://docs.rs/ism330dhcx"
 description = "Interface to ST Micro BlueNRG Bluetooth radios"
 license = "MIT"
 readme = "README.md"
