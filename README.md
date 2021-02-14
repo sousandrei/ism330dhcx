@@ -45,7 +45,7 @@ For bits that operate together, they have their custom type abstracted. For exam
 
 sensor
     .ctrl1xl
-    .set_accelerometer_data_rate(i2c, ctrl1xl::ODR_XL::Hz52)
+    .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz52)
     .unwrap();
 ```
 
