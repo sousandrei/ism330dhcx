@@ -10,7 +10,6 @@ license = "MIT"
 readme = "README.md"
 keywords = [
     "spi",
-    "bare-metal",
     "embedded-hal-driver",
     "ism330dhcx",
     "gyroscope",
