@@ -45,7 +45,7 @@ const FS_OFFSET: u8 = 2;
 
 /// Gyroscope chain full-scale selection in dps
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum FS {
+pub enum Fs {
     Dps250,  // ±250 dps
     Dps500,  // ±500 dps
     Dps1000, // ±1000 dps
@@ -61,7 +61,7 @@ const ODR_OFFSET: u8 = 4;
 ///
 /// Default value: `Off`
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub enum ODR {
+pub enum Odr {
     Off,   // off
     Hz125, // 12.5 Hz
     Hz26,  // 26   Hz
@@ -102,7 +102,7 @@ impl Ctrl2G {
     pub fn set_gyroscope_data_rate<I2C>(
         &mut self,
         i2c: &mut I2C,
-        value: ODR,
+        value: Odr,
     ) -> Result<(), I2C::Error>
     where
         I2C: Write,
@@ -130,15 +130,15 @@ impl Ctrl2G {
         }
     }
 
-    pub fn set_chain_full_scale<I2C>(&mut self, i2c: &mut I2C, value: FS) -> Result<(), I2C::Error>
+    pub fn set_chain_full_scale<I2C>(&mut self, i2c: &mut I2C, value: Fs) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
         self.0 &= 0b1111_0000;
 
-        if value == FS::Dps4000 {
+        if value == Fs::Dps4000 {
             self.0 |= 1;
-        } else if value == FS::Dps125 {
+        } else if value == Fs::Dps125 {
             self.0 |= 2;
         } else {
             self.0 |= (value as u8) << FS_OFFSET;
