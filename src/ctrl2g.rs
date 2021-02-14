@@ -44,7 +44,7 @@ const FS_MASK: u8 = 0b11;
 const FS_OFFSET: u8 = 2;
 
 /// Gyroscope chain full-scale selection in dps
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Fs {
     Dps250,  // ±250 dps
     Dps500,  // ±500 dps
@@ -60,7 +60,7 @@ const ODR_OFFSET: u8 = 4;
 /// Gyroscope ODR selection
 ///
 /// Default value: `Off`
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Odr {
     Off,   // off
     Hz125, // 12.5 Hz

@@ -44,7 +44,7 @@ const FS_OFFSET: u8 = 2;
 ///
 /// (00: ±2 g; 01: ±16 g; 10: ±4 g; 11: ±8 g)
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Fs_Xl {
     G2,  // ±2  g
     G16, // ±16 g
@@ -59,7 +59,7 @@ const ODR_XL_OFFSET: u8 = 4;
 ///
 /// Default value: `Off`
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Odr_Xl {
     Off,   // off
     Hz125, // 12.5 Hz
