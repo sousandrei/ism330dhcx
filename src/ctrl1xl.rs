@@ -134,11 +134,11 @@ impl Ctrl1Xl {
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << LPF2_XL_EN;
+        self.0 |= (value as u8) << LPF2_XL_EN;
         self.write(i2c, ADDR, self.0)
     }
 }
