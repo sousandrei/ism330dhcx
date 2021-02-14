@@ -10,7 +10,7 @@ use cortex_m_semihosting::hio::{self};
 use hal::{delay::Delay, i2c::I2c, prelude::*, stm32};
 use rt::entry;
 
-use ism330dhcx::{ctrl1xl, ctrl2g, ISM330DHCX};
+use ism330dhcx::{ctrl1xl, ctrl2g, Ism330Dhcx};
 
 #[entry]
 fn main() -> ! {
@@ -53,7 +53,7 @@ fn main() -> ! {
 
     let mut stdout = hio::hstdout().unwrap();
 
-    let mut sensor = match ISM330DHCX::new(&mut i2c) {
+    let mut sensor = match Ism330Dhcx::new(&mut i2c) {
         Ok(sensor) => sensor,
         Err(error) => {
             writeln!(stdout, "{:?}", error).unwrap();
@@ -73,7 +73,7 @@ fn main() -> ! {
 }
 
 // Booting the sensor accoring to Adafruit's driver
-fn boot_sensor<I2C, E>(sensor: &mut ISM330DHCX, i2c: &mut I2C)
+fn boot_sensor<I2C, E>(sensor: &mut Ism330Dhcx, i2c: &mut I2C)
 where
     I2C: embedded_hal::blocking::i2c::WriteRead<Error = E>
         + embedded_hal::blocking::i2c::Write<Error = E>,
@@ -99,12 +99,12 @@ where
 
     sensor
         .ctrl1xl
-        .set_accelerometer_data_rate(i2c, ctrl1xl::ODR_XL::Hz52)
+        .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz52)
         .unwrap();
 
     sensor
         .ctrl1xl
-        .set_chain_full_scale(i2c, ctrl1xl::FS_XL::G4)
+        .set_chain_full_scale(i2c, ctrl1xl::Fs_Xl::G4)
         .unwrap();
     sensor.ctrl1xl.set_lpf2_xl_en(i2c, 1).unwrap();
 
@@ -113,12 +113,12 @@ where
 
     sensor
         .ctrl2g
-        .set_gyroscope_data_rate(i2c, ctrl2g::ODR::Hz52)
+        .set_gyroscope_data_rate(i2c, ctrl2g::Odr::Hz52)
         .unwrap();
 
     sensor
         .ctrl2g
-        .set_chain_full_scale(i2c, ctrl2g::FS::Dps500)
+        .set_chain_full_scale(i2c, ctrl2g::Fs::Dps500)
         .unwrap();
 
     // =======================================
