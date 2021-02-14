@@ -1,6 +1,6 @@
 [package]
 name = "ism330dhcx"
-version = "0.0.1"
+version = "0.1.0"
 edition = "2018"
 authors = ["Andrei Sousa <sousandrei@gmail.com>"]
 categories = ["embedded", "hardware-support", "no-std"]
@@ -16,6 +16,8 @@ keywords = [
     "gyroscope",
     "accelerometer",
 ]
+include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
+
 
 [dependencies]
 embedded-hal = "0.2.4"
