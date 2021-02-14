@@ -82,17 +82,17 @@ where
     // =======================================
     // CTRL3_C
 
-    sensor.ctrl3c.set_boot(i2c, 1).unwrap();
-    sensor.ctrl3c.set_bdu(i2c, 1).unwrap();
-    sensor.ctrl3c.set_if_inc(i2c, 1).unwrap();
+    sensor.ctrl3c.set_boot(i2c, true).unwrap();
+    sensor.ctrl3c.set_bdu(i2c, true).unwrap();
+    sensor.ctrl3c.set_if_inc(i2c, true).unwrap();
 
     // =======================================
     // CTRL9_XL
 
-    sensor.ctrl9xl.set_den_x(i2c, 1).unwrap();
-    sensor.ctrl9xl.set_den_y(i2c, 1).unwrap();
-    sensor.ctrl9xl.set_den_z(i2c, 1).unwrap();
-    sensor.ctrl9xl.set_device_conf(i2c, 1).unwrap();
+    sensor.ctrl9xl.set_den_x(i2c, true).unwrap();
+    sensor.ctrl9xl.set_den_y(i2c, true).unwrap();
+    sensor.ctrl9xl.set_den_z(i2c, true).unwrap();
+    sensor.ctrl9xl.set_device_conf(i2c, true).unwrap();
 
     // =======================================
     // CTRL1_XL
@@ -106,7 +106,7 @@ where
         .ctrl1xl
         .set_chain_full_scale(i2c, ctrl1xl::Fs_Xl::G4)
         .unwrap();
-    sensor.ctrl1xl.set_lpf2_xl_en(i2c, 1).unwrap();
+    sensor.ctrl1xl.set_lpf2_xl_en(i2c, true).unwrap();
 
     // =======================================
     // CTRL2_G
@@ -124,5 +124,5 @@ where
     // =======================================
     // CTRL7_G
 
-    sensor.ctrl7g.set_g_hm_mode(i2c, 1).unwrap();
+    sensor.ctrl7g.set_g_hm_mode(i2c, true).unwrap();
 }

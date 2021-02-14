@@ -85,35 +85,35 @@ impl Ctrl9Xl {
         Ctrl9Xl(bits)
     }
 
-    pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << DEVICE_CONF;
+        self.0 |= (value as u8) << DEVICE_CONF;
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << DEN_X;
+        self.0 |= (value as u8) << DEN_X;
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_den_y<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_den_y<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << DEN_Y;
+        self.0 |= (value as u8) << DEN_Y;
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_den_z<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_den_z<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << DEN_Z;
+        self.0 |= (value as u8) << DEN_Z;
         self.write(i2c, ADDR, self.0)
     }
 }

@@ -104,11 +104,11 @@ impl Ctrl7G {
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << G_HM_MODE;
+        self.0 |= (value as u8) << G_HM_MODE;
         self.write(i2c, ADDR, self.0)
     }
 }

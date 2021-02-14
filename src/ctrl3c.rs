@@ -95,19 +95,19 @@ impl Ctrl3C {
         self.0
     }
 
-    pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << BOOT;
+        self.0 |= u8::from(value) << BOOT;
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_bdu<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_bdu<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << BDU;
+        self.0 |= (value as u8) << BDU;
         self.write(i2c, ADDR, self.0)
     }
 
@@ -119,11 +119,11 @@ impl Ctrl3C {
         self.write(i2c, ADDR, self.0)
     }
 
-    pub fn set_if_inc<I2C>(&mut self, i2c: &mut I2C, value: u8) -> Result<(), I2C::Error>
+    pub fn set_if_inc<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 |= value << IF_INC;
+        self.0 |= (value as u8) << IF_INC;
         self.write(i2c, ADDR, self.0)
     }
 }
