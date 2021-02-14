@@ -52,7 +52,7 @@ const HPM_G_OFFSET: u8 = 3;
 ///
 /// Default: 00
 #[allow(non_camel_case_types)]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Hpm_g {
     Hpmg16,  // ±250 mHz
     Hpmg65,  // ±500 mHz
