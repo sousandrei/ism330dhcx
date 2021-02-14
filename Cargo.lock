@@ -148,7 +148,6 @@ dependencies = [
  "embedded-hal",
  "panic-semihosting",
  "stm32l4xx-hal",
- "vcell",
 ]
 
 [[package]]
