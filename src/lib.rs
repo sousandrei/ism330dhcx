@@ -1,3 +1,39 @@
+//! This is a simple driver for ST's `ism330dhcx` sensor.
+//!
+//! # Quick Start
+//! To declare a sensor is pretty simple:
+//!
+//! ```rust
+//! let sensor = Ism330Dhcx::new(&mut i2c).unwrap()
+//! ```
+//!
+//! All registers have the bits addressed by their function, for example here se set the `BOOT` register in the `CTRL_3C` register to `1`
+//!
+//! ```rust
+//! sensor.ctrl3c.set_boot(i2c, 1).unwrap();
+//! ```
+//!
+//! For bits that operate together, they have their custom type abstracted. For example, to set the accelerometer data rate you have to operate 4 bits. But here you just have to specify your desired data rate and the driver takes care of it.
+//!
+//! ```rust
+//! // Sets the following bits
+//! // ODR_XL3 to 0
+//! // ODR_XL2 to 0
+//! // ODR_XL1 to 1
+//! // ODR_XL0 to 1
+//!
+//! sensor
+//!     .ctrl1xl
+//!     .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz52)
+//!     .unwrap();
+//! ```
+
+//!
+//! # Reference
+//!
+//!- [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
+//!- [Datasheet](https://www.st.com/resource/en/datasheet/ism330dhcx.pdf)
+
 #![no_std]
 
 use embedded_hal::blocking::i2c::{Write, WriteRead};
@@ -37,7 +73,6 @@ trait Register {
         i2c.write(I2C_ADDRESS, &[reg_addr, bits])
     }
 }
-
 pub struct Ism330Dhcx {
     pub ctrl1xl: Ctrl1Xl,
     pub ctrl2g: Ctrl2G,
