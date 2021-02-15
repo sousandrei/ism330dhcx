@@ -1,6 +1,6 @@
 [package]
 name = "ism330dhcx"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2018"
 authors = ["Andrei Sousa <sousandrei@gmail.com>"]
 categories = ["embedded", "hardware-support", "no-std"]
