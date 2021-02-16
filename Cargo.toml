@@ -6,11 +6,11 @@ authors = ["Andrei Sousa <sousandrei@gmail.com>"]
 categories = ["embedded", "hardware-support", "no-std"]
 repository = "https://github.com/sousandrei/ism330dhcx"
 documentation = "https://docs.rs/ism330dhcx"
-description = "Aimple driver for ST ism330dhcx sensor"
+description = "Simple driver for ST ism330dhcx sensor"
 license = "MIT"
 readme = "README.md"
 keywords = [
-    "spi",
+    "i2c",
     "embedded-hal-driver",
     "ism330dhcx",
     "gyroscope",
