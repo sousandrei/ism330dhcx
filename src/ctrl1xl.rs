@@ -142,6 +142,7 @@ impl Ctrl1Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << LPF2_XL_EN);
         self.0 |= (value as u8) << LPF2_XL_EN;
         self.write(i2c, ADDR, self.0)
     }
