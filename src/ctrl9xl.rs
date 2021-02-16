@@ -27,6 +27,48 @@ impl fmt::LowerHex for Ctrl9Xl {
 
 pub const ADDR: u8 = 0x18u8;
 
+/// DEN value stored in LSB of Z-axis.
+///
+/// Default value: 1
+///
+///(0: DEN not stored in Z-axis LSB; 1: DEN stored in Z-axis LSB)
+pub const DEN_Z: u8 = 7;
+
+/// DEN value stored in LSB of Y-axis.
+///
+/// Default value: 1
+///
+///(0: DEN not stored in Y-axis LSB; 1: DEN stored in Y-axis LSB)
+pub const DEN_Y: u8 = 6;
+
+/// DEN value stored in LSB of X-axis.
+///
+/// Default value: 1
+///
+///(0: DEN not stored in X-axis LSB; 1: DEN stored in X-axis LSB)
+pub const DEN_X: u8 = 5;
+
+/// DEN stamping sensor selection.
+///
+/// Default value: 0
+///
+/// (0: DEN pin info stamped in the gyroscope axis selected by bits \[7:5\]; 1: DEN pin info stamped in the accelerometer axis selected by bits \[7:5\])
+pub const DEN_XL_G: u8 = 4;
+
+/// Extends DEN functionality to accelerometer sensor.
+///
+/// Default value: 0
+///
+/// (0: disabled; 1: enabled)
+pub const DEN_XL_EN: u8 = 3;
+
+/// DEN active level configuration.
+///
+/// Default value: 0
+///
+/// (0: active low; 1: active high)
+pub const DEN_LH: u8 = 2;
+
 /// Enables the proper device configuration.
 ///
 /// Default value: 0
@@ -36,61 +78,11 @@ pub const ADDR: u8 = 0x18u8;
 /// It is recommended to always set this bit to 1 during device configuration.
 pub const DEVICE_CONF: u8 = 1;
 
-/// DEN active level configuration.
-///
-/// Default value: 0
-///
-/// (0: active low; 1: active high)
-pub const DEN_LH: u8 = 2;
-
-/// Extends DEN functionality to accelerometer sensor.
-///
-/// Default value: 0
-///
-/// (0: disabled; 1: enabled)
-pub const DEN_EN: u8 = 3;
-
-/// DEN stamping sensor selection.
-///
-/// Default value: 0
-///
-/// (0: DEN pin info stamped in the gyroscope axis selected by bits \[7:5\]; 1: DEN pin info stamped in the accelerometer axis selected by bits \[7:5\])
-pub const DEN_XL_G: u8 = 4;
-
-/// DEN value stored in LSB of X-axis.
-///
-/// Default value: 1
-///
-///(0: DEN not stored in X-axis LSB; 1: DEN stored in X-axis LSB)
-pub const DEN_X: u8 = 5;
-
-/// DEN value stored in LSB of Y-axis.
-///
-/// Default value: 1
-///
-///(0: DEN not stored in Y-axis LSB; 1: DEN stored in Y-axis LSB)
-pub const DEN_Y: u8 = 6;
-
-/// DEN value stored in LSB of Z-axis.
-///
-/// Default value: 1
-///
-///(0: DEN not stored in Z-axis LSB; 1: DEN stored in Z-axis LSB)
-pub const DEN_Z: u8 = 7;
-
 impl Register for Ctrl9Xl {}
 
 impl Ctrl9Xl {
     pub fn new(bits: u8) -> Self {
         Ctrl9Xl(bits)
-    }
-
-    pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
-    where
-        I2C: Write,
-    {
-        self.0 |= (value as u8) << DEVICE_CONF;
-        self.write(i2c, ADDR, self.0)
     }
 
     pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
@@ -114,6 +106,38 @@ impl Ctrl9Xl {
         I2C: Write,
     {
         self.0 |= (value as u8) << DEN_Z;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn set_den_xl_g<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << DEN_XL_G;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn set_den_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << DEN_XL_EN;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn set_den_lh<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << DEN_LH;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << DEVICE_CONF;
         self.write(i2c, ADDR, self.0)
     }
 }

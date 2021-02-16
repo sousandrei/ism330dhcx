@@ -134,6 +134,10 @@ impl Ctrl1Xl {
         self.write(i2c, ADDR, self.0)
     }
 
+    pub fn lpf2_xl_en(&mut self) -> bool {
+        self.0 & (1 << LPF2_XL_EN) != 0
+    }
+
     pub fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,

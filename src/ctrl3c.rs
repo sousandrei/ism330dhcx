@@ -91,8 +91,8 @@ impl Ctrl3C {
         Ctrl3C(bits)
     }
 
-    pub fn get(&mut self) -> u8 {
-        self.0
+    pub fn boot(&mut self) -> bool {
+        self.0 & (1 << BOOT) != 0
     }
 
     pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
@@ -101,6 +101,10 @@ impl Ctrl3C {
     {
         self.0 |= u8::from(value) << BOOT;
         self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn bdu(&mut self) -> bool {
+        self.0 & (1 << BDU) != 0
     }
 
     pub fn set_bdu<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
@@ -117,6 +121,10 @@ impl Ctrl3C {
     {
         self.0 |= 1 << SW_RESET;
         self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn if_inc(&mut self) -> bool {
+        self.0 & (1 << IF_INC) != 0
     }
 
     pub fn set_if_inc<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
