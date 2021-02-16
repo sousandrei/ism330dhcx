@@ -104,11 +104,51 @@ impl Ctrl7G {
         self.write(i2c, ADDR, self.0)
     }
 
+    pub fn g_hm_mode(&mut self) -> bool {
+        self.0 & (1 << G_HM_MODE) != 0
+    }
+
     pub fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
         self.0 |= (value as u8) << G_HM_MODE;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn ois_on_en(&mut self) -> bool {
+        self.0 & (1 << OIS_ON_EN) != 0
+    }
+
+    pub fn set_ois_on_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << OIS_ON_EN;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn usr_off_on_out(&mut self) -> bool {
+        self.0 & (1 << USR_OFF_ON_OUT) != 0
+    }
+
+    pub fn set_usr_off_on_out<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << USR_OFF_ON_OUT;
+        self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn ois_on(&mut self) -> bool {
+        self.0 & (1 << OIS_ON) != 0
+    }
+
+    pub fn set_ois_on<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        self.0 |= (value as u8) << OIS_ON;
         self.write(i2c, ADDR, self.0)
     }
 }
