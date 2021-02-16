@@ -99,6 +99,7 @@ impl Ctrl3C {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << BOOT);
         self.0 |= u8::from(value) << BOOT;
         self.write(i2c, ADDR, self.0)
     }
@@ -111,6 +112,7 @@ impl Ctrl3C {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << BDU);
         self.0 |= (value as u8) << BDU;
         self.write(i2c, ADDR, self.0)
     }
@@ -131,6 +133,7 @@ impl Ctrl3C {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << IF_INC);
         self.0 |= (value as u8) << IF_INC;
         self.write(i2c, ADDR, self.0)
     }
