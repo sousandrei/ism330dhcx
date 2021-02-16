@@ -85,12 +85,20 @@ impl Ctrl9Xl {
         Ctrl9Xl(bits)
     }
 
+    pub fn den_x(&mut self) -> bool {
+        self.0 & (1 << DEN_X) != 0
+    }
+
     pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
         self.0 |= (value as u8) << DEN_X;
         self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn den_y(&mut self) -> bool {
+        self.0 & (1 << DEN_Y) != 0
     }
 
     pub fn set_den_y<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
@@ -101,12 +109,20 @@ impl Ctrl9Xl {
         self.write(i2c, ADDR, self.0)
     }
 
+    pub fn den_z(&mut self) -> bool {
+        self.0 & (1 << DEN_Z) != 0
+    }
+
     pub fn set_den_z<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
         self.0 |= (value as u8) << DEN_Z;
         self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn den_xl_g(&mut self) -> bool {
+        self.0 & (1 << DEN_XL_G) != 0
     }
 
     pub fn set_den_xl_g<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
@@ -117,6 +133,10 @@ impl Ctrl9Xl {
         self.write(i2c, ADDR, self.0)
     }
 
+    pub fn den_xl_en(&mut self) -> bool {
+        self.0 & (1 << DEN_XL_EN) != 0
+    }
+
     pub fn set_den_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
@@ -125,12 +145,20 @@ impl Ctrl9Xl {
         self.write(i2c, ADDR, self.0)
     }
 
+    pub fn den_lh(&mut self) -> bool {
+        self.0 & (1 << DEN_LH) != 0
+    }
+
     pub fn set_den_lh<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
         self.0 |= (value as u8) << DEN_LH;
         self.write(i2c, ADDR, self.0)
+    }
+
+    pub fn device_conf(&mut self) -> bool {
+        self.0 & (1 << DEVICE_CONF) != 0
     }
 
     pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
