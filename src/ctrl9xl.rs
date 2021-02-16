@@ -93,6 +93,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEN_X);
         self.0 |= (value as u8) << DEN_X;
         self.write(i2c, ADDR, self.0)
     }
@@ -105,6 +106,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEN_Y);
         self.0 |= (value as u8) << DEN_Y;
         self.write(i2c, ADDR, self.0)
     }
@@ -117,6 +119,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEN_Z);
         self.0 |= (value as u8) << DEN_Z;
         self.write(i2c, ADDR, self.0)
     }
@@ -129,6 +132,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEN_XL_G);
         self.0 |= (value as u8) << DEN_XL_G;
         self.write(i2c, ADDR, self.0)
     }
@@ -141,6 +145,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEN_XL_EN);
         self.0 |= (value as u8) << DEN_XL_EN;
         self.write(i2c, ADDR, self.0)
     }
@@ -153,6 +158,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEN_LH);
         self.0 |= (value as u8) << DEN_LH;
         self.write(i2c, ADDR, self.0)
     }
@@ -165,6 +171,7 @@ impl Ctrl9Xl {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << DEVICE_CONF);
         self.0 |= (value as u8) << DEVICE_CONF;
         self.write(i2c, ADDR, self.0)
     }

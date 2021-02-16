@@ -112,6 +112,7 @@ impl Ctrl7G {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << G_HM_MODE);
         self.0 |= (value as u8) << G_HM_MODE;
         self.write(i2c, ADDR, self.0)
     }
@@ -124,6 +125,7 @@ impl Ctrl7G {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << OIS_ON_EN);
         self.0 |= (value as u8) << OIS_ON_EN;
         self.write(i2c, ADDR, self.0)
     }
@@ -136,6 +138,7 @@ impl Ctrl7G {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << USR_OFF_ON_OUT);
         self.0 |= (value as u8) << USR_OFF_ON_OUT;
         self.write(i2c, ADDR, self.0)
     }
@@ -148,6 +151,7 @@ impl Ctrl7G {
     where
         I2C: Write,
     {
+        self.0 &= !(1 << OIS_ON);
         self.0 |= (value as u8) << OIS_ON;
         self.write(i2c, ADDR, self.0)
     }
