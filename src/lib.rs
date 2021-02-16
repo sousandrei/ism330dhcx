@@ -10,7 +10,7 @@
 //! All registers have the bits addressed by their function, for example here se set the `BOOT` register in the `CTRL_3C` register to `1`
 //!
 //! ```rust
-//! sensor.ctrl3c.set_boot(i2c, 1).unwrap();
+//! sensor.ctrl3c.set_boot(i2c, true).unwrap();
 //! ```
 //!
 //! For bits that operate together, they have their custom type abstracted. For example, to set the accelerometer data rate you have to operate 4 bits. But here you just have to specify your desired data rate and the driver takes care of it.
