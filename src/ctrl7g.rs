@@ -8,24 +8,26 @@ use crate::Register;
 /// Contains high-performance operating mode for gyroscope,
 /// gyroscope digital high-pass filter, gyroscope digital HP filter cutoff selection,
 /// enabling and disabling the OIS chain and accelerometer user offset correction block
-// #[derive(Debug)]
-pub struct Ctrl7G(u8);
+pub struct Ctrl7G {
+    pub address: u8,
+    value: u8,
+}
 
 impl fmt::Display for Ctrl7G {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
     }
 }
 
 impl fmt::Binary for Ctrl7G {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:b}", self.0)
+        write!(f, "{:b}", self.value)
     }
 }
 
 impl fmt::LowerHex for Ctrl7G {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.0, f)
+        fmt::LowerHex::fmt(&self.value, f)
     }
 }
 
@@ -81,12 +83,12 @@ pub const OIS_ON: u8 = 0;
 impl Register for Ctrl7G {}
 
 impl Ctrl7G {
-    pub fn new(bits: u8) -> Self {
-        Ctrl7G(bits)
+    pub fn new(value: u8, address: u8) -> Self {
+        Ctrl7G { address, value }
     }
 
     pub fn hpm_g(&self) -> f32 {
-        match (self.0 >> HPM_G_OFFSET) & HPM_G_MASK {
+        match (self.value >> HPM_G_OFFSET) & HPM_G_MASK {
             0 => 250.0,
             1 => 500.0,
             2 => 1000.0,
@@ -99,60 +101,60 @@ impl Ctrl7G {
     where
         I2C: Write,
     {
-        self.0 &= !(HPM_G_MASK << HPM_G_OFFSET);
-        self.0 |= (value as u8) << HPM_G_OFFSET;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(HPM_G_MASK << HPM_G_OFFSET);
+        self.value |= (value as u8) << HPM_G_OFFSET;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn g_hm_mode(&mut self) -> bool {
-        self.0 & (1 << G_HM_MODE) != 0
+        self.value & (1 << G_HM_MODE) != 0
     }
 
     pub fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << G_HM_MODE);
-        self.0 |= (value as u8) << G_HM_MODE;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << G_HM_MODE);
+        self.value |= (value as u8) << G_HM_MODE;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn ois_on_en(&mut self) -> bool {
-        self.0 & (1 << OIS_ON_EN) != 0
+        self.value & (1 << OIS_ON_EN) != 0
     }
 
     pub fn set_ois_on_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << OIS_ON_EN);
-        self.0 |= (value as u8) << OIS_ON_EN;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << OIS_ON_EN);
+        self.value |= (value as u8) << OIS_ON_EN;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn usr_off_on_out(&mut self) -> bool {
-        self.0 & (1 << USR_OFF_ON_OUT) != 0
+        self.value & (1 << USR_OFF_ON_OUT) != 0
     }
 
     pub fn set_usr_off_on_out<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << USR_OFF_ON_OUT);
-        self.0 |= (value as u8) << USR_OFF_ON_OUT;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << USR_OFF_ON_OUT);
+        self.value |= (value as u8) << USR_OFF_ON_OUT;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn ois_on(&mut self) -> bool {
-        self.0 & (1 << OIS_ON) != 0
+        self.value & (1 << OIS_ON) != 0
     }
 
     pub fn set_ois_on<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << OIS_ON);
-        self.0 |= (value as u8) << OIS_ON;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << OIS_ON);
+        self.value |= (value as u8) << OIS_ON;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 }
