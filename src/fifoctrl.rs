@@ -7,11 +7,14 @@ use crate::Register;
 ///
 /// The four registers are handled as one because values and functionality is split across several
 /// registers.
-pub struct FifoCtrl([u8; 4]);
+pub struct FifoCtrl {
+    pub address: u8,
+    value: [u8; 4],
+}
 
 impl fmt::Display for FifoCtrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for r in self.0.iter() {
+        for r in self.value.iter() {
             write!(f, "{}", r)?;
         }
 
@@ -21,7 +24,7 @@ impl fmt::Display for FifoCtrl {
 
 impl fmt::Binary for FifoCtrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for r in self.0.iter() {
+        for r in self.value.iter() {
             write!(f, "{:b}", r)?;
         }
 
@@ -31,7 +34,7 @@ impl fmt::Binary for FifoCtrl {
 
 impl fmt::LowerHex for FifoCtrl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        for r in self.0.iter() {
+        for r in self.value.iter() {
             fmt::LowerHex::fmt(&r, f)?;
         }
 
@@ -57,8 +60,8 @@ pub enum FifoMode {
 }
 
 impl FifoCtrl {
-    pub fn new(bits: [u8; 4]) -> Self {
-        FifoCtrl(bits)
+    pub fn new(value: [u8; 4], address: u8) -> Self {
+        FifoCtrl { address, value }
     }
 
     /// Enable compression of values in FIFO, increasing FIFO size from 3kB to maximum 9kB.
@@ -66,9 +69,9 @@ impl FifoCtrl {
     where
         I2C: Write,
     {
-        self.0[1] &= !(1 << 6);
-        self.0[1] |= (value as u8) << 6;
-        self.write(i2c, ADDR + 1, self.0[1])
+        self.value[1] &= !(1 << 6);
+        self.value[1] |= (value as u8) << 6;
+        self.write(i2c, self.address, ADDR + 1, self.value[1])
     }
 
     /// Set the FIFO mode (or disable FIFO)
@@ -78,9 +81,9 @@ impl FifoCtrl {
     {
         const RESET: u8 = 0b111;
 
-        self.0[3] &= !RESET;
-        self.0[3] |= mode as u8;
-        self.write(i2c, ADDR + 3, self.0[3])
+        self.value[3] &= !RESET;
+        self.value[3] |= mode as u8;
+        self.write(i2c, self.address, ADDR + 3, self.value[3])
     }
 }
 
@@ -91,12 +94,12 @@ mod tests {
 
     #[test]
     fn test_compression() {
-        let mut i2c = Mock::new(&[Transaction::write(0x6a, vec![0x08, 0b1000000])]);
+        let mut i2c = Mock::new(&[Transaction::write(0x6b, vec![0x08, 0b1000000])]);
 
-        let mut f = FifoCtrl([0; 4]);
+        let mut f = FifoCtrl::new([0; 4], crate::DEFAULT_I2C_ADDRESS);
 
         f.compression(&mut i2c, true).unwrap();
-        assert_eq!(f.0[1], 0b1000000);
+        assert_eq!(f.value[1], 0b1000000);
     }
 
     #[test]
@@ -114,15 +117,18 @@ mod tests {
     #[test]
     fn set_mode() {
         let mut i2c = Mock::new(&[
-            Transaction::write(0x6a, vec![0x0a, 0b0000000]),
-            Transaction::write(0x6a, vec![0x0a, 0b0000001]),
+            Transaction::write(0x6b, vec![0x0a, 0b0000000]),
+            Transaction::write(0x6b, vec![0x0a, 0b0000001]),
         ]);
-        let mut f = FifoCtrl([0; 4]);
+        let mut f = FifoCtrl {
+            address: 0x6b,
+            value: [0; 4],
+        };
 
         f.mode(&mut i2c, FifoMode::Bypass).unwrap();
-        assert_eq!(f.0[3], 0b0000000);
+        assert_eq!(f.value[3], 0b0000000);
 
         f.mode(&mut i2c, FifoMode::FifoMode).unwrap();
-        assert_eq!(f.0[3], 0b0000001);
+        assert_eq!(f.value[3], 0b0000001);
     }
 }
