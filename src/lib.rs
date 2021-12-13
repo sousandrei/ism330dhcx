@@ -155,6 +155,7 @@ impl Ism330Dhcx {
         self.fifostatus.address = address;
     }
 
+    /// Get temperature in Celsius.
     pub fn get_temperature<I2C>(&mut self, i2c: &mut I2C) -> Result<f32, I2C::Error>
     where
         I2C: WriteRead,
