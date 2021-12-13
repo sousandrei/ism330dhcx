@@ -56,6 +56,7 @@ pub mod ctrl2g;
 pub mod ctrl3c;
 pub mod ctrl7g;
 pub mod ctrl9xl;
+pub mod fifo;
 pub mod fifoctrl;
 pub mod fifostatus;
 
@@ -178,15 +179,7 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
-        let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-        let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-        let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
-
-        let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-        let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-        let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-
-        Ok([gyro_x, gyro_y, gyro_z])
+        Ok(parse_gyroscope(scale, measurements))
     }
 
     pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
@@ -198,14 +191,40 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x28], &mut measurements)?;
 
-        let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-        let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-        let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
-
-        let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-        let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-        let acc_z = raw_acc_z as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-
-        Ok([acc_x, acc_y, acc_z])
+        Ok(parse_accelerometer(scale, measurements))
     }
+
+    pub fn fifo_pop<I2C>(&mut self, i2c: &mut I2C) -> Result<fifo::Value, I2C::Error>
+    where
+        I2C: WriteRead,
+    {
+        let gyro_scale = self.ctrl2g.chain_full_scale();
+        let accel_scale = self.ctrl1xl.chain_full_scale();
+
+        fifo::FifoOut::new().pop(i2c, gyro_scale, accel_scale)
+    }
+}
+
+pub(crate) fn parse_gyroscope(scale: f64, measurements: [u8; 6]) -> [f64; 3] {
+    let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
+    let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
+    let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+
+    let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+    let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+    let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+
+    [gyro_x, gyro_y, gyro_z]
+}
+
+pub(crate) fn parse_accelerometer(scale: f64, measurements: [u8; 6]) -> [f64; 3] {
+    let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
+    let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
+    let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+
+    let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_z = raw_acc_z as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+
+    [acc_x, acc_y, acc_z]
 }
