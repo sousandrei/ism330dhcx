@@ -106,35 +106,30 @@ impl Ism330Dhcx {
     where
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
-        let mut registers = [0u8; 9];
-        i2c.write_read(DEFAULT_I2C_ADDRESS, &[0x10], &mut registers)?;
-
-        let ctrl1xl = Ctrl1Xl::new(registers[0], DEFAULT_I2C_ADDRESS);
-        let ctrl2g = Ctrl2G::new(registers[1], DEFAULT_I2C_ADDRESS);
-        let ctrl3c = Ctrl3C::new(registers[2], DEFAULT_I2C_ADDRESS);
-        let ctrl7g = Ctrl7G::new(registers[6], DEFAULT_I2C_ADDRESS);
-        let ctrl9xl = Ctrl9Xl::new(registers[8], DEFAULT_I2C_ADDRESS);
-
-        let ism330dhcx = Ism330Dhcx {
-            address: DEFAULT_I2C_ADDRESS,
-            ctrl1xl,
-            ctrl2g,
-            ctrl3c,
-            ctrl7g,
-            ctrl9xl,
-        };
-
-        Ok(ism330dhcx)
+        Ism330Dhcx::new_with_address(i2c, DEFAULT_I2C_ADDRESS)
     }
 
     pub fn new_with_address<I2C, E>(i2c: &mut I2C, address: u8) -> Result<Ism330Dhcx, E>
     where
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
-        let mut ism330dhcx = Ism330Dhcx::new(i2c)?;
+        let mut registers = [0u8; 9];
+        i2c.write_read(address, &[0x10], &mut registers)?;
 
-        ism330dhcx.address = address;
-        ism330dhcx.set_address(address);
+        let ctrl1xl = Ctrl1Xl::new(registers[0], address);
+        let ctrl2g = Ctrl2G::new(registers[1], address);
+        let ctrl3c = Ctrl3C::new(registers[2], address);
+        let ctrl7g = Ctrl7G::new(registers[6], address);
+        let ctrl9xl = Ctrl9Xl::new(registers[8], address);
+
+        let ism330dhcx = Ism330Dhcx {
+            address,
+            ctrl1xl,
+            ctrl2g,
+            ctrl3c,
+            ctrl7g,
+            ctrl9xl,
+        };
 
         Ok(ism330dhcx)
     }
