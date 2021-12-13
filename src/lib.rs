@@ -121,7 +121,7 @@ impl Ism330Dhcx {
     where
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
-        let mut registers = [0u8; 9];
+        let mut registers = [0u8; 13];
         i2c.write_read(address, &[0x10], &mut registers)?;
 
         let ctrl1xl = Ctrl1Xl::new(registers[0], address);
@@ -129,7 +129,7 @@ impl Ism330Dhcx {
         let ctrl3c = Ctrl3C::new(registers[2], address);
         let ctrl7g = Ctrl7G::new(registers[6], address);
         let ctrl9xl = Ctrl9Xl::new(registers[8], address);
-        let fifoctrl = FifoCtrl::new(registers[9..14].try_into().unwrap(), address);
+        let fifoctrl = FifoCtrl::new(registers[9..13].try_into().unwrap(), address);
         let fifostatus = FifoStatus::new(address);
 
         let ism330dhcx = Ism330Dhcx {
