@@ -28,6 +28,18 @@ To declare a sensor is pretty simple:
 let sensor = Ism330Dhcx::new(&mut i2c).unwrap()
 ```
 
+If you want to use another address for the chip, you can do:
+
+```rust
+let sensor = Ism330Dhcx::new_with_address(&mut i2c, 0x6au8).unwrap()
+```
+
+Or alter it after the fact
+
+```rust
+sensor.set_address(0x6au8);
+```
+
 All registers have the bits addressed by their function, for example here se set the `BOOT` register in the `CTRL_3C` register to `1`
 
 ```rust
