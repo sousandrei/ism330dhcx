@@ -46,8 +46,9 @@
 //!- [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
 //!- [Datasheet](https://www.st.com/resource/en/datasheet/ism330dhcx.pdf)
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
+use core::convert::TryInto;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 pub mod ctrl1xl;
@@ -55,14 +56,18 @@ pub mod ctrl2g;
 pub mod ctrl3c;
 pub mod ctrl7g;
 pub mod ctrl9xl;
+pub mod fifoctrl;
+pub mod fifostatus;
 
 use ctrl1xl::Ctrl1Xl;
 use ctrl2g::Ctrl2G;
 use ctrl3c::Ctrl3C;
 use ctrl7g::Ctrl7G;
 use ctrl9xl::Ctrl9Xl;
+use fifoctrl::FifoCtrl;
+use fifostatus::FifoStatus;
 
-/// Datasheed write address for the device. (D6h)
+/// Datasheet write address for the device. (D6h)
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 
 const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
@@ -99,6 +104,8 @@ pub struct Ism330Dhcx {
     pub ctrl7g: Ctrl7G,
     pub ctrl3c: Ctrl3C,
     pub ctrl9xl: Ctrl9Xl,
+    pub fifoctrl: FifoCtrl,
+    pub fifostatus: FifoStatus,
 }
 
 impl Ism330Dhcx {
@@ -121,6 +128,8 @@ impl Ism330Dhcx {
         let ctrl3c = Ctrl3C::new(registers[2], address);
         let ctrl7g = Ctrl7G::new(registers[6], address);
         let ctrl9xl = Ctrl9Xl::new(registers[8], address);
+        let fifoctrl = FifoCtrl::new(registers[9..14].try_into().unwrap(), address);
+        let fifostatus = FifoStatus::new(address);
 
         let ism330dhcx = Ism330Dhcx {
             address,
@@ -129,6 +138,8 @@ impl Ism330Dhcx {
             ctrl3c,
             ctrl7g,
             ctrl9xl,
+            fifoctrl,
+            fifostatus,
         };
 
         Ok(ism330dhcx)
@@ -140,6 +151,8 @@ impl Ism330Dhcx {
         self.ctrl3c.address = address;
         self.ctrl7g.address = address;
         self.ctrl9xl.address = address;
+        self.fifoctrl.address = address;
+        self.fifostatus.address = address;
     }
 
     pub fn get_temperature<I2C>(&mut self, i2c: &mut I2C) -> Result<f32, I2C::Error>
