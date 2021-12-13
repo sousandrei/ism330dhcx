@@ -1,14 +1,10 @@
 [package]
-name = "ism330dhcx"
-version = "0.2.0"
-edition = "2018"
 authors = ["Andrei Sousa <sousandrei@gmail.com>"]
 categories = ["embedded", "hardware-support", "no-std"]
-repository = "https://github.com/sousandrei/ism330dhcx"
-documentation = "https://docs.rs/ism330dhcx"
 description = "Simple driver for ST ism330dhcx sensor"
-license = "MIT"
-readme = "README.md"
+documentation = "https://docs.rs/ism330dhcx"
+edition = "2021"
+include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
 keywords = [
     "i2c",
     "embedded-hal-driver",
@@ -16,7 +12,11 @@ keywords = [
     "gyroscope",
     "accelerometer",
 ]
-include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
+license = "MIT"
+name = "ism330dhcx"
+readme = "README.md"
+repository = "https://github.com/sousandrei/ism330dhcx"
+version = "0.2.0"
 
 
 [dependencies]
@@ -30,4 +30,7 @@ embedded-hal = "0.2.4"
 panic-semihosting = "0.5.6"
 
 # Waiting for a release inclusing stm32l433 I2C pins
-stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", features = ["rt", "stm32l4x3"] }
+stm32l4xx-hal = { git = "https://github.com/stm32-rs/stm32l4xx-hal", features = [
+    "rt",
+    "stm32l4x3",
+] }
