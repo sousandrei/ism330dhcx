@@ -6,24 +6,26 @@ use crate::Register;
 /// The CTRL1_XL register. Accelerometer control register 1 (r/w).
 ///
 /// Contains the chain full-scale selection and output data rate selection and high-resolution selection
-// #[derive(Debug)]
-pub struct Ctrl1Xl(u8);
+pub struct Ctrl1Xl {
+    pub address: u8,
+    value: u8,
+}
 
 impl fmt::Display for Ctrl1Xl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
     }
 }
 
 impl fmt::Binary for Ctrl1Xl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:b}", self.0)
+        write!(f, "{:b}", self.value)
     }
 }
 
 impl fmt::LowerHex for Ctrl1Xl {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.0, f)
+        fmt::LowerHex::fmt(&self.value, f)
     }
 }
 
@@ -77,12 +79,12 @@ pub enum Odr_Xl {
 impl Register for Ctrl1Xl {}
 
 impl Ctrl1Xl {
-    pub fn new(bits: u8) -> Self {
-        Ctrl1Xl(bits)
+    pub fn new(value: u8, address: u8) -> Self {
+        Ctrl1Xl { value, address }
     }
 
     pub fn accelerometer_data_rate(&self) -> f32 {
-        match (self.0 >> ODR_XL_OFFSET) & ODR_XL_MASK {
+        match (self.value >> ODR_XL_OFFSET) & ODR_XL_MASK {
             0 => 0.0,
             1 => 12.5,
             2 => 26.0,
@@ -106,13 +108,13 @@ impl Ctrl1Xl {
     where
         I2C: Write,
     {
-        self.0 &= !(ODR_XL_MASK << ODR_XL_OFFSET);
-        self.0 |= (value as u8) << ODR_XL_OFFSET;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(ODR_XL_MASK << ODR_XL_OFFSET);
+        self.value |= (value as u8) << ODR_XL_OFFSET;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn chain_full_scale(&self) -> f64 {
-        match (self.0 >> FS_OFFSET) & FS_MASK {
+        match (self.value >> FS_OFFSET) & FS_MASK {
             0 => 0.061,
             1 => 0.488,
             2 => 0.122,
@@ -129,21 +131,21 @@ impl Ctrl1Xl {
     where
         I2C: Write,
     {
-        self.0 &= !(FS_MASK << FS_OFFSET);
-        self.0 |= (value as u8) << FS_OFFSET;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(FS_MASK << FS_OFFSET);
+        self.value |= (value as u8) << FS_OFFSET;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn lpf2_xl_en(&mut self) -> bool {
-        self.0 & (1 << LPF2_XL_EN) != 0
+        self.value & (1 << LPF2_XL_EN) != 0
     }
 
     pub fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << LPF2_XL_EN);
-        self.0 |= (value as u8) << LPF2_XL_EN;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << LPF2_XL_EN);
+        self.value |= (value as u8) << LPF2_XL_EN;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 }
