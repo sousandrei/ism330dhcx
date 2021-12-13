@@ -4,24 +4,26 @@ use embedded_hal::blocking::i2c::Write;
 use crate::Register;
 
 /// The CTRL9_XL (control 9) register
-// #[derive(Debug)]
-pub struct Ctrl9Xl(u8);
+pub struct Ctrl9Xl {
+    pub address: u8,
+    value: u8,
+}
 
 impl fmt::Display for Ctrl9Xl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
     }
 }
 
 impl fmt::Binary for Ctrl9Xl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{:b}", self.0)
+        write!(f, "{:b}", self.value)
     }
 }
 
 impl fmt::LowerHex for Ctrl9Xl {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.0, f)
+        fmt::LowerHex::fmt(&self.value, f)
     }
 }
 
@@ -81,98 +83,98 @@ pub const DEVICE_CONF: u8 = 1;
 impl Register for Ctrl9Xl {}
 
 impl Ctrl9Xl {
-    pub fn new(bits: u8) -> Self {
-        Ctrl9Xl(bits)
+    pub fn new(value: u8, address: u8) -> Self {
+        Ctrl9Xl { address, value }
     }
 
     pub fn den_x(&mut self) -> bool {
-        self.0 & (1 << DEN_X) != 0
+        self.value & (1 << DEN_X) != 0
     }
 
     pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEN_X);
-        self.0 |= (value as u8) << DEN_X;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEN_X);
+        self.value |= (value as u8) << DEN_X;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn den_y(&mut self) -> bool {
-        self.0 & (1 << DEN_Y) != 0
+        self.value & (1 << DEN_Y) != 0
     }
 
     pub fn set_den_y<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEN_Y);
-        self.0 |= (value as u8) << DEN_Y;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEN_Y);
+        self.value |= (value as u8) << DEN_Y;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn den_z(&mut self) -> bool {
-        self.0 & (1 << DEN_Z) != 0
+        self.value & (1 << DEN_Z) != 0
     }
 
     pub fn set_den_z<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEN_Z);
-        self.0 |= (value as u8) << DEN_Z;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEN_Z);
+        self.value |= (value as u8) << DEN_Z;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn den_xl_g(&mut self) -> bool {
-        self.0 & (1 << DEN_XL_G) != 0
+        self.value & (1 << DEN_XL_G) != 0
     }
 
     pub fn set_den_xl_g<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEN_XL_G);
-        self.0 |= (value as u8) << DEN_XL_G;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEN_XL_G);
+        self.value |= (value as u8) << DEN_XL_G;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn den_xl_en(&mut self) -> bool {
-        self.0 & (1 << DEN_XL_EN) != 0
+        self.value & (1 << DEN_XL_EN) != 0
     }
 
     pub fn set_den_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEN_XL_EN);
-        self.0 |= (value as u8) << DEN_XL_EN;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEN_XL_EN);
+        self.value |= (value as u8) << DEN_XL_EN;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn den_lh(&mut self) -> bool {
-        self.0 & (1 << DEN_LH) != 0
+        self.value & (1 << DEN_LH) != 0
     }
 
     pub fn set_den_lh<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEN_LH);
-        self.0 |= (value as u8) << DEN_LH;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEN_LH);
+        self.value |= (value as u8) << DEN_LH;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn device_conf(&mut self) -> bool {
-        self.0 & (1 << DEVICE_CONF) != 0
+        self.value & (1 << DEVICE_CONF) != 0
     }
 
     pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        self.0 &= !(1 << DEVICE_CONF);
-        self.0 |= (value as u8) << DEVICE_CONF;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(1 << DEVICE_CONF);
+        self.value |= (value as u8) << DEVICE_CONF;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 }

@@ -7,6 +7,18 @@
 //! let sensor = Ism330Dhcx::new(&mut i2c).unwrap()
 //! ```
 //!
+//! If you want to use another address for the chip, you can do:
+//!
+//! ```rust
+//! let sensor = Ism330Dhcx::new_with_address(&mut i2c, 0x6au8).unwrap()
+//! ```
+//!
+//! Or alter it after the fact
+//!
+//! ```rust
+//! sensor.set_address(0x6au8);
+//! ```
+//!
 //! All registers have the bits addressed by their function, for example here se set the `BOOT` register in the `CTRL_3C` register to `1`
 //!
 //! ```rust
@@ -51,29 +63,37 @@ use ctrl7g::Ctrl7G;
 use ctrl9xl::Ctrl9Xl;
 
 /// Datasheed write address for the device. (D6h)
-pub const I2C_ADDRESS: u8 = 0x6bu8;
+pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 
 const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
 const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
 
 trait Register {
-    fn read<I2C>(&self, i2c: &mut I2C, reg_addr: u8) -> Result<u8, I2C::Error>
+    fn read<I2C>(&self, i2c: &mut I2C, chip_addr: u8, reg_addr: u8) -> Result<u8, I2C::Error>
     where
         I2C: WriteRead,
     {
         let mut data: [u8; 1] = [0];
-        i2c.write_read(I2C_ADDRESS, &[reg_addr], &mut data)?;
+        i2c.write_read(chip_addr, &[reg_addr], &mut data)?;
         Ok(data[0])
     }
 
-    fn write<I2C>(&self, i2c: &mut I2C, reg_addr: u8, bits: u8) -> Result<(), I2C::Error>
+    fn write<I2C>(
+        &self,
+        i2c: &mut I2C,
+        chip_addr: u8,
+        reg_addr: u8,
+        bits: u8,
+    ) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
-        i2c.write(I2C_ADDRESS, &[reg_addr, bits])
+        i2c.write(chip_addr, &[reg_addr, bits])
     }
 }
+
 pub struct Ism330Dhcx {
+    pub address: u8,
     pub ctrl1xl: Ctrl1Xl,
     pub ctrl2g: Ctrl2G,
     pub ctrl7g: Ctrl7G,
@@ -87,15 +107,16 @@ impl Ism330Dhcx {
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
         let mut registers = [0u8; 9];
-        i2c.write_read(I2C_ADDRESS, &[0x10], &mut registers)?;
+        i2c.write_read(DEFAULT_I2C_ADDRESS, &[0x10], &mut registers)?;
 
-        let ctrl1xl = Ctrl1Xl::new(registers[0]);
-        let ctrl2g = Ctrl2G::new(registers[1]);
-        let ctrl3c = Ctrl3C::new(registers[2]);
-        let ctrl7g = Ctrl7G::new(registers[6]);
-        let ctrl9xl = Ctrl9Xl::new(registers[8]);
+        let ctrl1xl = Ctrl1Xl::new(registers[0], DEFAULT_I2C_ADDRESS);
+        let ctrl2g = Ctrl2G::new(registers[1], DEFAULT_I2C_ADDRESS);
+        let ctrl3c = Ctrl3C::new(registers[2], DEFAULT_I2C_ADDRESS);
+        let ctrl7g = Ctrl7G::new(registers[6], DEFAULT_I2C_ADDRESS);
+        let ctrl9xl = Ctrl9Xl::new(registers[8], DEFAULT_I2C_ADDRESS);
 
         let ism330dhcx = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
             ctrl1xl,
             ctrl2g,
             ctrl3c,
@@ -106,12 +127,32 @@ impl Ism330Dhcx {
         Ok(ism330dhcx)
     }
 
+    pub fn new_with_address<I2C, E>(i2c: &mut I2C, address: u8) -> Result<Ism330Dhcx, E>
+    where
+        I2C: WriteRead<Error = E> + Write<Error = E>,
+    {
+        let mut ism330dhcx = Ism330Dhcx::new(i2c)?;
+
+        ism330dhcx.address = address;
+        ism330dhcx.set_address(address);
+
+        Ok(ism330dhcx)
+    }
+
+    pub fn set_address(&mut self, address: u8) {
+        self.ctrl1xl.address = address;
+        self.ctrl2g.address = address;
+        self.ctrl3c.address = address;
+        self.ctrl7g.address = address;
+        self.ctrl9xl.address = address;
+    }
+
     pub fn get_temperature<I2C>(&mut self, i2c: &mut I2C) -> Result<f32, I2C::Error>
     where
         I2C: WriteRead,
     {
         let mut measurements = [0u8; 2];
-        i2c.write_read(I2C_ADDRESS, &[0x20], &mut measurements)?;
+        i2c.write_read(self.address, &[0x20], &mut measurements)?;
 
         let raw_temp = (measurements[1] as i16) << 8 | measurements[0] as i16;
         let temp: f32 = (raw_temp as f32 / 256.0) + 25.0;
@@ -126,7 +167,7 @@ impl Ism330Dhcx {
         let scale = self.ctrl2g.chain_full_scale();
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(I2C_ADDRESS, &[0x22], &mut measurements)?;
+        i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
         let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
         let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
@@ -146,7 +187,7 @@ impl Ism330Dhcx {
         let scale = self.ctrl1xl.chain_full_scale();
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(I2C_ADDRESS, &[0x28], &mut measurements)?;
+        i2c.write_read(self.address, &[0x28], &mut measurements)?;
 
         let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
         let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);

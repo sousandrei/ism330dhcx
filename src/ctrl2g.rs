@@ -6,24 +6,26 @@ use crate::Register;
 /// The CTRL2_G register. Gyroscope control register 2.
 ///
 /// Contains the chain full-scale selection and output data rate selection
-// #[derive(Debug)]
-pub struct Ctrl2G(u8);
+pub struct Ctrl2G {
+    pub address: u8,
+    value: u8,
+}
 
 impl fmt::Display for Ctrl2G {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{}", self.0)
+        write!(f, "{}", self.value)
     }
 }
 
 impl fmt::Binary for Ctrl2G {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{:b}", self.0)
+        write!(f, "{:b}", self.value)
     }
 }
 
 impl fmt::LowerHex for Ctrl2G {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt::LowerHex::fmt(&self.0, f)
+        fmt::LowerHex::fmt(&self.value, f)
     }
 }
 
@@ -78,12 +80,12 @@ pub enum Odr {
 impl Register for Ctrl2G {}
 
 impl Ctrl2G {
-    pub fn new(bits: u8) -> Self {
-        Ctrl2G(bits)
+    pub fn new(value: u8, address: u8) -> Self {
+        Ctrl2G { address, value }
     }
 
     pub fn gyroscope_data_rate(&self) -> f32 {
-        match (self.0 >> ODR_OFFSET) & ODR_MASK {
+        match (self.value >> ODR_OFFSET) & ODR_MASK {
             0 => 0.0,
             1 => 12.5,
             2 => 26.0,
@@ -107,21 +109,21 @@ impl Ctrl2G {
     where
         I2C: Write,
     {
-        self.0 &= !(ODR_MASK << ODR_OFFSET);
-        self.0 |= (value as u8) << ODR_OFFSET;
-        self.write(i2c, ADDR, self.0)
+        self.value &= !(ODR_MASK << ODR_OFFSET);
+        self.value |= (value as u8) << ODR_OFFSET;
+        self.write(i2c, self.address, ADDR, self.value)
     }
 
     pub fn chain_full_scale(&self) -> f64 {
-        if (self.0 & 1 << FS4000) > 0 {
+        if (self.value & 1 << FS4000) > 0 {
             return 140.0;
         }
 
-        if (self.0 & 1 << FS125) > 0 {
+        if (self.value & 1 << FS125) > 0 {
             return 4.375;
         }
 
-        match (self.0 >> FS_OFFSET) & FS_MASK {
+        match (self.value >> FS_OFFSET) & FS_MASK {
             0 => 8.75,
             1 => 17.5,
             2 => 35.0,
@@ -134,16 +136,16 @@ impl Ctrl2G {
     where
         I2C: Write,
     {
-        self.0 &= 0b1111_0000;
+        self.value &= 0b1111_0000;
 
         if value == Fs::Dps4000 {
-            self.0 |= 1;
+            self.value |= 1;
         } else if value == Fs::Dps125 {
-            self.0 |= 2;
+            self.value |= 2;
         } else {
-            self.0 |= (value as u8) << FS_OFFSET;
+            self.value |= (value as u8) << FS_OFFSET;
         }
 
-        self.write(i2c, ADDR, self.0)
+        self.write(i2c, self.address, ADDR, self.value)
     }
 }
