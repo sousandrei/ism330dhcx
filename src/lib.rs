@@ -201,7 +201,7 @@ impl Ism330Dhcx {
         let gyro_scale = self.ctrl2g.chain_full_scale();
         let accel_scale = self.ctrl1xl.chain_full_scale();
 
-        fifo::FifoOut::new().pop(i2c, gyro_scale, accel_scale)
+        fifo::FifoOut::new(self.address).pop(i2c, gyro_scale, accel_scale)
     }
 }
 

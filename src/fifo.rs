@@ -1,5 +1,5 @@
-use embedded_hal::blocking::i2c::WriteRead;
 use core::convert::{TryFrom, TryInto};
+use embedded_hal::blocking::i2c::WriteRead;
 
 use crate::{parse_accelerometer, parse_gyroscope, Register};
 
@@ -29,13 +29,15 @@ pub enum Value {
 
 const ADDR: u8 = 0x78;
 
-pub struct FifoOut;
+pub struct FifoOut {
+    pub address: u8,
+}
 
 impl Register for FifoOut {}
 
 impl FifoOut {
-    pub fn new() -> Self {
-        FifoOut
+    pub fn new(address: u8) -> Self {
+        FifoOut { address }
     }
 
     /// Pop a value from the FIFO.
@@ -49,7 +51,7 @@ impl FifoOut {
         I2C: WriteRead,
     {
         let mut out = [0u8; 7];
-        i2c.write_read(crate::I2C_ADDRESS, &[ADDR], &mut out)?;
+        i2c.write_read(self.address, &[ADDR], &mut out)?;
 
         let tag = out[0] >> 3;
 
@@ -75,12 +77,12 @@ mod tests {
     #[test]
     fn test_pop_gyro() {
         let mut i2c = Mock::new(&[Transaction::write_read(
-            0x6a,
+            0x6b,
             vec![0x78],
             vec![0x01 << 3, 0, 1, 0, 2, 0, 4],
         )]);
 
-        let mut f = FifoOut;
+        let mut f = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
         let v = f.pop(&mut i2c, 1., 1.).unwrap();
 
         assert!(matches!(v, Value::Gyroscope(_)));
