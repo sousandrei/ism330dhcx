@@ -21,10 +21,10 @@ impl TryFrom<u8> for SensorTag {
     }
 }
 
-#[derive(Debug)]
+#[derive(Copy, Clone, Debug)]
 pub enum Value {
-    Gyroscope([f64; 3]),
-    Accelerometer([f64; 3]),
+    Gyro([f64; 3]),
+    Accel([f64; 3]),
 }
 
 const ADDR: u8 = 0x78;
@@ -58,11 +58,11 @@ impl FifoOut {
         let out: &[u8; 6] = out.try_into().expect("must be 6!");
 
         match tag.try_into() {
-            Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyroscope(parse_gyroscope(
+            Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyro(parse_gyroscope(
                 gyro_scale,
                 out,
             ))),
-            Ok(SensorTag::AccelerometerNC) => Ok(Value::Accelerometer(parse_accelerometer(
+            Ok(SensorTag::AccelerometerNC) => Ok(Value::Accel(parse_accelerometer(
                 accel_scale,
                 out,
             ))),
@@ -87,7 +87,7 @@ mod tests {
         let mut f = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
         let v = f.pop(&mut i2c, 1., 1.).unwrap();
 
-        assert!(matches!(v, Value::Gyroscope(_)));
+        assert!(matches!(v, Value::Gyro(_)));
         println!("{:?}", v);
     }
 }
