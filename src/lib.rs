@@ -179,7 +179,7 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
-        Ok(parse_gyroscope(scale, measurements))
+        Ok(parse_gyroscope(scale, &measurements))
     }
 
     pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
@@ -191,7 +191,7 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x28], &mut measurements)?;
 
-        Ok(parse_accelerometer(scale, measurements))
+        Ok(parse_accelerometer(scale, &measurements))
     }
 
     pub fn fifo_pop<I2C>(&mut self, i2c: &mut I2C) -> Result<fifo::Value, I2C::Error>
@@ -205,7 +205,7 @@ impl Ism330Dhcx {
     }
 }
 
-pub(crate) fn parse_gyroscope(scale: f64, measurements: [u8; 6]) -> [f64; 3] {
+pub(crate) fn parse_gyroscope(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
     let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
     let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
     let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
@@ -217,7 +217,7 @@ pub(crate) fn parse_gyroscope(scale: f64, measurements: [u8; 6]) -> [f64; 3] {
     [gyro_x, gyro_y, gyro_z]
 }
 
-pub(crate) fn parse_accelerometer(scale: f64, measurements: [u8; 6]) -> [f64; 3] {
+pub(crate) fn parse_accelerometer(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
     let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
     let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
     let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
