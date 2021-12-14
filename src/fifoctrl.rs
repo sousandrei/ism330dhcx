@@ -58,7 +58,7 @@ pub enum FifoMode {
     FifoMode = 0b001,
     ContinuousToFifo = 0b011,
     BypassToContinuous = 0b100,
-    Conitnous = 0b110,
+    Continuous = 0b110,
     BypassToFifo = 0b111,
 }
 
