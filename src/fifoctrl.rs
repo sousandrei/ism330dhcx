@@ -59,6 +59,38 @@ pub enum FifoMode {
     BypassToFifo = 0b111,
 }
 
+/// Batch data rate of gyroscope.
+#[repr(u8)]
+pub enum BdrGy {
+    Off = 0b0000,
+    Hz6_5 = 0b1011,
+    Hz12_5 = 0b0001,
+    Hz26 = 0b0010,
+    Hz104 = 0b100,
+    Hz208 = 0b0101,
+    Hz417 = 0b0110,
+    Hz833 = 0b0111,
+    Hz1667 = 0b1000,
+    Hz3333 = 0b1001,
+    Hz6667 = 0b1010,
+}
+
+/// Batch data rate of accelerometer.
+#[repr(u8)]
+pub enum BdrXl {
+    Off = 0b0000,
+    Hz6_5 = 0b1011,
+    Hz12_5 = 0b0001,
+    Hz26 = 0b0010,
+    Hz104 = 0b100,
+    Hz208 = 0b0101,
+    Hz417 = 0b0110,
+    Hz833 = 0b0111,
+    Hz1667 = 0b1000,
+    Hz3333 = 0b1001,
+    Hz6667 = 0b1010,
+}
+
 impl FifoCtrl {
     pub fn new(value: [u8; 4], address: u8) -> Self {
         FifoCtrl { address, value }
@@ -84,6 +116,28 @@ impl FifoCtrl {
         self.value[3] &= !RESET;
         self.value[3] |= mode as u8;
         self.write(i2c, self.address, ADDR + 3, self.value[3])
+    }
+
+    /// Set the batch data rate for the accelerometer.
+    pub fn set_accelerometer_batch_data_rate<I2C>(&mut self, i2c: &mut I2C, rate: BdrXl) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        const RESET: u8 = 0b00001111;
+        self.value[2] &= !RESET;
+        self.value[2] |= rate as u8;
+        self.write(i2c, self.address, ADDR + 2, self.value[2])
+    }
+
+    /// Set the batch data rate for the gyroscope.
+    pub fn set_gyroscope_batch_data_rate<I2C>(&mut self, i2c: &mut I2C, rate: BdrGy) -> Result<(), I2C::Error>
+    where
+        I2C: Write,
+    {
+        const RESET: u8 = 0b11110000;
+        self.value[2] &= !RESET;
+        self.value[2] |= (rate as u8) << 4;
+        self.write(i2c, self.address, ADDR + 2, self.value[2])
     }
 }
 
@@ -130,5 +184,28 @@ mod tests {
 
         f.mode(&mut i2c, FifoMode::FifoMode).unwrap();
         assert_eq!(f.value[3], 0b0000001);
+    }
+
+    #[test]
+    fn bdr_u8_val() {
+        assert_eq!(BdrGy::Hz6_5 as u8, 0b1011);
+    }
+
+    #[test]
+    fn set_data_rate() {
+        let mut i2c = Mock::new(&[
+            Transaction::write(0x6b, vec![0x09, 0b00100000]),
+            Transaction::write(0x6b, vec![0x09, 0b00100101]),
+        ]);
+        let mut f = FifoCtrl {
+            address: 0x6b,
+            value: [0; 4],
+        };
+
+        f.set_gyroscope_batch_data_rate(&mut i2c, BdrGy::Hz26).unwrap();
+        assert_eq!(f.value[2], 0b00100000);
+
+        f.set_accelerometer_batch_data_rate(&mut i2c, BdrXl::Hz208).unwrap();
+        assert_eq!(f.value[2], 0b00100101);
     }
 }
