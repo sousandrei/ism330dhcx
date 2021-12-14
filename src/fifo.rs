@@ -53,16 +53,18 @@ impl FifoOut {
         let mut out = [0u8; 7];
         i2c.write_read(self.address, &[ADDR], &mut out)?;
 
-        let tag = out[0] >> 3;
+        let (tag, out) = out.split_at(1);
+        let tag = tag[0] >> 3;
+        let out: &[u8; 6] = out.try_into().expect("must be 6!");
 
         match tag.try_into() {
             Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyroscope(parse_gyroscope(
                 gyro_scale,
-                out[1..].try_into().unwrap(),
+                out,
             ))),
             Ok(SensorTag::AccelerometerNC) => Ok(Value::Accelerometer(parse_accelerometer(
                 accel_scale,
-                out[1..].try_into().unwrap(),
+                out,
             ))),
             _ => unimplemented!(),
         }
