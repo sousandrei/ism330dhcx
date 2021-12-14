@@ -44,6 +44,9 @@ impl fmt::LowerHex for FifoCtrl {
 
 pub const ADDR: u8 = 0x07_u8;
 
+/// The maximum number of samples in an uncompressed FIFO.
+pub const FIFO_SIZE: u16 = 512;
+
 impl Register for FifoCtrl {}
 
 /// FIFO mode
