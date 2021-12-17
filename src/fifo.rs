@@ -5,8 +5,10 @@ use crate::{parse_accelerometer, parse_gyroscope, Register};
 
 #[repr(u8)]
 pub enum SensorTag {
-    GyroscopeNC = 0x01,
-    AccelerometerNC = 0x02,
+    Empty,
+    GyroscopeNC,
+    AccelerometerNC,
+    Other(u8),
 }
 
 impl TryFrom<u8> for SensorTag {
@@ -14,17 +16,21 @@ impl TryFrom<u8> for SensorTag {
 
     fn try_from(v: u8) -> Result<Self, Self::Error> {
         match v {
-            x if x == SensorTag::GyroscopeNC as u8 => Ok(SensorTag::GyroscopeNC),
-            x if x == SensorTag::AccelerometerNC as u8 => Ok(SensorTag::AccelerometerNC),
-            _ => Err(()),
+            x if x == 0x00 => Ok(SensorTag::Empty),
+            x if x == 0x01 => Ok(SensorTag::GyroscopeNC),
+            x if x == 0x02 => Ok(SensorTag::AccelerometerNC),
+            x if x <= 0x19 => Ok(SensorTag::Other(x)),
+            _ => Err(())
         }
     }
 }
 
-#[derive(Copy, Clone, Debug)]
+#[derive(Copy, Clone, Debug, defmt::Format)]
 pub enum Value {
+    Empty,
     Gyro([f64; 3]),
     Accel([f64; 3]),
+    Other(u8, [u8; 6])
 }
 
 const ADDR: u8 = 0x78;
@@ -58,6 +64,7 @@ impl FifoOut {
         let out: &[u8; 6] = out.try_into().expect("must be 6!");
 
         match tag.try_into() {
+            Ok(SensorTag::Empty) => Ok(Value::Empty),
             Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyro(parse_gyroscope(
                 gyro_scale,
                 out,
@@ -66,7 +73,8 @@ impl FifoOut {
                 accel_scale,
                 out,
             ))),
-            _ => unimplemented!(),
+            Ok(SensorTag::Other(u)) => Ok(Value::Other(u, *out)),
+            _ => unreachable!()
         }
     }
 }
