@@ -63,17 +63,17 @@ const ODR_XL_OFFSET: u8 = 4;
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
 pub enum Odr_Xl {
-    Off,   // off
-    Hz125, // 12.5 Hz
-    Hz26,  // 26   Hz
-    Hz52,  // 52   Hz
-    Hz104, // 104  Hz
-    Hz208, // 208  Hz
-    Hz416, // 416  Hz
-    Hz833, // 833  Hz
-    Hz166, // 1.66 Hz
-    Hz333, // 3.33 Hz
-    Hz666, // 6.66 Hz
+    Off,    // off
+    Hz125,  // 12.5 Hz
+    Hz26,   // 26   Hz
+    Hz52,   // 52   Hz
+    Hz104,  // 104  Hz
+    Hz208,  // 208  Hz
+    Hz416,  // 416  Hz
+    Hz833,  // 833  Hz
+    KHz166, // 1.66 kHz
+    KHz333, // 3.33 kHz
+    KHz666, // 6.66 kHz
 }
 
 impl Register for Ctrl1Xl {}
