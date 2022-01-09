@@ -122,7 +122,11 @@ impl FifoCtrl {
     }
 
     /// Set the batch data rate for the accelerometer.
-    pub fn set_accelerometer_batch_data_rate<I2C>(&mut self, i2c: &mut I2C, rate: BdrXl) -> Result<(), I2C::Error>
+    pub fn set_accelerometer_batch_data_rate<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        rate: BdrXl,
+    ) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
@@ -133,7 +137,11 @@ impl FifoCtrl {
     }
 
     /// Set the batch data rate for the gyroscope.
-    pub fn set_gyroscope_batch_data_rate<I2C>(&mut self, i2c: &mut I2C, rate: BdrGy) -> Result<(), I2C::Error>
+    pub fn set_gyroscope_batch_data_rate<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        rate: BdrGy,
+    ) -> Result<(), I2C::Error>
     where
         I2C: Write,
     {
@@ -205,10 +213,12 @@ mod tests {
             value: [0; 4],
         };
 
-        f.set_gyroscope_batch_data_rate(&mut i2c, BdrGy::Hz26).unwrap();
+        f.set_gyroscope_batch_data_rate(&mut i2c, BdrGy::Hz26)
+            .unwrap();
         assert_eq!(f.value[2], 0b00100000);
 
-        f.set_accelerometer_batch_data_rate(&mut i2c, BdrXl::Hz208).unwrap();
+        f.set_accelerometer_batch_data_rate(&mut i2c, BdrXl::Hz208)
+            .unwrap();
         assert_eq!(f.value[2], 0b00100101);
     }
 }
