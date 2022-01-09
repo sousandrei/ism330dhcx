@@ -46,8 +46,9 @@
 //!- [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
 //!- [Datasheet](https://www.st.com/resource/en/datasheet/ism330dhcx.pdf)
 
-#![no_std]
+#![cfg_attr(not(test), no_std)]
 
+use core::convert::TryInto;
 use embedded_hal::blocking::i2c::{Write, WriteRead};
 
 pub mod ctrl1xl;
@@ -55,14 +56,19 @@ pub mod ctrl2g;
 pub mod ctrl3c;
 pub mod ctrl7g;
 pub mod ctrl9xl;
+pub mod fifo;
+pub mod fifoctrl;
+pub mod fifostatus;
 
 use ctrl1xl::Ctrl1Xl;
 use ctrl2g::Ctrl2G;
 use ctrl3c::Ctrl3C;
 use ctrl7g::Ctrl7G;
 use ctrl9xl::Ctrl9Xl;
+use fifoctrl::FifoCtrl;
+use fifostatus::FifoStatus;
 
-/// Datasheed write address for the device. (D6h)
+/// Datasheet write address for the device. (D6h)
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 
 const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
@@ -99,6 +105,8 @@ pub struct Ism330Dhcx {
     pub ctrl7g: Ctrl7G,
     pub ctrl3c: Ctrl3C,
     pub ctrl9xl: Ctrl9Xl,
+    pub fifoctrl: FifoCtrl,
+    pub fifostatus: FifoStatus,
 }
 
 impl Ism330Dhcx {
@@ -113,7 +121,7 @@ impl Ism330Dhcx {
     where
         I2C: WriteRead<Error = E> + Write<Error = E>,
     {
-        let mut registers = [0u8; 9];
+        let mut registers = [0u8; 13];
         i2c.write_read(address, &[0x10], &mut registers)?;
 
         let ctrl1xl = Ctrl1Xl::new(registers[0], address);
@@ -121,6 +129,8 @@ impl Ism330Dhcx {
         let ctrl3c = Ctrl3C::new(registers[2], address);
         let ctrl7g = Ctrl7G::new(registers[6], address);
         let ctrl9xl = Ctrl9Xl::new(registers[8], address);
+        let fifoctrl = FifoCtrl::new(registers[9..13].try_into().unwrap(), address);
+        let fifostatus = FifoStatus::new(address);
 
         let ism330dhcx = Ism330Dhcx {
             address,
@@ -129,6 +139,8 @@ impl Ism330Dhcx {
             ctrl3c,
             ctrl7g,
             ctrl9xl,
+            fifoctrl,
+            fifostatus,
         };
 
         Ok(ism330dhcx)
@@ -140,8 +152,11 @@ impl Ism330Dhcx {
         self.ctrl3c.address = address;
         self.ctrl7g.address = address;
         self.ctrl9xl.address = address;
+        self.fifoctrl.address = address;
+        self.fifostatus.address = address;
     }
 
+    /// Get temperature in Celsius.
     pub fn get_temperature<I2C>(&mut self, i2c: &mut I2C) -> Result<f32, I2C::Error>
     where
         I2C: WriteRead,
@@ -164,15 +179,7 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
-        let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-        let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-        let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
-
-        let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-        let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-        let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-
-        Ok([gyro_x, gyro_y, gyro_z])
+        Ok(parse_gyroscope(scale, &measurements))
     }
 
     pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
@@ -184,14 +191,40 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x28], &mut measurements)?;
 
-        let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-        let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-        let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
-
-        let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-        let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-        let acc_z = raw_acc_z as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-
-        Ok([acc_x, acc_y, acc_z])
+        Ok(parse_accelerometer(scale, &measurements))
     }
+
+    pub fn fifo_pop<I2C>(&mut self, i2c: &mut I2C) -> Result<fifo::Value, I2C::Error>
+    where
+        I2C: WriteRead,
+    {
+        let gyro_scale = self.ctrl2g.chain_full_scale();
+        let accel_scale = self.ctrl1xl.chain_full_scale();
+
+        fifo::FifoOut::new(self.address).pop(i2c, gyro_scale, accel_scale)
+    }
+}
+
+pub(crate) fn parse_gyroscope(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
+    let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
+    let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
+    let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+
+    let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+    let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+    let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+
+    [gyro_x, gyro_y, gyro_z]
+}
+
+pub(crate) fn parse_accelerometer(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
+    let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
+    let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
+    let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+
+    let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_z = raw_acc_z as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+
+    [acc_x, acc_y, acc_z]
 }
