@@ -20,7 +20,7 @@ impl TryFrom<u8> for SensorTag {
             x if x == 0x01 => Ok(SensorTag::GyroscopeNC),
             x if x == 0x02 => Ok(SensorTag::AccelerometerNC),
             x if x <= 0x19 => Ok(SensorTag::Other(x)),
-            _ => Err(())
+            _ => Err(()),
         }
     }
 }
@@ -30,7 +30,7 @@ pub enum Value {
     Empty,
     Gyro([f64; 3]),
     Accel([f64; 3]),
-    Other(u8, [u8; 6])
+    Other(u8, [u8; 6]),
 }
 
 const ADDR: u8 = 0x78;
@@ -65,16 +65,12 @@ impl FifoOut {
 
         match tag.try_into() {
             Ok(SensorTag::Empty) => Ok(Value::Empty),
-            Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyro(parse_gyroscope(
-                gyro_scale,
-                out,
-            ))),
-            Ok(SensorTag::AccelerometerNC) => Ok(Value::Accel(parse_accelerometer(
-                accel_scale,
-                out,
-            ))),
+            Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyro(parse_gyroscope(gyro_scale, out))),
+            Ok(SensorTag::AccelerometerNC) => {
+                Ok(Value::Accel(parse_accelerometer(accel_scale, out)))
+            }
             Ok(SensorTag::Other(u)) => Ok(Value::Other(u, *out)),
-            _ => unreachable!()
+            _ => unreachable!(),
         }
     }
 }
