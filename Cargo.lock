@@ -109,6 +109,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cortex-m-semihosting"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c23234600452033cc77e4b761e740e02d2c4168e11dbf36ab14a0f58973592b0"
+dependencies = [
+ "cortex-m 0.7.1",
+]
+
+[[package]]
 name = "defmt"
 version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -191,7 +200,7 @@ version = "0.4.0"
 dependencies = [
  "cortex-m 0.6.7",
  "cortex-m-rt",
- "cortex-m-semihosting",
+ "cortex-m-semihosting 0.3.7",
  "defmt",
  "embedded-hal",
  "embedded-hal-mock",
@@ -216,12 +225,12 @@ checksum = "546c37ac5d9e56f55e73b677106873d9d9f5190605e41a856503623648488cae"
 
 [[package]]
 name = "panic-semihosting"
-version = "0.5.6"
+version = "0.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c3d55dedd501dfd02514646e0af4d7016ce36bc12ae177ef52056989966a1eec"
+checksum = "ee8a3e1233d9073d76a870223512ce4eeea43c067a94a445c13bd6d792d7b1ab"
 dependencies = [
  "cortex-m 0.7.1",
- "cortex-m-semihosting",
+ "cortex-m-semihosting 0.5.0",
 ]
 
 [[package]]
