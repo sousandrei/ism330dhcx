@@ -110,9 +110,9 @@ dependencies = [
 
 [[package]]
 name = "defmt"
-version = "0.3.0"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "62fb5df4d2b06a2dbf6ba26b49031f5f45f1aafdfca4b9259719466d362f34a0"
+checksum = "d3a0ae7494d9bff013d7b89471f4c424356a71e9752e0c78abe7e6c608a16bb3"
 dependencies = [
  "bitflags",
  "defmt-macros",
@@ -120,9 +120,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-macros"
-version = "0.3.1"
+version = "0.3.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "098396b763a1786b329405f69bc3677e00d45eb4534bc9f31cd23011ee2ba267"
+checksum = "6d944432e281084511691b36e5e9c794c19c33675822c9019e3b64f5b89e10da"
 dependencies = [
  "defmt-parser",
  "proc-macro-error",
@@ -133,9 +133,9 @@ dependencies = [
 
 [[package]]
 name = "defmt-parser"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8d1ce010e1a51aef925c98f12ed81a4e0e96ce0185a87c33f1b3b9c8f20749c7"
+checksum = "0db23d29972d99baa3de2ee2ae3f104c10564a6d05a346eb3f4c4f2c0525a06e"
 
 [[package]]
 name = "embedded-hal"
