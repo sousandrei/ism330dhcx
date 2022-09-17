@@ -3,12 +3,16 @@
 
 use cortex_m_rt as rt;
 use panic_semihosting as _;
-use stm32l4xx_hal as hal;
 
 use core::fmt::{Debug, Write};
 use cortex_m_semihosting::hio::{self};
-use hal::{delay::Delay, i2c::I2c, prelude::*, stm32};
 use rt::entry;
+use stm32l4xx_hal::{
+    delay::Delay,
+    i2c::{self, I2c},
+    prelude::*,
+    stm32,
+};
 
 use ism330dhcx::{ctrl1xl, ctrl2g, Ism330Dhcx};
 
@@ -26,9 +30,9 @@ fn main() -> ! {
 
     let clocks = rcc
         .cfgr
-        .sysclk(80.mhz())
-        .pclk1(8.mhz())
-        .pclk2(80.mhz())
+        .sysclk(80.MHz())
+        .pclk1(8.MHz())
+        .pclk2(80.MHz())
         .freeze(&mut flash.acr, &mut pwr);
 
     let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
@@ -37,17 +41,22 @@ fn main() -> ! {
     //==========================================
     // Declaring I2C1
 
-    let scl = gpiob
-        .pb8
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper)
-        .into_af4(&mut gpiob.moder, &mut gpiob.afrh);
+    let scl =
+        gpiob
+            .pb8
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
 
-    let sda = gpiob
-        .pb7
-        .into_open_drain_output(&mut gpiob.moder, &mut gpiob.otyper)
-        .into_af4(&mut gpiob.moder, &mut gpiob.afrl);
+    let sda =
+        gpiob
+            .pb7
+            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
 
-    let mut i2c = I2c::i2c1(dp.I2C1, (scl, sda), 400.khz(), clocks, &mut rcc.apb1r1);
+    let mut i2c = I2c::i2c1(
+        dp.I2C1,
+        (scl, sda),
+        i2c::Config::new(100.kHz(), clocks),
+        &mut rcc.apb1r1,
+    );
 
     //==============================================
 
