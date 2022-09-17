@@ -189,7 +189,7 @@ dependencies = [
 name = "ism330dhcx"
 version = "0.4.0"
 dependencies = [
- "cortex-m 0.6.7",
+ "cortex-m 0.7.1",
  "cortex-m-rt",
  "cortex-m-semihosting",
  "defmt",
