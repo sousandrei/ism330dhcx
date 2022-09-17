@@ -1,22 +1,19 @@
-name: Main
+name: Branches
 
 on:
-  push:
-    branches:
-      - main
+  pull_request:
+    types: [opened, reopened, synchronize]
+    branches-ignore:
+      - "release-please-*"
+
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  main:
+  ci:
     runs-on: ubuntu-latest
-
-    permissions:
-      issues: write
-      contents: write
-      packages: write
-      pull-requests: write
 
     steps:
       - uses: actions/checkout@v3
@@ -46,20 +43,13 @@ jobs:
           args: --release -- -D warnings
 
       - uses: actions-rs/cargo@v1
-        name: Cargo Build
+        name: Cargo build
         with:
           command: build
           args: --release
 
       - uses: actions-rs/cargo@v1
-        name: Cargo Build Examples
+        name: Cargo build examples
         with:
           command: build
           args: --examples --target thumbv7em-none-eabi
-
-      - uses: google-github-actions/release-please-action@v3
-        name: Release
-        id: release
-        with:
-          release-type: rust
-          package-name: ism330dhcx
