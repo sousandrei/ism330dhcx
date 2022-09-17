@@ -25,7 +25,7 @@ embedded-hal = "0.2.4"
 
 [dev-dependencies]
 cortex-m = "0.6.2"
-cortex-m-rt = "0.6.12"
+cortex-m-rt = "0.6.15"
 cortex-m-semihosting = "0.3.7"
 embedded-hal = "0.2.4"
 panic-semihosting = "0.5.6"
