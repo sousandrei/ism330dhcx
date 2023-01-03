@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/sousandrei/ism330dhcx/compare/v0.4.1...v0.5.0) (2023-01-03)
+
+
+### Features
+
+* add 52Hz to bdr bdrxl/gy ([#23](https://github.com/sousandrei/ism330dhcx/issues/23)) ([57bdf85](https://github.com/sousandrei/ism330dhcx/commit/57bdf852f9117863ada543be89277a74089de7ca))
+
 ## 0.4.1 (2022-09-17)
 
 
