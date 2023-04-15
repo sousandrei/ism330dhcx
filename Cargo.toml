@@ -20,7 +20,7 @@ version = "0.5.1"
 
 
 [dependencies]
-defmt = "0.3.2"
+defmt = "0.3.4"
 embedded-hal = "0.2.7"
 
 [dev-dependencies]
