@@ -71,9 +71,9 @@ pub enum Odr_Xl {
     Hz208,  // 208  Hz
     Hz416,  // 416  Hz
     Hz833,  // 833  Hz
-    KHz166, // 1.66 kHz
-    KHz333, // 3.33 kHz
-    KHz666, // 6.66 kHz
+    Hz1667, // 1.66 kHz
+    Hz3333, // 3.33 kHz
+    Hz6667, // 6.66 kHz
 }
 
 impl Register for Ctrl1Xl {}
