@@ -31,7 +31,7 @@ jobs:
           target: thumbv7em-none-eabi
 
       - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.5.1
+        uses: Swatinem/rust-cache@v2.6.0
 
       - uses: actions-rs/cargo@v1
         name: Cargo fmt
