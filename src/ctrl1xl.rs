@@ -115,10 +115,10 @@ impl Ctrl1Xl {
 
     pub fn chain_full_scale(&self) -> f64 {
         match (self.value >> FS_OFFSET) & FS_MASK {
-            0 => 0.061,
-            1 => 0.488,
-            2 => 0.122,
-            3 => 0.244,
+            0 => 2.,
+            1 => 16.,
+            2 => 4.,
+            3 => 8.,
             _ => panic!("Unreachable"),
         }
     }
