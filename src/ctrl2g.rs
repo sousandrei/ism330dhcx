@@ -116,18 +116,18 @@ impl Ctrl2G {
 
     pub fn chain_full_scale(&self) -> f64 {
         if (self.value & 1 << FS4000) > 0 {
-            return 140.0;
+            return 4000.0;
         }
 
         if (self.value & 1 << FS125) > 0 {
-            return 4.375;
+            return 125.0;
         }
 
         match (self.value >> FS_OFFSET) & FS_MASK {
-            0 => 8.75,
-            1 => 17.5,
-            2 => 35.0,
-            3 => 70.0,
+            0 => 250.0,
+            1 => 500.0,
+            2 => 1000.0,
+            3 => 2000.0,
             _ => panic!("Unreachable"),
         }
     }
