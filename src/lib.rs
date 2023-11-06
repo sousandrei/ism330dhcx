@@ -210,6 +210,9 @@ pub(crate) fn parse_gyroscope(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
     let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
     let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
 
+    // Range is in milli-dps per bit!
+    let scale = scale * 1000. / i16::MAX as f64;
+
     let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
     let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
     let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
@@ -221,6 +224,9 @@ pub(crate) fn parse_accelerometer(scale: f64, measurements: &[u8; 6]) -> [f64; 3
     let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
     let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
     let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+
+    // Range is in milli-g per bit!
+    let scale = scale * 1000. / i16::MAX as f64;
 
     let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
     let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
