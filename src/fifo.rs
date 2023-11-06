@@ -16,9 +16,9 @@ impl TryFrom<u8> for SensorTag {
 
     fn try_from(v: u8) -> Result<Self, Self::Error> {
         match v {
-            x if x == 0x00 => Ok(SensorTag::Empty),
-            x if x == 0x01 => Ok(SensorTag::GyroscopeNC),
-            x if x == 0x02 => Ok(SensorTag::AccelerometerNC),
+            0x00 => Ok(SensorTag::Empty),
+            0x01 => Ok(SensorTag::GyroscopeNC),
+            0x02 => Ok(SensorTag::AccelerometerNC),
             x if x <= 0x19 => Ok(SensorTag::Other(x)),
             _ => Err(()),
         }
