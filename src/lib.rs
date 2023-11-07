@@ -218,7 +218,7 @@ pub(crate) fn parse_gyroscope(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
         1000. => 35.,
         2000. => 70.,
         4000. => 140.,
-        _ => unreachable!()
+        _ => unreachable!(),
     };
 
     let gyro_x = raw_gyro_x as f64 * sens * SENSORS_DPS_TO_RADS / 1000.;
@@ -239,7 +239,7 @@ pub(crate) fn parse_accelerometer(scale: f64, measurements: &[u8; 6]) -> [f64; 3
         4. => 0.122,
         8. => 0.244,
         16. => 0.488,
-        _ => unreachable!()
+        _ => unreachable!(),
     };
 
     let acc_x = raw_acc_x as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
@@ -257,7 +257,10 @@ mod tests {
     #[test]
     fn parse_acceleromtere_2g() {
         // Table 19 in AN5398
-        assert_eq!(parse_accelerometer(2., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), [0., 0., 0.]);
+        assert_eq!(
+            parse_accelerometer(2., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]),
+            [0., 0., 0.]
+        );
 
         let a = parse_accelerometer(2., &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]);
         assert_abs_diff_eq!(a[0], 0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
@@ -275,7 +278,10 @@ mod tests {
     #[test]
     fn parse_gyro_250dps() {
         // Table 19 in AN5398
-        assert_eq!(parse_gyroscope(250., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), [0., 0., 0.]);
+        assert_eq!(
+            parse_gyroscope(250., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]),
+            [0., 0., 0.]
+        );
 
         let a = parse_gyroscope(250., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
         assert_abs_diff_eq!(a[0], 100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
