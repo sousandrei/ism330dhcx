@@ -210,12 +210,20 @@ pub(crate) fn parse_gyroscope(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
     let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
     let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
 
-    // Range is in milli-dps per bit!
-    let scale = scale * 1000. / i16::MAX as f64;
+    // Sensitivity mdps / LSB: G_So in Table 2.
+    let sens = match scale {
+        125. => 4.375,
+        250. => 8.750,
+        500. => 17.50,
+        1000. => 35.,
+        2000. => 70.,
+        4000. => 140.,
+        _ => unreachable!()
+    };
 
-    let gyro_x = raw_gyro_x as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-    let gyro_y = raw_gyro_y as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
-    let gyro_z = raw_gyro_z as f64 * scale * SENSORS_DPS_TO_RADS / 1000.0;
+    let gyro_x = raw_gyro_x as f64 * sens * SENSORS_DPS_TO_RADS / 1000.;
+    let gyro_y = raw_gyro_y as f64 * sens * SENSORS_DPS_TO_RADS / 1000.0;
+    let gyro_z = raw_gyro_z as f64 * sens * SENSORS_DPS_TO_RADS / 1000.0;
 
     [gyro_x, gyro_y, gyro_z]
 }
@@ -225,12 +233,75 @@ pub(crate) fn parse_accelerometer(scale: f64, measurements: &[u8; 6]) -> [f64; 3
     let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
     let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
 
-    // Range is in milli-g per bit!
-    let scale = scale * 1000. / i16::MAX as f64;
+    // Sensitivity milli-g / LSB: LA_So in Table 2.
+    let sens = match scale {
+        2. => 0.061,
+        4. => 0.122,
+        8. => 0.244,
+        16. => 0.488,
+        _ => unreachable!()
+    };
 
-    let acc_x = raw_acc_x as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-    let acc_y = raw_acc_y as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
-    let acc_z = raw_acc_z as f64 * scale * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_x = raw_acc_x as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_y = raw_acc_y as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
+    let acc_z = raw_acc_z as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
 
     [acc_x, acc_y, acc_z]
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use approx::*;
+
+    #[test]
+    fn parse_acceleromtere_2g() {
+        // Table 19 in AN5398
+        assert_eq!(parse_accelerometer(2., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), [0., 0., 0.]);
+
+        let a = parse_accelerometer(2., &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], 0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+
+        let a = parse_accelerometer(2., &[0x09, 0x40, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], 1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+
+        let a = parse_accelerometer(2., &[0x97, 0xe9, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], -0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+
+        let a = parse_accelerometer(2., &[0xf7, 0xbf, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], -1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+    }
+
+    #[test]
+    fn parse_gyro_250dps() {
+        // Table 19 in AN5398
+        assert_eq!(parse_gyroscope(250., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]), [0., 0., 0.]);
+
+        let a = parse_gyroscope(250., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], 100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+
+        let a = parse_gyroscope(250., &[0x49, 0x59, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], 200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+
+        let a = parse_gyroscope(250., &[0x5c, 0xd3, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], -100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+
+        let a = parse_gyroscope(250., &[0xb7, 0xa6, 0x0, 0x0, 0x0, 0x0]);
+        assert_abs_diff_eq!(a[0], -200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+    }
+
+    #[test]
+    fn parse_ranges_not_unreachable() {
+        parse_gyroscope(125., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_gyroscope(250., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_gyroscope(500., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_gyroscope(1000., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_gyroscope(2000., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_gyroscope(4000., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+
+        parse_accelerometer(2., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_accelerometer(4., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_accelerometer(8., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        parse_accelerometer(16., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+    }
 }
