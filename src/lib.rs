@@ -74,6 +74,90 @@ pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
 const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
 
+#[derive(Copy, Clone, Debug, defmt::Format)]
+pub struct GyroValue {
+    range: ctrl2g::Fs,
+    count: [i16; 3],
+}
+
+impl GyroValue {
+    pub fn new(range: ctrl2g::Fs, count: [i16; 3]) -> GyroValue {
+        GyroValue { range, count }
+    }
+
+    pub fn from_msr(range: ctrl2g::Fs, measurements: &[u8; 6]) -> GyroValue {
+        let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
+        let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
+        let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+        GyroValue {
+            range,
+            count: [raw_gyro_x, raw_gyro_y, raw_gyro_z],
+        }
+    }
+
+    pub fn count(&self) -> [i16; 3] {
+        self.count
+    }
+
+    /// As radians [rad]
+    pub fn as_rad(&self) -> [f64; 3] {
+        self.as_mdps().map(|v| v * SENSORS_DPS_TO_RADS / 1000.)
+    }
+
+    /// As milli degrees per second [mdps]
+    pub fn as_mdps(&self) -> [f64; 3] {
+        let sensitivity = self.range.sensitivity() as f64;
+        self.count.map(|r| r as f64 * sensitivity)
+    }
+
+    /// As degrees per second [dps]
+    pub fn as_dps(&self) -> [f64; 3] {
+        self.as_mdps().map(|v| v / 1000.)
+    }
+}
+
+#[derive(Copy, Clone, Debug, defmt::Format)]
+pub struct AccelValue {
+    range: ctrl1xl::Fs_Xl,
+    count: [i16; 3],
+}
+
+impl AccelValue {
+    pub fn new(range: ctrl1xl::Fs_Xl, count: [i16; 3]) -> AccelValue {
+        AccelValue { range, count }
+    }
+
+    pub fn from_msr(range: ctrl1xl::Fs_Xl, measurements: &[u8; 6]) -> AccelValue {
+        let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
+        let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
+        let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+        AccelValue {
+            range,
+            count: [raw_acc_x, raw_acc_y, raw_acc_z],
+        }
+    }
+
+    pub fn count(&self) -> [i16; 3] {
+        self.count
+    }
+
+    /// As [m/s^2]
+    pub fn as_m_ss(&self) -> [f64; 3] {
+        self.as_mg().map(|v| v * SENSORS_GRAVITY_STANDARD / 1000.)
+    }
+
+    /// As [milli-g]
+    pub fn as_mg(&self) -> [f64; 3] {
+        let sensitivity = self.range.sensitivity() as f64;
+        self.count.map(|r| r as f64 * sensitivity)
+    }
+
+    /// As [g]
+    pub fn as_g(&self) -> [f64; 3] {
+        self.as_mg().map(|v| v / 1000.)
+    }
+}
+
 trait Register {
     fn read<I2C>(&self, i2c: &mut I2C, chip_addr: u8, reg_addr: u8) -> Result<u8, I2C::Error>
     where
@@ -170,7 +254,7 @@ impl Ism330Dhcx {
         Ok(temp)
     }
 
-    pub fn get_gyroscope<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
+    pub fn get_gyroscope<I2C>(&mut self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
         I2C: WriteRead,
     {
@@ -179,10 +263,10 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
-        Ok(parse_gyroscope(scale, &measurements))
+        Ok(GyroValue::from_msr(scale, &measurements))
     }
 
-    pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<[f64; 3], I2C::Error>
+    pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<AccelValue, I2C::Error>
     where
         I2C: WriteRead,
     {
@@ -191,7 +275,7 @@ impl Ism330Dhcx {
         let mut measurements = [0u8; 6];
         i2c.write_read(self.address, &[0x28], &mut measurements)?;
 
-        Ok(parse_accelerometer(scale, &measurements))
+        Ok(AccelValue::from_msr(scale, &measurements))
     }
 
     pub fn fifo_pop<I2C>(&mut self, i2c: &mut I2C) -> Result<fifo::Value, I2C::Error>
@@ -205,50 +289,6 @@ impl Ism330Dhcx {
     }
 }
 
-pub(crate) fn parse_gyroscope(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
-    let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-    let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-    let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
-
-    // Sensitivity mdps / LSB: G_So in Table 2.
-    let sens = match scale {
-        125. => 4.375,
-        250. => 8.750,
-        500. => 17.50,
-        1000. => 35.,
-        2000. => 70.,
-        4000. => 140.,
-        _ => unreachable!(),
-    };
-
-    let gyro_x = raw_gyro_x as f64 * sens * SENSORS_DPS_TO_RADS / 1000.;
-    let gyro_y = raw_gyro_y as f64 * sens * SENSORS_DPS_TO_RADS / 1000.0;
-    let gyro_z = raw_gyro_z as f64 * sens * SENSORS_DPS_TO_RADS / 1000.0;
-
-    [gyro_x, gyro_y, gyro_z]
-}
-
-pub(crate) fn parse_accelerometer(scale: f64, measurements: &[u8; 6]) -> [f64; 3] {
-    let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-    let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-    let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
-
-    // Sensitivity milli-g / LSB: LA_So in Table 2.
-    let sens = match scale {
-        2. => 0.061,
-        4. => 0.122,
-        8. => 0.244,
-        16. => 0.488,
-        _ => unreachable!(),
-    };
-
-    let acc_x = raw_acc_x as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
-    let acc_y = raw_acc_y as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
-    let acc_z = raw_acc_z as f64 * sens * SENSORS_GRAVITY_STANDARD / 1000.0;
-
-    [acc_x, acc_y, acc_z]
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -256,58 +296,47 @@ mod tests {
 
     #[test]
     fn parse_acceleromtere_2g() {
+        use ctrl1xl::Fs_Xl;
+
         // Table 19 in AN5398
         assert_eq!(
-            parse_accelerometer(2., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]),
+            AccelValue::from_msr(Fs_Xl::G2, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_m_ss(),
             [0., 0., 0.]
         );
 
-        let a = parse_accelerometer(2., &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]);
+        let a = AccelValue::from_msr(Fs_Xl::G2, &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], 0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
 
-        let a = parse_accelerometer(2., &[0x09, 0x40, 0x0, 0x0, 0x0, 0x0]);
+        let a = AccelValue::from_msr(Fs_Xl::G2, &[0x09, 0x40, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], 1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
 
-        let a = parse_accelerometer(2., &[0x97, 0xe9, 0x0, 0x0, 0x0, 0x0]);
+        let a = AccelValue::from_msr(Fs_Xl::G2, &[0x97, 0xe9, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], -0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
 
-        let a = parse_accelerometer(2., &[0xf7, 0xbf, 0x0, 0x0, 0x0, 0x0]);
+        let a = AccelValue::from_msr(Fs_Xl::G2, &[0xf7, 0xbf, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], -1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
     }
 
     #[test]
     fn parse_gyro_250dps() {
+        use ctrl2g::Fs;
+
         // Table 19 in AN5398
         assert_eq!(
-            parse_gyroscope(250., &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]),
+            GyroValue::from_msr(Fs::Dps250, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_rad(),
             [0., 0., 0.]
         );
 
-        let a = parse_gyroscope(250., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
+        let a = GyroValue::from_msr(Fs::Dps250, &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], 100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
 
-        let a = parse_gyroscope(250., &[0x49, 0x59, 0x0, 0x0, 0x0, 0x0]);
+        let a = GyroValue::from_msr(Fs::Dps250, &[0x49, 0x59, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], 200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
 
-        let a = parse_gyroscope(250., &[0x5c, 0xd3, 0x0, 0x0, 0x0, 0x0]);
+        let a = GyroValue::from_msr(Fs::Dps250, &[0x5c, 0xd3, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], -100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
 
-        let a = parse_gyroscope(250., &[0xb7, 0xa6, 0x0, 0x0, 0x0, 0x0]);
+        let a = GyroValue::from_msr(Fs::Dps250, &[0xb7, 0xa6, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], -200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
-    }
-
-    #[test]
-    fn parse_ranges_not_unreachable() {
-        parse_gyroscope(125., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_gyroscope(250., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_gyroscope(500., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_gyroscope(1000., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_gyroscope(2000., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_gyroscope(4000., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-
-        parse_accelerometer(2., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_accelerometer(4., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_accelerometer(8., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
-        parse_accelerometer(16., &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]);
     }
 }

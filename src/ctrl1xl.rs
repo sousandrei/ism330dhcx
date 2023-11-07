@@ -46,12 +46,33 @@ const FS_OFFSET: u8 = 2;
 ///
 /// (00: ±2 g; 01: ±16 g; 10: ±4 g; 11: ±8 g)
 #[allow(non_camel_case_types)]
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, defmt::Format)]
 pub enum Fs_Xl {
     G2,  // ±2  g
     G16, // ±16 g
     G4,  // ±4  g
     G8,  // ±8  g
+}
+
+impl Fs_Xl {
+    /// Sensitivity milli-g / LSB: LA_So in Table 2.
+    pub fn sensitivity(&self) -> f32 {
+        match self {
+            Fs_Xl::G2 => 0.061,
+            Fs_Xl::G4 => 0.122,
+            Fs_Xl::G8 => 0.244,
+            Fs_Xl::G16 => 0.488,
+        }
+    }
+
+    pub fn g(&self) -> f32 {
+        match self {
+            Fs_Xl::G2 => 2.,
+            Fs_Xl::G4 => 4.,
+            Fs_Xl::G8 => 8.,
+            Fs_Xl::G16 => 16.,
+        }
+    }
 }
 
 const ODR_XL_MASK: u8 = 0b1111;
@@ -113,12 +134,12 @@ impl Ctrl1Xl {
         self.write(i2c, self.address, ADDR, self.value)
     }
 
-    pub fn chain_full_scale(&self) -> f64 {
+    pub fn chain_full_scale(&self) -> Fs_Xl {
         match (self.value >> FS_OFFSET) & FS_MASK {
-            0 => 2.,
-            1 => 16.,
-            2 => 4.,
-            3 => 8.,
+            0 => Fs_Xl::G2,
+            1 => Fs_Xl::G16,
+            2 => Fs_Xl::G4,
+            3 => Fs_Xl::G8,
             _ => panic!("Unreachable"),
         }
     }
