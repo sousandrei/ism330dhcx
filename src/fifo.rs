@@ -1,7 +1,7 @@
 use core::convert::{TryFrom, TryInto};
 use embedded_hal::blocking::i2c::WriteRead;
 
-use crate::{parse_accelerometer, parse_gyroscope, Register};
+use crate::{ctrl1xl, ctrl2g, AccelValue, GyroValue, Register};
 
 #[repr(u8)]
 pub enum SensorTag {
@@ -28,8 +28,8 @@ impl TryFrom<u8> for SensorTag {
 #[derive(Copy, Clone, Debug, defmt::Format)]
 pub enum Value {
     Empty,
-    Gyro([f64; 3]),
-    Accel([f64; 3]),
+    Gyro(GyroValue),
+    Accel(AccelValue),
     Other(u8, [u8; 6]),
 }
 
@@ -50,8 +50,8 @@ impl FifoOut {
     pub fn pop<I2C>(
         &mut self,
         i2c: &mut I2C,
-        gyro_scale: f64,
-        accel_scale: f64,
+        gyro_scale: ctrl2g::Fs,
+        accel_scale: ctrl1xl::Fs_Xl,
     ) -> Result<Value, I2C::Error>
     where
         I2C: WriteRead,
@@ -65,9 +65,9 @@ impl FifoOut {
 
         match tag.try_into() {
             Ok(SensorTag::Empty) => Ok(Value::Empty),
-            Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyro(parse_gyroscope(gyro_scale, out))),
+            Ok(SensorTag::GyroscopeNC) => Ok(Value::Gyro(GyroValue::from_msr(gyro_scale, out))),
             Ok(SensorTag::AccelerometerNC) => {
-                Ok(Value::Accel(parse_accelerometer(accel_scale, out)))
+                Ok(Value::Accel(AccelValue::from_msr(accel_scale, out)))
             }
             Ok(SensorTag::Other(u)) => Ok(Value::Other(u, *out)),
             _ => unreachable!(),
@@ -89,7 +89,9 @@ mod tests {
         )]);
 
         let mut f = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
-        let v = f.pop(&mut i2c, 1., 1.).unwrap();
+        let v = f
+            .pop(&mut i2c, ctrl2g::Fs::Dps250, ctrl1xl::Fs_Xl::G2)
+            .unwrap();
 
         assert!(matches!(v, Value::Gyro(_)));
         println!("{:?}", v);

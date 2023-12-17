@@ -46,7 +46,7 @@ const FS_MASK: u8 = 0b11;
 const FS_OFFSET: u8 = 2;
 
 /// Gyroscope chain full-scale selection in dps
-#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug)]
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, defmt::Format)]
 pub enum Fs {
     Dps250,  // ±250 dps
     Dps500,  // ±500 dps
@@ -54,6 +54,31 @@ pub enum Fs {
     Dps2000, // ±2000 dps
     Dps4000, // ±4000 dps
     Dps125,  // ±125 dps
+}
+
+impl Fs {
+    /// Sensitivity mdps / LSB: G_So in Table 2.
+    pub fn sensitivity(&self) -> f32 {
+        match self {
+            Fs::Dps125 => 4.375,
+            Fs::Dps250 => 8.750,
+            Fs::Dps500 => 17.50,
+            Fs::Dps1000 => 35.,
+            Fs::Dps2000 => 70.,
+            Fs::Dps4000 => 140.,
+        }
+    }
+
+    pub fn dps(&self) -> f32 {
+        match self {
+            Fs::Dps125 => 125.,
+            Fs::Dps250 => 250.,
+            Fs::Dps500 => 500.,
+            Fs::Dps1000 => 1000.,
+            Fs::Dps2000 => 2000.,
+            Fs::Dps4000 => 4000.,
+        }
+    }
 }
 
 const ODR_MASK: u8 = 0b1111;
@@ -114,20 +139,20 @@ impl Ctrl2G {
         self.write(i2c, self.address, ADDR, self.value)
     }
 
-    pub fn chain_full_scale(&self) -> f64 {
+    pub fn chain_full_scale(&self) -> Fs {
         if (self.value & 1 << FS4000) > 0 {
-            return 4000.0;
+            return Fs::Dps4000;
         }
 
         if (self.value & 1 << FS125) > 0 {
-            return 125.0;
+            return Fs::Dps125;
         }
 
         match (self.value >> FS_OFFSET) & FS_MASK {
-            0 => 250.0,
-            1 => 500.0,
-            2 => 1000.0,
-            3 => 2000.0,
+            0 => Fs::Dps250,
+            1 => Fs::Dps500,
+            2 => Fs::Dps1000,
+            3 => Fs::Dps2000,
             _ => panic!("Unreachable"),
         }
     }
