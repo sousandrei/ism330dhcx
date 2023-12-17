@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.2](https://github.com/sousandrei/ism330dhcx/compare/v0.5.1...v0.5.2) (2023-12-17)
+
+
+### Bug Fixes
+
+* gyro and accel chain full scale values match configurable values ([#45](https://github.com/sousandrei/ism330dhcx/issues/45)) ([23dbc52](https://github.com/sousandrei/ism330dhcx/commit/23dbc52c8631a96d4dd7ce4c08c81a1ca48e603a))
+* gyro and accel scale wrong: should be specified in milli-unit per bit! ([#49](https://github.com/sousandrei/ism330dhcx/issues/49)) ([2eac16c](https://github.com/sousandrei/ism330dhcx/commit/2eac16c615abcd4d0fb521023ab4cd479c497675))
+* making datarates all in Hz ([#47](https://github.com/sousandrei/ism330dhcx/issues/47)) ([c8d2211](https://github.com/sousandrei/ism330dhcx/commit/c8d2211f50f092102874f422de4ec4570c4ad6d1))
+
 ## [0.5.1](https://github.com/sousandrei/ism330dhcx/compare/v0.5.0...v0.5.1) (2023-03-28)
 
 
