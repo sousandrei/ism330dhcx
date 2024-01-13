@@ -1,5 +1,4 @@
 use core::fmt;
-use embedded_hal::blocking::i2c::Write;
 
 use crate::Register;
 
@@ -99,7 +98,7 @@ impl Ctrl7G {
 
     pub fn set_hpm_g<I2C>(&mut self, i2c: &mut I2C, value: Hpm_g) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(HPM_G_MASK << HPM_G_OFFSET);
         self.value |= (value as u8) << HPM_G_OFFSET;
@@ -112,7 +111,7 @@ impl Ctrl7G {
 
     pub fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << G_HM_MODE);
         self.value |= (value as u8) << G_HM_MODE;
@@ -125,7 +124,7 @@ impl Ctrl7G {
 
     pub fn set_ois_on_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << OIS_ON_EN);
         self.value |= (value as u8) << OIS_ON_EN;
@@ -138,7 +137,7 @@ impl Ctrl7G {
 
     pub fn set_usr_off_on_out<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << USR_OFF_ON_OUT);
         self.value |= (value as u8) << USR_OFF_ON_OUT;
@@ -151,7 +150,7 @@ impl Ctrl7G {
 
     pub fn set_ois_on<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << OIS_ON);
         self.value |= (value as u8) << OIS_ON;

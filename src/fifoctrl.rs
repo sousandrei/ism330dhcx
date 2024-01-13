@@ -1,5 +1,4 @@
 use core::fmt;
-use embedded_hal::blocking::i2c::Write;
 
 use crate::Register;
 
@@ -104,7 +103,7 @@ impl FifoCtrl {
     /// Enable compression of values in FIFO, increasing FIFO size from 3kB to maximum 9kB.
     pub fn compression<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value[1] &= !(1 << 6);
         self.value[1] |= (value as u8) << 6;
@@ -114,7 +113,7 @@ impl FifoCtrl {
     /// Set the FIFO mode (or disable FIFO)
     pub fn mode<I2C>(&mut self, i2c: &mut I2C, mode: FifoMode) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         const RESET: u8 = 0b111;
 
@@ -130,7 +129,7 @@ impl FifoCtrl {
         rate: BdrXl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         const RESET: u8 = 0b00001111;
         self.value[2] &= !RESET;
@@ -145,7 +144,7 @@ impl FifoCtrl {
         rate: BdrGy,
     ) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         const RESET: u8 = 0b11110000;
         self.value[2] &= !RESET;
@@ -157,7 +156,7 @@ impl FifoCtrl {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use embedded_hal_mock::i2c::{Mock, Transaction};
+    use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]
     fn test_compression() {

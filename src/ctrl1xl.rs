@@ -1,5 +1,4 @@
 use core::fmt;
-use embedded_hal::blocking::i2c::Write;
 
 use crate::Register;
 
@@ -127,7 +126,7 @@ impl Ctrl1Xl {
         value: Odr_Xl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(ODR_XL_MASK << ODR_XL_OFFSET);
         self.value |= (value as u8) << ODR_XL_OFFSET;
@@ -150,7 +149,7 @@ impl Ctrl1Xl {
         value: Fs_Xl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(FS_MASK << FS_OFFSET);
         self.value |= (value as u8) << FS_OFFSET;
@@ -163,7 +162,7 @@ impl Ctrl1Xl {
 
     pub fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << LPF2_XL_EN);
         self.value |= (value as u8) << LPF2_XL_EN;
