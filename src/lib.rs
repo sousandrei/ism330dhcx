@@ -48,9 +48,6 @@
 
 #![cfg_attr(not(test), no_std)]
 
-use core::convert::TryInto;
-use embedded_hal::blocking::i2c::{Write, WriteRead};
-
 pub mod ctrl1xl;
 pub mod ctrl2g;
 pub mod ctrl3c;
@@ -161,7 +158,7 @@ impl AccelValue {
 trait Register {
     fn read<I2C>(&self, i2c: &mut I2C, chip_addr: u8, reg_addr: u8) -> Result<u8, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let mut data: [u8; 1] = [0];
         i2c.write_read(chip_addr, &[reg_addr], &mut data)?;
@@ -176,7 +173,7 @@ trait Register {
         bits: u8,
     ) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         i2c.write(chip_addr, &[reg_addr, bits])
     }
@@ -186,24 +183,24 @@ pub struct Ism330Dhcx {
     pub address: u8,
     pub ctrl1xl: Ctrl1Xl,
     pub ctrl2g: Ctrl2G,
-    pub ctrl7g: Ctrl7G,
     pub ctrl3c: Ctrl3C,
+    pub ctrl7g: Ctrl7G,
     pub ctrl9xl: Ctrl9Xl,
     pub fifoctrl: FifoCtrl,
     pub fifostatus: FifoStatus,
 }
 
 impl Ism330Dhcx {
-    pub fn new<I2C, E>(i2c: &mut I2C) -> Result<Ism330Dhcx, E>
+    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
     where
-        I2C: WriteRead<Error = E> + Write<Error = E>,
+        I2C: embedded_hal::i2c::I2c,
     {
-        Ism330Dhcx::new_with_address(i2c, DEFAULT_I2C_ADDRESS)
+        Self::new_with_address(i2c, DEFAULT_I2C_ADDRESS)
     }
 
-    pub fn new_with_address<I2C, E>(i2c: &mut I2C, address: u8) -> Result<Ism330Dhcx, E>
+    pub fn new_with_address<I2C>(i2c: &mut I2C, address: u8) -> Result<Self, I2C::Error>
     where
-        I2C: WriteRead<Error = E> + Write<Error = E>,
+        I2C: embedded_hal::i2c::I2c,
     {
         let mut registers = [0u8; 13];
         i2c.write_read(address, &[0x10], &mut registers)?;
@@ -216,7 +213,7 @@ impl Ism330Dhcx {
         let fifoctrl = FifoCtrl::new(registers[9..13].try_into().unwrap(), address);
         let fifostatus = FifoStatus::new(address);
 
-        let ism330dhcx = Ism330Dhcx {
+        let ism330dhcx = Self {
             address,
             ctrl1xl,
             ctrl2g,
@@ -243,7 +240,7 @@ impl Ism330Dhcx {
     /// Get temperature in Celsius.
     pub fn get_temperature<I2C>(&mut self, i2c: &mut I2C) -> Result<f32, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let mut measurements = [0u8; 2];
         i2c.write_read(self.address, &[0x20], &mut measurements)?;
@@ -256,7 +253,7 @@ impl Ism330Dhcx {
 
     pub fn get_gyroscope<I2C>(&mut self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let scale = self.ctrl2g.chain_full_scale();
 
@@ -268,7 +265,7 @@ impl Ism330Dhcx {
 
     pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<AccelValue, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let scale = self.ctrl1xl.chain_full_scale();
 
@@ -280,7 +277,7 @@ impl Ism330Dhcx {
 
     pub fn fifo_pop<I2C>(&mut self, i2c: &mut I2C) -> Result<fifo::Value, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let gyro_scale = self.ctrl2g.chain_full_scale();
         let accel_scale = self.ctrl1xl.chain_full_scale();
