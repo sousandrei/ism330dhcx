@@ -84,8 +84,7 @@ fn main() -> ! {
 // Booting the sensor accoring to Adafruit's driver
 fn boot_sensor<I2C, E>(sensor: &mut Ism330Dhcx, i2c: &mut I2C)
 where
-    I2C: embedded_hal::blocking::i2c::WriteRead<Error = E>
-        + embedded_hal::blocking::i2c::Write<Error = E>,
+    I2C: embedded_hal::i2c::I2c,
     E: Debug,
 {
     // =======================================

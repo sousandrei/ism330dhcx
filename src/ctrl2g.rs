@@ -1,5 +1,4 @@
 use core::fmt;
-use embedded_hal::blocking::i2c::Write;
 
 use crate::Register;
 
@@ -132,7 +131,7 @@ impl Ctrl2G {
         value: Odr,
     ) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(ODR_MASK << ODR_OFFSET);
         self.value |= (value as u8) << ODR_OFFSET;
@@ -159,7 +158,7 @@ impl Ctrl2G {
 
     pub fn set_chain_full_scale<I2C>(&mut self, i2c: &mut I2C, value: Fs) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= 0b1111_0000;
 

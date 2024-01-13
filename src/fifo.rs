@@ -1,5 +1,5 @@
 use core::convert::{TryFrom, TryInto};
-use embedded_hal::blocking::i2c::WriteRead;
+use embedded_hal::i2c::I2c;
 
 use crate::{ctrl1xl, ctrl2g, AccelValue, GyroValue, Register};
 
@@ -54,7 +54,7 @@ impl FifoOut {
         accel_scale: ctrl1xl::Fs_Xl,
     ) -> Result<Value, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: I2c,
     {
         let mut out = [0u8; 7];
         i2c.write_read(self.address, &[ADDR], &mut out)?;
@@ -78,7 +78,7 @@ impl FifoOut {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use embedded_hal_mock::i2c::{Mock, Transaction};
+    use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]
     fn test_pop_gyro() {
