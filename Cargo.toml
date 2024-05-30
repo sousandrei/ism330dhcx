@@ -32,7 +32,7 @@ panic-semihosting = "0.6.0"
 stm32l4xx-hal = { version = "0.7.1", features = ["rt", "stm32l433"] }
 
 [target.'cfg(windows)'.dev-dependencies]
-embedded-hal-mock = "0.10.0"
+embedded-hal-mock = "0.11.0"
 
 [target.'cfg(unix)'.dev-dependencies]
-embedded-hal-mock = "0.10.0"
+embedded-hal-mock = "0.11.0"
