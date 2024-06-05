@@ -9,7 +9,33 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  main:
+  build_matrix:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        folder: [".", "examples/stm32l433"]
+    
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+          targets: thumbv7em-none-eabi
+
+      - uses: Swatinem/rust-cache@v2.7.1
+      
+      - run: cargo fmt --all -- --check
+        working-directory: ${{ matrix.folder }}
+
+      - run: cargo clippy --release -- -D warnings
+        working-directory: ${{ matrix.folder }}
+
+      - run: cargo build --release
+        working-directory: ${{ matrix.folder }}
+
+  release:
     runs-on: ubuntu-latest
 
     permissions:
@@ -21,44 +47,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions-rs/toolchain@v1
-        name: Installing Rust Toolchain
-        with:
-          profile: default
-          toolchain: stable
-          override: true
-          components: rustfmt, clippy
-          target: thumbv7em-none-eabi
-
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.3
-
-      - uses: actions-rs/cargo@v1
-        name: Cargo fmt
-        with:
-          command: fmt
-          args: --all -- --check
-
-      - uses: actions-rs/cargo@v1
-        name: Cargo clippy
-        with:
-          command: clippy
-          args: --release -- -D warnings
-
-      - uses: actions-rs/cargo@v1
-        name: Cargo Build
-        with:
-          command: build
-          args: --release
-
-      - uses: actions-rs/cargo@v1
-        name: Cargo Build Examples
-        with:
-          command: build
-          args: --examples --target thumbv7em-none-eabi
-
       - uses: google-github-actions/release-please-action@v4
-        name: Release
         id: release
         with:
           release-type: rust

@@ -1,0 +1,45 @@
+[package]
+edition = "2021"
+name = "stm32l4xx-example"
+version = "0.1.0"
+
+[dependencies]
+ism330dhcx = { path = "../../" }
+
+defmt = "0.3"
+defmt-rtt = "0.4"
+
+chrono = { version = "^0.4", default-features = false }
+cortex-m = { version = "0.7.6", features = ["critical-section-single-core"] }
+cortex-m-rt = "0.7.0"
+embedded-hal = { package = "embedded-hal", version = "1.0" }
+panic-probe = { version = "0.3", features = ["print-defmt"] }
+
+embassy-executor = { version = "0.5.0", features = [
+    "task-arena-size-32768",
+    "arch-cortex-m",
+    "executor-thread",
+    "defmt",
+    "integrated-timers",
+] }
+
+embassy-stm32 = { version = "0.1.0", features = [
+    "defmt",
+    "unstable-pac",
+    "stm32l433rc",
+    "memory-x",
+    "time-driver-any",
+    "exti",
+    "chrono",
+] }
+embassy-time = { version = "0.3.0", features = [
+    "defmt",
+    "defmt-timestamp-uptime",
+    "tick-hz-32_768",
+] }
+
+
+[patch.crates-io]
+embassy-executor = { git = "https://github.com/embassy-rs/embassy.git", rev = "62f4b4ee1edc156663aaa26ce92c24f173ea660a" }
+embassy-stm32 = { git = "https://github.com/embassy-rs/embassy.git", rev = "62f4b4ee1edc156663aaa26ce92c24f173ea660a" }
+embassy-time = { git = "https://github.com/embassy-rs/embassy.git", rev = "62f4b4ee1edc156663aaa26ce92c24f173ea660a" }
