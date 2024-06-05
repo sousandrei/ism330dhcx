@@ -4,6 +4,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "deps"
     groups:
       github-actions:
         patterns:
@@ -13,6 +15,8 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "deps"
     groups:
       cargo:
         patterns:
@@ -22,6 +26,8 @@ updates:
     directory: "/examples/*"
     schedule:
       interval: "weekly"
+    commit-message:
+      prefix: "deps"
     groups:
       cargo-examples:
         patterns:
