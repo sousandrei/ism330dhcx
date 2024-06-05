@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/sousandrei/ism330dhcx/compare/v0.5.2...v0.6.0) (2024-06-05)
+
+
+### Features
+
+* migrate to ehal 1.0 ([#55](https://github.com/sousandrei/ism330dhcx/issues/55)) ([40b6b3b](https://github.com/sousandrei/ism330dhcx/commit/40b6b3bf6a35c37dce4e05ed6aff8b683b8131a3))
+
 ## [0.5.2](https://github.com/sousandrei/ism330dhcx/compare/v0.5.1...v0.5.2) (2023-12-17)
 
 
