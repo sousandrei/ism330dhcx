@@ -3,9 +3,27 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
 
   - package-ecosystem: "cargo"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+    groups:
+      cargo:
+        patterns:
+          - "*"
+
+  - package-ecosystem: "cargo"
+    directory: "/examples/*"
+    schedule:
+      interval: "weekly"
+    groups:
+      cargo-examples:
+        patterns:
+          - "*"
+    

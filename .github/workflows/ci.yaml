@@ -12,44 +12,28 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  ci:
+  build_matrix:
     runs-on: ubuntu-latest
 
+    strategy:
+      matrix:
+        folder: [".", "examples/stm32l433"]
+    
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions-rs/toolchain@v1
-        name: Installing Rust Toolchain
+      - uses: dtolnay/rust-toolchain@stable
         with:
-          profile: default
-          toolchain: stable
-          override: true
           components: rustfmt, clippy
-          target: thumbv7em-none-eabi
+          targets: thumbv7em-none-eabi
 
-      - name: Rust Cache
-        uses: Swatinem/rust-cache@v2.7.3
+      - uses: Swatinem/rust-cache@v2.7.1
+      
+      - run: cargo fmt --all -- --check
+        working-directory: ${{ matrix.folder }}
 
-      - uses: actions-rs/cargo@v1
-        name: Cargo fmt
-        with:
-          command: fmt
-          args: --all -- --check
+      - run: cargo clippy --release -- -D warnings
+        working-directory: ${{ matrix.folder }}
 
-      - uses: actions-rs/cargo@v1
-        name: Cargo clippy
-        with:
-          command: clippy
-          args: --release -- -D warnings
-
-      - uses: actions-rs/cargo@v1
-        name: Cargo build
-        with:
-          command: build
-          args: --release
-
-      - uses: actions-rs/cargo@v1
-        name: Cargo build examples
-        with:
-          command: build
-          args: --examples --target thumbv7em-none-eabi
+      - run: cargo build --release
+        working-directory: ${{ matrix.folder }}

@@ -1,5 +1,4 @@
 use core::fmt;
-use embedded_hal::blocking::i2c::Write;
 
 use crate::Register;
 
@@ -93,7 +92,7 @@ impl Ctrl9Xl {
 
     pub fn set_den_x<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEN_X);
         self.value |= (value as u8) << DEN_X;
@@ -106,7 +105,7 @@ impl Ctrl9Xl {
 
     pub fn set_den_y<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEN_Y);
         self.value |= (value as u8) << DEN_Y;
@@ -119,7 +118,7 @@ impl Ctrl9Xl {
 
     pub fn set_den_z<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEN_Z);
         self.value |= (value as u8) << DEN_Z;
@@ -132,7 +131,7 @@ impl Ctrl9Xl {
 
     pub fn set_den_xl_g<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEN_XL_G);
         self.value |= (value as u8) << DEN_XL_G;
@@ -145,7 +144,7 @@ impl Ctrl9Xl {
 
     pub fn set_den_xl_en<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEN_XL_EN);
         self.value |= (value as u8) << DEN_XL_EN;
@@ -158,7 +157,7 @@ impl Ctrl9Xl {
 
     pub fn set_den_lh<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEN_LH);
         self.value |= (value as u8) << DEN_LH;
@@ -171,7 +170,7 @@ impl Ctrl9Xl {
 
     pub fn set_device_conf<I2C>(&mut self, i2c: &mut I2C, value: bool) -> Result<(), I2C::Error>
     where
-        I2C: Write,
+        I2C: embedded_hal::i2c::I2c,
     {
         self.value &= !(1 << DEVICE_CONF);
         self.value |= (value as u8) << DEVICE_CONF;

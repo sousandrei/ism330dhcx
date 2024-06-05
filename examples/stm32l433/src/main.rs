@@ -1,92 +1,63 @@
 #![no_std]
 #![no_main]
 
-use cortex_m_rt as rt;
-use panic_semihosting as _;
+use defmt_rtt as _;
+use panic_probe as _;
 
-use core::fmt::{Debug, Write};
-use cortex_m_semihosting::hio::{self};
-use rt::entry;
-use stm32l4xx_hal::{
-    delay::Delay,
-    i2c::{self, I2c},
-    prelude::*,
-    stm32,
-};
+use embassy_executor::Spawner;
+use embassy_stm32::i2c::I2c;
+use embassy_stm32::time::Hertz;
+use embassy_time::Timer;
 
 use ism330dhcx::{ctrl1xl, ctrl2g, Ism330Dhcx};
 
-#[entry]
-fn main() -> ! {
+#[embassy_executor::main]
+async fn main(_spawner: Spawner) {
     //==========================================
     // Initilizing board
 
-    let cp = cortex_m::Peripherals::take().unwrap();
-    let dp = stm32::Peripherals::take().unwrap();
-
-    let mut flash = dp.FLASH.constrain();
-    let mut rcc = dp.RCC.constrain();
-    let mut pwr = dp.PWR.constrain(&mut rcc.apb1r1);
-
-    let clocks = rcc
-        .cfgr
-        .sysclk(80.MHz())
-        .pclk1(8.MHz())
-        .pclk2(80.MHz())
-        .freeze(&mut flash.acr, &mut pwr);
-
-    let mut gpiob = dp.GPIOB.split(&mut rcc.ahb2);
-    let mut delay = Delay::new(cp.SYST, clocks);
+    let p = embassy_stm32::init(Default::default());
 
     //==========================================
     // Declaring I2C1
 
-    let scl =
-        gpiob
-            .pb8
-            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrh);
-
-    let sda =
-        gpiob
-            .pb7
-            .into_alternate_open_drain(&mut gpiob.moder, &mut gpiob.otyper, &mut gpiob.afrl);
-
-    let mut i2c = I2c::i2c1(
-        dp.I2C1,
-        (scl, sda),
-        i2c::Config::new(100.kHz(), clocks),
-        &mut rcc.apb1r1,
-    );
+    let mut i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Hertz(100_000), Default::default());
 
     //==============================================
-
-    let mut stdout = hio::hstdout().unwrap();
+    // Declaring sensor
 
     let mut sensor = match Ism330Dhcx::new(&mut i2c) {
         Ok(sensor) => sensor,
         Err(error) => {
-            writeln!(stdout, "{:?}", error).unwrap();
+            defmt::error!("{:?}", error);
             panic!("failed to create sensor")
         }
     };
 
+    // Initializing sensor
     boot_sensor(&mut sensor, &mut i2c);
 
-    loop {
-        writeln!(stdout, "{}", sensor.get_temperature(&mut i2c).unwrap()).unwrap();
-        writeln!(stdout, "{:?}", sensor.get_gyroscope(&mut i2c).unwrap()).unwrap();
-        writeln!(stdout, "{:?}", sensor.get_accelerometer(&mut i2c).unwrap()).unwrap();
+    // =======================================
 
-        delay.delay_ms(500u32);
+    loop {
+        defmt::info!("Temperature: {}", sensor.get_temperature(&mut i2c).unwrap());
+        defmt::info!(
+            "Gyroscope: {:?}",
+            sensor.get_gyroscope(&mut i2c).unwrap().as_dps()
+        );
+        defmt::info!(
+            "Accelerometer: {:?}",
+            sensor.get_accelerometer(&mut i2c).unwrap().as_m_ss()
+        );
+
+        Timer::after_millis(500).await;
     }
 }
 
 // Booting the sensor accoring to Adafruit's driver
-fn boot_sensor<I2C, E>(sensor: &mut Ism330Dhcx, i2c: &mut I2C)
+fn boot_sensor<I2C>(sensor: &mut Ism330Dhcx, i2c: &mut I2C)
 where
-    I2C: embedded_hal::blocking::i2c::WriteRead<Error = E>
-        + embedded_hal::blocking::i2c::Write<Error = E>,
-    E: Debug,
+    I2C: embedded_hal::i2c::I2c,
 {
     // =======================================
     // CTRL3_C

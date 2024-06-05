@@ -1,4 +1,4 @@
-use embedded_hal::blocking::i2c::WriteRead;
+use embedded_hal::i2c::I2c;
 
 use crate::Register;
 
@@ -19,7 +19,7 @@ impl FifoStatus {
     /// Is the FIFO full
     pub fn full<I2C>(&mut self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let v = self.read(i2c, self.address, ADDR + 1)?;
 
@@ -29,7 +29,7 @@ impl FifoStatus {
     /// Is the FIFO overrun
     pub fn overrun<I2C>(&mut self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let v = self.read(i2c, self.address, ADDR + 1)?;
 
@@ -39,7 +39,7 @@ impl FifoStatus {
     /// Is the FIFO watermark reached.
     pub fn watermark_reached<I2C>(&mut self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let v = self.read(i2c, self.address, ADDR + 1)?;
 
@@ -49,7 +49,7 @@ impl FifoStatus {
     /// Latched FIFO overrun status.
     pub fn overrun_latched<I2C>(&mut self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let v = self.read(i2c, self.address, ADDR + 1)?;
 
@@ -59,7 +59,7 @@ impl FifoStatus {
     /// Counter BDR reached.
     pub fn count_bdr_reached<I2C>(&mut self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: embedded_hal::i2c::I2c,
     {
         let v = self.read(i2c, self.address, ADDR + 1)?;
 
@@ -69,7 +69,7 @@ impl FifoStatus {
     /// Number of unread sensor data in FIFO.
     pub fn diff_fifo<I2C>(&mut self, i2c: &mut I2C) -> Result<u16, I2C::Error>
     where
-        I2C: WriteRead,
+        I2C: I2c,
     {
         let mut v = [0u8; 2];
         i2c.write_read(self.address, &[ADDR], &mut v)?;
@@ -82,7 +82,7 @@ impl FifoStatus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use embedded_hal_mock::i2c::{Mock, Transaction};
+    use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]
     fn test_full() {
