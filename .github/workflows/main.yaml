@@ -24,7 +24,7 @@ jobs:
           components: rustfmt, clippy
           targets: thumbv7em-none-eabi
 
-      - uses: Swatinem/rust-cache@v2.7.3
+      - uses: Swatinem/rust-cache@v2.7.5
       
       - run: cargo fmt --all -- --check
         working-directory: ${{ matrix.folder }}
