@@ -20,9 +20,9 @@ version = "0.6.0"
 
 
 [dependencies]
-defmt = "0.3"
+defmt = "1.0"
 embedded-hal = "1.0.0"
-embedded-io = "0.6.1"
+embedded-io = "0.7.1"
 
 [dev-dependencies]
 approx = "0.5.1"
