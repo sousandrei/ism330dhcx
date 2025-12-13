@@ -3,7 +3,7 @@ authors = ["Andrei Sousa <sousandrei@gmail.com>"]
 categories = ["embedded", "hardware-support", "no-std"]
 description = "Simple driver for ST ism330dhcx sensor"
 documentation = "https://docs.rs/ism330dhcx"
-edition = "2021"
+edition = "2024"
 include = ["src/", "LICENSE-*", "README.md", "CHANGELOG.md", "COPYRIGHT"]
 keywords = [
     "i2c",
@@ -20,9 +20,9 @@ version = "0.6.0"
 
 
 [dependencies]
-defmt = "0.3"
+defmt = "1.0.1"
 embedded-hal = "1.0.0"
-embedded-io = "0.6.1"
+embedded-io = "0.7.1"
 
 [dev-dependencies]
 approx = "0.5.1"

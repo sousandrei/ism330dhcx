@@ -6,7 +6,6 @@ use panic_probe as _;
 
 use embassy_executor::Spawner;
 use embassy_stm32::i2c::I2c;
-use embassy_stm32::time::Hertz;
 use embassy_time::Timer;
 
 use ism330dhcx::{ctrl1xl, ctrl2g, Ism330Dhcx};
@@ -21,7 +20,7 @@ async fn main(_spawner: Spawner) {
     //==========================================
     // Declaring I2C1
 
-    let mut i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Hertz(100_000), Default::default());
+    let mut i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Default::default());
 
     //==============================================
     // Declaring sensor
