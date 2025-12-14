@@ -4,11 +4,16 @@ use embedded_hal::i2c::I2c;
 use crate::registers::{FsG, FsXl};
 use crate::{AccelValue, GyroValue};
 
+/// Sensor tag identifying the data source in the FIFO.
 #[repr(u8)]
 pub enum SensorTag {
+    /// Empty tag.
     Empty,
+    /// Gyroscope data (No Compression).
     GyroscopeNC,
+    /// Accelerometer data (No Compression).
     AccelerometerNC,
+    /// Other tag values.
     Other(u8),
 }
 
@@ -26,26 +31,37 @@ impl TryFrom<u8> for SensorTag {
     }
 }
 
+/// Parsed FIFO value.
 #[derive(Copy, Clone, Debug, defmt::Format)]
 pub enum Value {
+    /// Empty value.
     Empty,
+    /// Gyroscope reading.
     Gyro(GyroValue),
+    /// Accelerometer reading.
     Accel(AccelValue),
+    /// Other unparsed data.
     Other(u8, [u8; 6]),
 }
 
 const ADDR: u8 = 0x78;
 
+/// FIFO output handler.
 pub struct FifoOut {
     pub address: u8,
 }
 
 impl FifoOut {
+    /// Create a new FIFO output handler.
     pub fn new(address: u8) -> Self {
         FifoOut { address }
     }
 
     /// Pop a value from the FIFO.
+    ///
+    /// Reads 7 bytes from the FIFO output register.
+    /// The first 5 bits of the first byte are the tag.
+    /// The rest is the data.
     pub fn pop<I2C, E>(
         &mut self,
         i2c: &mut I2C,
@@ -71,6 +87,84 @@ impl FifoOut {
             Ok(SensorTag::Other(u)) => Ok(Value::Other(u, *out)),
             _ => unreachable!(),
         }
+    }
+}
+
+use crate::Ism330Dhcx;
+use crate::registers::{
+    BdrGy, BdrXl, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode, FifoStatus, Register,
+};
+
+/// FIFO methods.
+pub trait Fifo<I2C, E>
+where
+    I2C: I2c<Error = E>,
+{
+    /// Set FIFO mode.
+    fn set_fifo_mode(&mut self, mode: FifoMode) -> Result<(), E>;
+    /// Set accelerometer batch data rate.
+    fn set_fifo_accel_batch_rate(&mut self, rate: BdrXl) -> Result<(), E>;
+    /// Set gyroscope batch data rate.
+    fn set_fifo_gyro_batch_rate(&mut self, rate: BdrGy) -> Result<(), E>;
+    /// Enable FIFO compression.
+    fn set_fifo_compression(&mut self, enable: bool) -> Result<(), E>;
+    /// Get FIFO status.
+    fn get_fifo_status(&mut self) -> Result<FifoStatus, E>;
+    /// Pop a value from the FIFO.
+    fn fifo_pop(&mut self) -> Result<Value, E>;
+}
+
+impl<I2C, E> Fifo<I2C, E> for Ism330Dhcx<I2C>
+where
+    I2C: I2c<Error = E>,
+{
+    fn set_fifo_mode(&mut self, mode: FifoMode) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl4, |v| {
+            let mut reg = FifoCtrl4::from_bytes([v]);
+            reg.set_fifo_mode(mode);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_accel_batch_rate(&mut self, rate: BdrXl) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl3, |v| {
+            let mut reg = FifoCtrl3::from_bytes([v]);
+            reg.set_bdr_xl(rate);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_gyro_batch_rate(&mut self, rate: BdrGy) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl3, |v| {
+            let mut reg = FifoCtrl3::from_bytes([v]);
+            reg.set_bdr_gy(rate);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_compression(&mut self, enable: bool) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_fifo_compr_rt_en(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn get_fifo_status(&mut self) -> Result<FifoStatus, E> {
+        let mut out = [0u8; 2];
+        self.i2c
+            .write_read(self.address, &[Register::FifoStatus1.addr()], &mut out)?;
+        Ok(FifoStatus::from_bytes(out))
+    }
+
+    fn fifo_pop(&mut self) -> Result<Value, E> {
+        use crate::accelerometer::Accelerometer;
+        use crate::gyroscope::Gyroscope;
+
+        let gyro_scale = self.get_gyro_scale()?;
+        let accel_scale = self.get_accel_scale()?;
+
+        FifoOut::new(self.address).pop(&mut self.i2c, gyro_scale, accel_scale)
     }
 }
 

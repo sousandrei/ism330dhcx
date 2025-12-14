@@ -1,7 +1,9 @@
 use crate::registers::FsG;
 
+/// Conversion factor from Degrees Per Second to Radians Per Second.
 pub const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
 
+/// High-level gyroscope reading.
 #[derive(Copy, Clone, Debug, defmt::Format)]
 pub struct GyroValue {
     range: FsG,
@@ -9,10 +11,12 @@ pub struct GyroValue {
 }
 
 impl GyroValue {
+    /// Create a new `GyroValue` from raw counts and range.
     pub fn new(range: FsG, count: [i16; 3]) -> GyroValue {
         GyroValue { range, count }
     }
 
+    /// Create a new `GyroValue` from raw byte measurements (little-endian).
     pub fn from_msr(range: FsG, measurements: &[u8; 6]) -> GyroValue {
         let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
         let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
@@ -23,23 +27,115 @@ impl GyroValue {
         }
     }
 
+    /// Return the raw signed integer counts for X, Y, Z axes.
     pub fn count(&self) -> [i16; 3] {
         self.count
     }
 
-    /// As radians [rad]
+    /// Return angular velocity in radians per second [rad/s].
     pub fn as_rad(&self) -> [f64; 3] {
         self.as_mdps().map(|v| v * SENSORS_DPS_TO_RADS / 1000.)
     }
 
-    /// As milli degrees per second [mdps]
+    /// Return angular velocity in milli-degrees per second \[mdps\].
     pub fn as_mdps(&self) -> [f64; 3] {
         let sensitivity = self.range.sensitivity() as f64;
         self.count.map(|r| r as f64 * sensitivity)
     }
 
-    /// As degrees per second [dps]
+    /// Return angular velocity in degrees per second \[dps\].
     pub fn as_dps(&self) -> [f64; 3] {
         self.as_mdps().map(|v| v / 1000.)
+    }
+}
+
+use crate::Ism330Dhcx;
+use crate::registers::{Ctrl2G, Ctrl7G, FsGScale, OdrG, Register};
+use embedded_hal::i2c::I2c;
+
+/// Gyroscope sensor methods.
+pub trait Gyroscope<I2C, E>
+where
+    I2C: I2c<Error = E>,
+{
+    /// Set gyroscope output data rate.
+    fn set_gyro_odr(&mut self, odr: OdrG) -> Result<(), E>;
+    /// Set gyroscope full-scale range.
+    fn set_gyro_scale(&mut self, scale: FsG) -> Result<(), E>;
+    /// Get current gyroscope full-scale range.
+    fn get_gyro_scale(&mut self) -> Result<FsG, E>;
+    /// Enable Gyroscope High-Performance mode (disable g_hm_mode bit).
+    fn set_g_hm_mode(&mut self, enable: bool) -> Result<(), E>;
+    /// Get gyroscope reading.
+    fn get_gyroscope(&mut self) -> Result<GyroValue, E>;
+}
+
+impl<I2C, E> Gyroscope<I2C, E> for Ism330Dhcx<I2C>
+where
+    I2C: I2c<Error = E>,
+{
+    fn set_gyro_odr(&mut self, odr: OdrG) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl2G, |v| {
+            let mut reg = Ctrl2G::from_bytes([v]);
+            reg.set_odr_g(odr);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_gyro_scale(&mut self, scale: FsG) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl2G, |v| {
+            let mut reg = Ctrl2G::from_bytes([v]);
+
+            // Reset fields
+            reg.set_fs_125(false);
+            reg.set_fs_4000(false);
+
+            match scale {
+                FsG::Dps125 => reg.set_fs_125(true),
+                FsG::Dps4000 => reg.set_fs_4000(true),
+                FsG::Dps250 => reg.set_fs_g(FsGScale::Dps250),
+                FsG::Dps500 => reg.set_fs_g(FsGScale::Dps500),
+                FsG::Dps1000 => reg.set_fs_g(FsGScale::Dps1000),
+                FsG::Dps2000 => reg.set_fs_g(FsGScale::Dps2000),
+            }
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn get_gyro_scale(&mut self) -> Result<FsG, E> {
+        let v = self.read_reg(Register::Ctrl2G)?;
+        let reg = Ctrl2G::from_bytes([v]);
+
+        if reg.fs_4000() {
+            return Ok(FsG::Dps4000);
+        }
+        if reg.fs_125() {
+            return Ok(FsG::Dps125);
+        }
+        Ok(match reg.fs_g() {
+            FsGScale::Dps250 => FsG::Dps250,
+            FsGScale::Dps500 => FsG::Dps500,
+            FsGScale::Dps1000 => FsG::Dps1000,
+            FsGScale::Dps2000 => FsG::Dps2000,
+        })
+    }
+
+    fn set_g_hm_mode(&mut self, enable: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            // Logic inverted: bit 1 means disabled.
+            reg.set_g_hm_mode(!enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn get_gyroscope(&mut self) -> Result<GyroValue, E> {
+        let scale = self.get_gyro_scale()?;
+
+        let mut measurements = [0u8; 6];
+        self.i2c
+            .write_read(self.address, &[0x22], &mut measurements)?;
+
+        Ok(GyroValue::from_msr(scale, &measurements))
     }
 }

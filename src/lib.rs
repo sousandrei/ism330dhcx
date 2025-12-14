@@ -28,8 +28,9 @@ pub mod fifo;
 pub mod gyroscope;
 pub mod registers;
 
-pub use accelerometer::{AccelValue, SENSORS_GRAVITY_STANDARD};
-pub use gyroscope::{GyroValue, SENSORS_DPS_TO_RADS};
+pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
+pub use fifo::Fifo;
+pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 
 use embedded_hal::i2c::I2c;
 use registers::*;
@@ -40,7 +41,9 @@ pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 // SENSORS_DPS_TO_RADS moved to gyroscope.rs
 // SENSORS_GRAVITY_STANDARD moved to accelerometer.rs
 
+/// Driver for the ISM330DHCX sensor.
 pub struct Ism330Dhcx<I2C> {
+    /// I2C address.
     pub address: u8,
     i2c: I2C,
 }
@@ -49,31 +52,33 @@ impl<I2C, E> Ism330Dhcx<I2C>
 where
     I2C: I2c<Error = E>,
 {
+    /// Create a new driver instance with the default I2C address (0x6B).
     pub fn new(i2c: I2C) -> Result<Self, E> {
         Self::new_with_address(i2c, DEFAULT_I2C_ADDRESS)
     }
 
+    /// Create a new driver instance with a specific I2C address.
     pub fn new_with_address(i2c: I2C, address: u8) -> Result<Self, E> {
         Ok(Self { address, i2c })
     }
 
-    /// Return the underlying I2C interface
+    /// Destroy the driver and return the underlying I2C interface.
     pub fn destroy(self) -> I2C {
         self.i2c
     }
 
-    fn read_reg(&mut self, reg: Register) -> Result<u8, E> {
+    pub(crate) fn read_reg(&mut self, reg: Register) -> Result<u8, E> {
         let mut buffer = [0u8];
         self.i2c
             .write_read(self.address, &[reg.addr()], &mut buffer)?;
         Ok(buffer[0])
     }
 
-    fn write_reg(&mut self, reg: Register, value: u8) -> Result<(), E> {
+    pub(crate) fn write_reg(&mut self, reg: Register, value: u8) -> Result<(), E> {
         self.i2c.write(self.address, &[reg.addr(), value])
     }
 
-    fn modify_reg<F>(&mut self, reg: Register, f: F) -> Result<(), E>
+    pub(crate) fn modify_reg<F>(&mut self, reg: Register, f: F) -> Result<(), E>
     where
         F: FnOnce(u8) -> u8,
     {
@@ -82,6 +87,7 @@ where
         self.write_reg(reg, new_value)
     }
 
+    /// Set the I2C address.
     pub fn set_address(&mut self, address: u8) {
         self.address = address;
     }
@@ -90,6 +96,7 @@ where
     // Configuration
     // ===========================================
 
+    /// Reboot memory content.
     pub fn set_boot(&mut self, boot: bool) -> Result<(), E> {
         self.modify_reg(Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
@@ -98,6 +105,9 @@ where
         })
     }
 
+    /// Block Data Update.
+    ///
+    /// If true, output registers are not updated until MSB and LSB have been read.
     pub fn set_bdu(&mut self, bdu: bool) -> Result<(), E> {
         self.modify_reg(Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
@@ -106,184 +116,13 @@ where
         })
     }
 
+    /// Register address automatically incremented during a multiple byte access with a serial interface.
     pub fn set_if_inc(&mut self, if_inc: bool) -> Result<(), E> {
         self.modify_reg(Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_if_inc(if_inc);
             reg.into_bytes()[0]
         })
-    }
-
-    // ===========================================
-    // Accelerometer
-    // ===========================================
-
-    pub fn set_accel_odr(&mut self, odr: OdrXl) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl1Xl, |v| {
-            let mut reg = Ctrl1Xl::from_bytes([v]);
-            reg.set_odr_xl(odr);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn set_accel_scale(&mut self, scale: FsXl) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl1Xl, |v| {
-            let mut reg = Ctrl1Xl::from_bytes([v]);
-            reg.set_fs_xl(scale);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn get_accel_scale(&mut self) -> Result<FsXl, E> {
-        let v = self.read_reg(Register::Ctrl1Xl)?;
-        let reg = Ctrl1Xl::from_bytes([v]);
-        Ok(reg.fs_xl())
-    }
-
-    pub fn set_lpf2_xl_en(&mut self, enable: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl1Xl, |v| {
-            let mut reg = Ctrl1Xl::from_bytes([v]);
-            reg.set_lpf2_xl_en(enable);
-            reg.into_bytes()[0]
-        })
-    }
-
-    // ===========================================
-    // Gyroscope
-    // ===========================================
-
-    pub fn set_gyro_odr(&mut self, odr: OdrG) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl2G, |v| {
-            let mut reg = Ctrl2G::from_bytes([v]);
-            reg.set_odr_g(odr);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn set_gyro_scale(&mut self, scale: FsG) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl2G, |v| {
-            let mut reg = Ctrl2G::from_bytes([v]);
-
-            // Reset fields
-            reg.set_fs_125(false);
-            reg.set_fs_4000(false);
-
-            match scale {
-                FsG::Dps125 => reg.set_fs_125(true),
-                FsG::Dps4000 => reg.set_fs_4000(true),
-                FsG::Dps250 => reg.set_fs_g(FsGScale::Dps250),
-                FsG::Dps500 => reg.set_fs_g(FsGScale::Dps500),
-                FsG::Dps1000 => reg.set_fs_g(FsGScale::Dps1000),
-                FsG::Dps2000 => reg.set_fs_g(FsGScale::Dps2000),
-            }
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn get_gyro_scale(&mut self) -> Result<FsG, E> {
-        let v = self.read_reg(Register::Ctrl2G)?;
-        let reg = Ctrl2G::from_bytes([v]);
-
-        if reg.fs_4000() {
-            return Ok(FsG::Dps4000);
-        }
-        if reg.fs_125() {
-            return Ok(FsG::Dps125);
-        }
-        Ok(match reg.fs_g() {
-            FsGScale::Dps250 => FsG::Dps250,
-            FsGScale::Dps500 => FsG::Dps500,
-            FsGScale::Dps1000 => FsG::Dps1000,
-            FsGScale::Dps2000 => FsG::Dps2000,
-        })
-    }
-
-    // ===========================================
-    // CTRL7_G
-    // ===========================================
-
-    pub fn set_g_hm_mode(&mut self, enable: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl7G, |v| {
-            let mut reg = Ctrl7G::from_bytes([v]);
-            reg.set_g_hm_mode(enable);
-            reg.into_bytes()[0]
-        })
-    }
-
-    // ===========================================
-    // CTRL9_XL
-    // ===========================================
-
-    pub fn set_den_x(&mut self, val: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl9Xl, |v| {
-            let mut reg = Ctrl9Xl::from_bytes([v]);
-            reg.set_den_x(val);
-            reg.into_bytes()[0]
-        })
-    }
-    pub fn set_den_y(&mut self, val: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl9Xl, |v| {
-            let mut reg = Ctrl9Xl::from_bytes([v]);
-            reg.set_den_y(val);
-            reg.into_bytes()[0]
-        })
-    }
-    pub fn set_den_z(&mut self, val: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl9Xl, |v| {
-            let mut reg = Ctrl9Xl::from_bytes([v]);
-            reg.set_den_z(val);
-            reg.into_bytes()[0]
-        })
-    }
-    pub fn set_den_device_conf(&mut self, val: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl9Xl, |v| {
-            let mut reg = Ctrl9Xl::from_bytes([v]);
-            reg.set_device_conf(val);
-            reg.into_bytes()[0]
-        })
-    }
-
-    // ===========================================
-    // FIFO
-    // ===========================================
-
-    pub fn set_fifo_mode(&mut self, mode: FifoMode) -> Result<(), E> {
-        self.modify_reg(Register::FifoCtrl4, |v| {
-            let mut reg = FifoCtrl4::from_bytes([v]);
-            reg.set_fifo_mode(mode);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn set_fifo_accel_batch_rate(&mut self, rate: BdrXl) -> Result<(), E> {
-        self.modify_reg(Register::FifoCtrl3, |v| {
-            let mut reg = FifoCtrl3::from_bytes([v]);
-            reg.set_bdr_xl(rate);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn set_fifo_gyro_batch_rate(&mut self, rate: BdrGy) -> Result<(), E> {
-        self.modify_reg(Register::FifoCtrl3, |v| {
-            let mut reg = FifoCtrl3::from_bytes([v]);
-            reg.set_bdr_gy(rate);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn set_fifo_compression(&mut self, enable: bool) -> Result<(), E> {
-        self.modify_reg(Register::FifoCtrl2, |v| {
-            let mut reg = FifoCtrl2::from_bytes([v]);
-            reg.set_fifo_compr_rt_en(enable);
-            reg.into_bytes()[0]
-        })
-    }
-
-    pub fn get_fifo_status(&mut self) -> Result<FifoStatus, E> {
-        let mut out = [0u8; 2];
-        self.i2c
-            .write_read(self.address, &[Register::FifoStatus1.addr()], &mut out)?;
-        Ok(FifoStatus::from_bytes(out))
     }
 
     // ===========================================
@@ -302,31 +141,10 @@ where
         Ok(temp)
     }
 
-    pub fn get_gyroscope(&mut self) -> Result<GyroValue, E> {
-        let scale = self.get_gyro_scale()?;
-
-        let mut measurements = [0u8; 6];
-        self.i2c
-            .write_read(self.address, &[0x22], &mut measurements)?;
-
-        Ok(GyroValue::from_msr(scale, &measurements))
-    }
-
-    pub fn get_accelerometer(&mut self) -> Result<AccelValue, E> {
-        let scale = self.get_accel_scale()?;
-
-        let mut measurements = [0u8; 6];
-        self.i2c
-            .write_read(self.address, &[0x28], &mut measurements)?;
-
-        Ok(AccelValue::from_msr(scale, &measurements))
-    }
-
-    pub fn fifo_pop(&mut self) -> Result<fifo::Value, E> {
-        let gyro_scale = self.get_gyro_scale()?;
-        let accel_scale = self.get_accel_scale()?;
-
-        fifo::FifoOut::new(self.address).pop(&mut self.i2c, gyro_scale, accel_scale)
+    /// Set chain full scale.
+    pub fn set_chain_full_scale(&mut self) -> Result<&mut Self, E> {
+        self.set_gyro_scale(FsG::Dps500)?;
+        Ok(self)
     }
 }
 

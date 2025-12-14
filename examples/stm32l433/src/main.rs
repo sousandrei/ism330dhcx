@@ -9,7 +9,7 @@ use embassy_stm32::i2c::I2c;
 use embassy_time::Timer;
 
 use ism330dhcx::registers::{FsG, FsXl, OdrG, OdrXl};
-use ism330dhcx::Ism330Dhcx;
+use ism330dhcx::{Accelerometer, Gyroscope, Ism330Dhcx};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -41,10 +41,7 @@ async fn main(_spawner: Spawner) {
 
     loop {
         defmt::info!("Temperature: {}", sensor.get_temperature().unwrap());
-        defmt::info!(
-            "Gyroscope: {:?}",
-            sensor.get_gyroscope().unwrap().as_dps()
-        );
+        defmt::info!("Gyroscope: {:?}", sensor.get_gyroscope().unwrap().as_dps());
         defmt::info!(
             "Accelerometer: {:?}",
             sensor.get_accelerometer().unwrap().as_m_ss()
