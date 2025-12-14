@@ -3,67 +3,31 @@
 //! # Quick Start
 //! To declare a sensor is pretty simple:
 //!
-//! ```rust
-//! let sensor = Ism330Dhcx::new(&mut i2c).unwrap()
+//! ```rust,ignore
+//! let sensor = Ism330Dhcx::new(i2c).unwrap();
 //! ```
 //!
-//! If you want to use another address for the chip, you can do:
+//! The driver now owns the I2C bus.
 //!
-//! ```rust
-//! let sensor = Ism330Dhcx::new_with_address(&mut i2c, 0x6au8).unwrap()
+//! To configure the sensor, use the high-level methods:
+//!
+//! ```rust,ignore
+//! sensor.set_accel_odr(OdrXl::Hz52).unwrap();
+//! sensor.set_boot(true).unwrap();
 //! ```
-//!
-//! Or alter it after the fact
-//!
-//! ```rust
-//! sensor.set_address(0x6au8);
-//! ```
-//!
-//! All registers have the bits addressed by their function, for example here se set the `BOOT` register in the `CTRL_3C` register to `1`
-//!
-//! ```rust
-//! sensor.ctrl3c.set_boot(i2c, true).unwrap();
-//! ```
-//!
-//! For bits that operate together, they have their custom type abstracted. For example, to set the accelerometer data rate you have to operate 4 bits. But here you just have to specify your desired data rate and the driver takes care of it.
-//!
-//! ```rust
-//! // Sets the following bits
-//! // ODR_XL3 to 0
-//! // ODR_XL2 to 0
-//! // ODR_XL1 to 1
-//! // ODR_XL0 to 1
-//!
-//! sensor
-//!     .ctrl1xl
-//!     .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz52)
-//!     .unwrap();
-//! ```
-
 //!
 //! # Reference
 //!
-//!- [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
-//!- [Datasheet](https://www.st.com/resource/en/datasheet/ism330dhcx.pdf)
+//! - [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
+//! - [Datasheet](https://www.st.com/resource/en/datasheet/ism330dhcx.pdf)
 
 #![cfg_attr(not(test), no_std)]
 
-pub mod ctrl1xl;
-pub mod ctrl2g;
-pub mod ctrl3c;
-pub mod ctrl7g;
-pub mod ctrl9xl;
 pub mod fifo;
-pub mod fifoctrl;
-pub mod fifostatus;
+pub mod registers;
 
-use ctrl1xl::Ctrl1Xl;
-use ctrl2g::Ctrl2G;
-use ctrl3c::Ctrl3C;
-use ctrl7g::Ctrl7G;
-use ctrl9xl::Ctrl9Xl;
-use fifoctrl::FifoCtrl;
-use fifostatus::FifoStatus;
+use embedded_hal::i2c::I2c;
+use registers::*;
 
 /// Datasheet write address for the device. (D6h)
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
@@ -73,16 +37,16 @@ const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
 
 #[derive(Copy, Clone, Debug, defmt::Format)]
 pub struct GyroValue {
-    range: ctrl2g::Fs,
+    range: FsG,
     count: [i16; 3],
 }
 
 impl GyroValue {
-    pub fn new(range: ctrl2g::Fs, count: [i16; 3]) -> GyroValue {
+    pub fn new(range: FsG, count: [i16; 3]) -> GyroValue {
         GyroValue { range, count }
     }
 
-    pub fn from_msr(range: ctrl2g::Fs, measurements: &[u8; 6]) -> GyroValue {
+    pub fn from_msr(range: FsG, measurements: &[u8; 6]) -> GyroValue {
         let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
         let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
         let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
@@ -115,16 +79,16 @@ impl GyroValue {
 
 #[derive(Copy, Clone, Debug, defmt::Format)]
 pub struct AccelValue {
-    range: ctrl1xl::Fs_Xl,
+    range: FsXl,
     count: [i16; 3],
 }
 
 impl AccelValue {
-    pub fn new(range: ctrl1xl::Fs_Xl, count: [i16; 3]) -> AccelValue {
+    pub fn new(range: FsXl, count: [i16; 3]) -> AccelValue {
         AccelValue { range, count }
     }
 
-    pub fn from_msr(range: ctrl1xl::Fs_Xl, measurements: &[u8; 6]) -> AccelValue {
+    pub fn from_msr(range: FsXl, measurements: &[u8; 6]) -> AccelValue {
         let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
         let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
         let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
@@ -155,95 +119,241 @@ impl AccelValue {
     }
 }
 
-trait Register {
-    fn read<I2C>(&self, i2c: &mut I2C, chip_addr: u8, reg_addr: u8) -> Result<u8, I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
-        let mut data: [u8; 1] = [0];
-        i2c.write_read(chip_addr, &[reg_addr], &mut data)?;
-        Ok(data[0])
-    }
-
-    fn write<I2C>(
-        &self,
-        i2c: &mut I2C,
-        chip_addr: u8,
-        reg_addr: u8,
-        bits: u8,
-    ) -> Result<(), I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
-        i2c.write(chip_addr, &[reg_addr, bits])
-    }
-}
-
-pub struct Ism330Dhcx {
+pub struct Ism330Dhcx<I2C> {
     pub address: u8,
-    pub ctrl1xl: Ctrl1Xl,
-    pub ctrl2g: Ctrl2G,
-    pub ctrl3c: Ctrl3C,
-    pub ctrl7g: Ctrl7G,
-    pub ctrl9xl: Ctrl9Xl,
-    pub fifoctrl: FifoCtrl,
-    pub fifostatus: FifoStatus,
+    i2c: I2C,
 }
 
-impl Ism330Dhcx {
-    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
+impl<I2C, E> Ism330Dhcx<I2C>
+where
+    I2C: I2c<Error = E>,
+{
+    pub fn new(i2c: I2C) -> Result<Self, E> {
         Self::new_with_address(i2c, DEFAULT_I2C_ADDRESS)
     }
 
-    pub fn new_with_address<I2C>(i2c: &mut I2C, address: u8) -> Result<Self, I2C::Error>
+    pub fn new_with_address(i2c: I2C, address: u8) -> Result<Self, E> {
+        Ok(Self { address, i2c })
+    }
+
+    /// Return the underlying I2C interface
+    pub fn destroy(self) -> I2C {
+        self.i2c
+    }
+
+    fn read_reg(&mut self, reg: Register) -> Result<u8, E> {
+        let mut buffer = [0u8];
+        self.i2c.write_read(self.address, &[reg.addr()], &mut buffer)?;
+        Ok(buffer[0])
+    }
+
+    fn write_reg(&mut self, reg: Register, value: u8) -> Result<(), E> {
+        self.i2c.write(self.address, &[reg.addr(), value])
+    }
+
+    fn modify_reg<F>(&mut self, reg: Register, f: F) -> Result<(), E>
     where
-        I2C: embedded_hal::i2c::I2c,
+        F: FnOnce(u8) -> u8,
     {
-        let mut registers = [0u8; 13];
-        i2c.write_read(address, &[0x10], &mut registers)?;
-
-        let ctrl1xl = Ctrl1Xl::new(registers[0], address);
-        let ctrl2g = Ctrl2G::new(registers[1], address);
-        let ctrl3c = Ctrl3C::new(registers[2], address);
-        let ctrl7g = Ctrl7G::new(registers[6], address);
-        let ctrl9xl = Ctrl9Xl::new(registers[8], address);
-        let fifoctrl = FifoCtrl::new(registers[9..13].try_into().unwrap(), address);
-        let fifostatus = FifoStatus::new(address);
-
-        let ism330dhcx = Self {
-            address,
-            ctrl1xl,
-            ctrl2g,
-            ctrl3c,
-            ctrl7g,
-            ctrl9xl,
-            fifoctrl,
-            fifostatus,
-        };
-
-        Ok(ism330dhcx)
+        let value = self.read_reg(reg)?;
+        let new_value = f(value);
+        self.write_reg(reg, new_value)
     }
 
     pub fn set_address(&mut self, address: u8) {
-        self.ctrl1xl.address = address;
-        self.ctrl2g.address = address;
-        self.ctrl3c.address = address;
-        self.ctrl7g.address = address;
-        self.ctrl9xl.address = address;
-        self.fifoctrl.address = address;
-        self.fifostatus.address = address;
+        self.address = address;
     }
 
+    // ===========================================
+    // Configuration
+    // ===========================================
+
+    pub fn set_boot(&mut self, boot: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl3C, |v| {
+            if boot {
+                v | CTRL3_C_BOOT
+            } else {
+                v & !CTRL3_C_BOOT
+            }
+        })
+    }
+
+    pub fn set_bdu(&mut self, bdu: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl3C, |v| {
+            if bdu {
+                v | CTRL3_C_BDU
+            } else {
+                v & !CTRL3_C_BDU
+            }
+        })
+    }
+
+    pub fn set_if_inc(&mut self, if_inc: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl3C, |v| {
+            if if_inc {
+                v | CTRL3_C_IF_INC
+            } else {
+                v & !CTRL3_C_IF_INC
+            }
+        })
+    }
+
+    // ===========================================
+    // Accelerometer
+    // ===========================================
+
+    pub fn set_accel_odr(&mut self, odr: OdrXl) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl1Xl, |v| {
+            (v & !CTRL1_XL_ODR_MASK) | ((odr as u8) << CTRL1_XL_ODR_SHIFT)
+        })
+    }
+
+    pub fn set_accel_scale(&mut self, scale: FsXl) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl1Xl, |v| {
+            (v & !CTRL1_XL_FS_MASK) | ((scale as u8) << CTRL1_XL_FS_SHIFT)
+        })
+    }
+
+    pub fn get_accel_scale(&mut self) -> Result<FsXl, E> {
+        let v = self.read_reg(Register::Ctrl1Xl)?;
+        let raw = (v & CTRL1_XL_FS_MASK) >> CTRL1_XL_FS_SHIFT;
+        Ok(match raw {
+            0b00 => FsXl::G2,
+            0b01 => FsXl::G16,
+            0b10 => FsXl::G4,
+            0b11 => FsXl::G8,
+            _ => unreachable!(),
+        })
+    }
+
+    pub fn set_lpf2_xl_en(&mut self, enable: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl1Xl, |v| {
+            if enable {
+                v | CTRL1_XL_LPF2_XL_EN
+            } else {
+                v & !CTRL1_XL_LPF2_XL_EN
+            }
+        })
+    }
+
+    // ===========================================
+    // Gyroscope
+    // ===========================================
+
+    pub fn set_gyro_odr(&mut self, odr: OdrG) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl2G, |v| {
+            (v & !CTRL2_G_ODR_MASK) | ((odr as u8) << CTRL2_G_ODR_SHIFT)
+        })
+    }
+
+    pub fn set_gyro_scale(&mut self, scale: FsG) -> Result<(), E> {
+        // Special cases for 125 and 4000
+        match scale {
+            FsG::Dps125 => self.modify_reg(Register::Ctrl2G, |v| (v & !CTRL2_G_FS_MASK) | CTRL2_G_FS_125),
+            FsG::Dps4000 => self.modify_reg(Register::Ctrl2G, |v| (v & !CTRL2_G_FS_MASK) | CTRL2_G_FS_4000),
+            _ => self.modify_reg(Register::Ctrl2G, |v| {
+                let mask = match scale {
+                    FsG::Dps250 => 0b00,
+                    FsG::Dps500 => 0b01,
+                    FsG::Dps1000 => 0b10,
+                    FsG::Dps2000 => 0b11,
+                    _ => unreachable!(),
+                };
+                (v & !CTRL2_G_FS_MASK) | (mask << CTRL2_G_FS_SHIFT)
+            }),
+        }
+    }
+
+    pub fn get_gyro_scale(&mut self) -> Result<FsG, E> {
+        let v = self.read_reg(Register::Ctrl2G)?;
+        // Check special bits first
+        if (v & CTRL2_G_FS_4000) != 0 {
+            return Ok(FsG::Dps4000);
+        }
+        if (v & CTRL2_G_FS_125) != 0 {
+            return Ok(FsG::Dps125);
+        }
+        let raw = (v & CTRL2_G_FS_MASK) >> CTRL2_G_FS_SHIFT;
+        Ok(match raw {
+            0b00 => FsG::Dps250,
+            0b01 => FsG::Dps500,
+            0b10 => FsG::Dps1000,
+            0b11 => FsG::Dps2000,
+            _ => unreachable!(),
+        })
+    }
+    
+    // ===========================================
+    // CTRL7_G
+    // ===========================================
+
+    pub fn set_g_hm_mode(&mut self, enable: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl7G, |v| {
+            if enable {
+                v & !CTRL7_G_G_HM_MODE // Inverted logic: 0 is enable
+            } else {
+                v | CTRL7_G_G_HM_MODE
+            }
+        })
+    }
+
+    // ===========================================
+    // CTRL9_XL
+    // ===========================================
+
+    pub fn set_den_x(&mut self, val: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl9Xl, |v| if val { v | CTRL9_XL_DEN_X } else { v & !CTRL9_XL_DEN_X })
+    }
+    pub fn set_den_y(&mut self, val: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl9Xl, |v| if val { v | CTRL9_XL_DEN_Y } else { v & !CTRL9_XL_DEN_Y })
+    }
+    pub fn set_den_z(&mut self, val: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl9Xl, |v| if val { v | CTRL9_XL_DEN_Z } else { v & !CTRL9_XL_DEN_Z })
+    }
+    pub fn set_den_device_conf(&mut self, val: bool) -> Result<(), E> {
+        self.modify_reg(Register::Ctrl9Xl, |v| if val { v | CTRL9_XL_DEVICE_CONF } else { v & !CTRL9_XL_DEVICE_CONF })
+    }
+
+    // ===========================================
+    // FIFO
+    // ===========================================
+
+    pub fn set_fifo_mode(&mut self, mode: FifoMode) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl4, |v| {
+            (v & !FIFO_CTRL4_FIFO_MODE_MASK) | (mode as u8)
+        })
+    }
+
+    pub fn set_fifo_accel_batch_rate(&mut self, rate: BdrXl) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl3, |v| {
+            (v & !FIFO_CTRL3_BDR_XL_MASK) | (rate as u8)
+        })
+    }
+
+    pub fn set_fifo_gyro_batch_rate(&mut self, rate: BdrGy) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl3, |v| {
+            (v & !FIFO_CTRL3_BDR_GY_MASK) | ((rate as u8) << FIFO_CTRL3_BDR_GY_SHIFT)
+        })
+    }
+
+    pub fn set_fifo_compression(&mut self, enable: bool) -> Result<(), E> {
+        self.modify_reg(Register::FifoCtrl2, |v| {
+            if enable {
+                v | FIFO_CTRL2_FIFO_COMPR_RT_EN
+            } else {
+                v & !FIFO_CTRL2_FIFO_COMPR_RT_EN
+            }
+        })
+    }
+
+    // ===========================================
+    // Sensors
+    // ===========================================
+
     /// Get temperature in Celsius.
-    pub fn get_temperature<I2C>(&mut self, i2c: &mut I2C) -> Result<f32, I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
+    pub fn get_temperature(&mut self) -> Result<f32, E> {
         let mut measurements = [0u8; 2];
-        i2c.write_read(self.address, &[0x20], &mut measurements)?;
+        self.i2c.write_read(self.address, &[0x20], &mut measurements)?;
 
         let raw_temp = (measurements[1] as i16) << 8 | measurements[0] as i16;
         let temp: f32 = (raw_temp as f32 / 256.0) + 25.0;
@@ -251,38 +361,29 @@ impl Ism330Dhcx {
         Ok(temp)
     }
 
-    pub fn get_gyroscope<I2C>(&mut self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
-        let scale = self.ctrl2g.chain_full_scale();
+    pub fn get_gyroscope(&mut self) -> Result<GyroValue, E> {
+        let scale = self.get_gyro_scale()?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[0x22], &mut measurements)?;
+        self.i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
         Ok(GyroValue::from_msr(scale, &measurements))
     }
 
-    pub fn get_accelerometer<I2C>(&mut self, i2c: &mut I2C) -> Result<AccelValue, I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
-        let scale = self.ctrl1xl.chain_full_scale();
+    pub fn get_accelerometer(&mut self) -> Result<AccelValue, E> {
+        let scale = self.get_accel_scale()?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[0x28], &mut measurements)?;
+        self.i2c.write_read(self.address, &[0x28], &mut measurements)?;
 
         Ok(AccelValue::from_msr(scale, &measurements))
     }
 
-    pub fn fifo_pop<I2C>(&mut self, i2c: &mut I2C) -> Result<fifo::Value, I2C::Error>
-    where
-        I2C: embedded_hal::i2c::I2c,
-    {
-        let gyro_scale = self.ctrl2g.chain_full_scale();
-        let accel_scale = self.ctrl1xl.chain_full_scale();
+    pub fn fifo_pop(&mut self) -> Result<fifo::Value, E> {
+        let gyro_scale = self.get_gyro_scale()?;
+        let accel_scale = self.get_accel_scale()?;
 
-        fifo::FifoOut::new(self.address).pop(i2c, gyro_scale, accel_scale)
+        fifo::FifoOut::new(self.address).pop(&mut self.i2c, gyro_scale, accel_scale)
     }
 }
 
@@ -290,50 +391,68 @@ impl Ism330Dhcx {
 mod tests {
     use super::*;
     use approx::*;
+    use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]
     fn parse_acceleromtere_2g() {
-        use ctrl1xl::Fs_Xl;
+        use registers::FsXl;
 
         // Table 19 in AN5398
         assert_eq!(
-            AccelValue::from_msr(Fs_Xl::G2, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_m_ss(),
+            AccelValue::from_msr(FsXl::G2, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_m_ss(),
             [0., 0., 0.]
         );
 
-        let a = AccelValue::from_msr(Fs_Xl::G2, &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        let a = AccelValue::from_msr(FsXl::G2, &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], 0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
 
-        let a = AccelValue::from_msr(Fs_Xl::G2, &[0x09, 0x40, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        let a = AccelValue::from_msr(FsXl::G2, &[0x09, 0x40, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], 1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
 
-        let a = AccelValue::from_msr(Fs_Xl::G2, &[0x97, 0xe9, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        let a = AccelValue::from_msr(FsXl::G2, &[0x97, 0xe9, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], -0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
 
-        let a = AccelValue::from_msr(Fs_Xl::G2, &[0xf7, 0xbf, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        let a = AccelValue::from_msr(FsXl::G2, &[0xf7, 0xbf, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
         assert_abs_diff_eq!(a[0], -1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
     }
 
     #[test]
     fn parse_gyro_250dps() {
-        use ctrl2g::Fs;
+        use registers::FsG;
 
         // Table 19 in AN5398
         assert_eq!(
-            GyroValue::from_msr(Fs::Dps250, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_rad(),
+            GyroValue::from_msr(FsG::Dps250, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_rad(),
             [0., 0., 0.]
         );
 
-        let a = GyroValue::from_msr(Fs::Dps250, &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        let a = GyroValue::from_msr(FsG::Dps250, &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], 100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
 
-        let a = GyroValue::from_msr(Fs::Dps250, &[0x49, 0x59, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        let a = GyroValue::from_msr(FsG::Dps250, &[0x49, 0x59, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], 200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
 
-        let a = GyroValue::from_msr(Fs::Dps250, &[0x5c, 0xd3, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        let a = GyroValue::from_msr(FsG::Dps250, &[0x5c, 0xd3, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], -100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
 
-        let a = GyroValue::from_msr(Fs::Dps250, &[0xb7, 0xa6, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        let a = GyroValue::from_msr(FsG::Dps250, &[0xb7, 0xa6, 0x0, 0x0, 0x0, 0x0]).as_rad();
         assert_abs_diff_eq!(a[0], -200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+    }
+
+    #[test]
+    fn test_set_fifo_mode() {
+        // Read register 0x0A (FifoCtrl4), modify it, write back.
+        let i2c = Mock::new(&[
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![0x0A], vec![0b00000000]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![0x0A, 0b00000001]),
+        ]);
+        
+        // Pass the mock by value to the sensor
+        let mut sensor = Ism330Dhcx::new(i2c).unwrap();
+        sensor.set_fifo_mode(FifoMode::FifoMode).unwrap();
+        
+        // Destroy sensor to get i2c back and verify expectations
+        let mut i2c = sensor.destroy();
+        i2c.done();
     }
 }

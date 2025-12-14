@@ -1,7 +1,8 @@
 use core::convert::{TryFrom, TryInto};
 use embedded_hal::i2c::I2c;
 
-use crate::{ctrl1xl, ctrl2g, AccelValue, GyroValue, Register};
+use crate::registers::{FsG, FsXl};
+use crate::{AccelValue, GyroValue};
 
 #[repr(u8)]
 pub enum SensorTag {
@@ -39,22 +40,20 @@ pub struct FifoOut {
     pub address: u8,
 }
 
-impl Register for FifoOut {}
-
 impl FifoOut {
     pub fn new(address: u8) -> Self {
         FifoOut { address }
     }
 
     /// Pop a value from the FIFO.
-    pub fn pop<I2C>(
+    pub fn pop<I2C, E>(
         &mut self,
         i2c: &mut I2C,
-        gyro_scale: ctrl2g::Fs,
-        accel_scale: ctrl1xl::Fs_Xl,
-    ) -> Result<Value, I2C::Error>
+        gyro_scale: FsG,
+        accel_scale: FsXl,
+    ) -> Result<Value, E>
     where
-        I2C: I2c,
+        I2C: I2c<Error = E>,
     {
         let mut out = [0u8; 7];
         i2c.write_read(self.address, &[ADDR], &mut out)?;
@@ -90,10 +89,11 @@ mod tests {
 
         let mut f = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
         let v = f
-            .pop(&mut i2c, ctrl2g::Fs::Dps250, ctrl1xl::Fs_Xl::G2)
+            .pop(&mut i2c, FsG::Dps250, FsXl::G2)
             .unwrap();
 
         assert!(matches!(v, Value::Gyro(_)));
         println!("{:?}", v);
+        i2c.done();
     }
 }
