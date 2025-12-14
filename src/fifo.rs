@@ -88,9 +88,7 @@ mod tests {
         )]);
 
         let mut f = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
-        let v = f
-            .pop(&mut i2c, FsG::Dps250, FsXl::G2)
-            .unwrap();
+        let v = f.pop(&mut i2c, FsG::Dps250, FsXl::G2).unwrap();
 
         assert!(matches!(v, Value::Gyro(_)));
         println!("{:?}", v);

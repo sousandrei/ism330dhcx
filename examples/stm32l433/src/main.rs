@@ -73,7 +73,7 @@ where
     sensor.set_den_x(true).unwrap();
     sensor.set_den_y(true).unwrap();
     sensor.set_den_z(true).unwrap();
-    sensor.set_device_conf(true).unwrap();
+    sensor.set_den_device_conf(true).unwrap();
 
     // =======================================
     // CTRL1_XL
