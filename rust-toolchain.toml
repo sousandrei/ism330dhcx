@@ -1,4 +1,4 @@
 [toolchain]
 channel = "1.92"
-components = ["rust-src", "rustfmt", "llvm-tools"]
+components = ["rust-src", "rustfmt", "llvm-tools", "clippy"]
 targets = ["thumbv7em-none-eabi"]
