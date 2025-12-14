@@ -22,3 +22,9 @@ pub struct Ctrl7G {
     pub hp_en_g: bool,
     pub g_hm_mode: bool,
 }
+
+impl Default for Ctrl7G {
+    fn default() -> Self {
+        Self::new()
+    }
+}

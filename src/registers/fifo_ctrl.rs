@@ -13,6 +13,12 @@ pub struct FifoCtrl2 {
     pub stop_on_wtm: bool,
 }
 
+impl Default for FifoCtrl2 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 4]
 pub enum BdrGy {
@@ -54,6 +60,12 @@ pub struct FifoCtrl3 {
     pub bdr_gy: BdrGy,
 }
 
+impl Default for FifoCtrl3 {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 3]
 pub enum FifoMode {
@@ -71,4 +83,10 @@ pub struct FifoCtrl4 {
     pub fifo_mode: FifoMode,
     #[skip]
     pub __: B5,
+}
+
+impl Default for FifoCtrl4 {
+    fn default() -> Self {
+        Self::new()
+    }
 }

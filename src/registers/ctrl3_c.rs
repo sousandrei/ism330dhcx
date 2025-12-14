@@ -14,3 +14,9 @@ pub struct Ctrl3C {
     pub bdu: bool,
     pub boot: bool,
 }
+
+impl Default for Ctrl3C {
+    fn default() -> Self {
+        Self::new()
+    }
+}

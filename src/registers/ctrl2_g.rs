@@ -57,3 +57,9 @@ pub struct Ctrl2G {
     pub fs_g: FsGScale,
     pub odr_g: OdrG,
 }
+
+impl Default for Ctrl2G {
+    fn default() -> Self {
+        Self::new()
+    }
+}

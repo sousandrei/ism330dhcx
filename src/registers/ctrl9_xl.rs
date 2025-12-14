@@ -14,3 +14,9 @@ pub struct Ctrl9Xl {
     pub den_y: bool,
     pub den_z: bool,
 }
+
+impl Default for Ctrl9Xl {
+    fn default() -> Self {
+        Self::new()
+    }
+}

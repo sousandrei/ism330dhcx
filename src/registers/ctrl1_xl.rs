@@ -46,3 +46,9 @@ pub struct Ctrl1Xl {
     pub fs_xl: FsXl,
     pub odr_xl: OdrXl,
 }
+
+impl Default for Ctrl1Xl {
+    fn default() -> Self {
+        Self::new()
+    }
+}

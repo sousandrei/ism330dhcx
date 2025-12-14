@@ -15,3 +15,9 @@ pub struct FifoStatus {
     #[skip]
     pub __: B3,
 }
+
+impl Default for FifoStatus {
+    fn default() -> Self {
+        Self::new()
+    }
+}
