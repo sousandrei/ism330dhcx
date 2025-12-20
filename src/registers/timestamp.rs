@@ -1,14 +1,33 @@
-use modular_bitfield::prelude::*;
+use bitfield::bitfield;
 
-/// Timestamp registers (40h - 43h)
-#[bitfield]
-#[derive(Debug, Copy, Clone)]
-pub struct Timestamp {
-    pub value: B8,
+bitfield! {
+    /// Timestamp registers (40h - 43h)
+    pub struct Timestamp(u8);
+    impl Debug;
+    pub value, set_value: 7, 0;
+}
+
+impl Timestamp {
+    pub fn new() -> Self {
+        Self(0)
+    }
+    pub fn from_bytes(bytes: [u8; 1]) -> Self {
+        Self(bytes[0])
+    }
+    pub fn into_bytes(self) -> [u8; 1] {
+        [self.0]
+    }
 }
 
 impl Default for Timestamp {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Copy for Timestamp {}
+impl Clone for Timestamp {
+    fn clone(&self) -> Self {
+        *self
     }
 }

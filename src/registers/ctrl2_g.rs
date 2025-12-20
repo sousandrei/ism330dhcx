@@ -1,9 +1,7 @@
-#![allow(unused_parens)]
-use modular_bitfield::{BitfieldSpecifier, bitfield};
+use bitfield::bitfield;
 
 /// Gyroscope full-scale selection.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
-#[bits = 2]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 pub enum FsGScale {
     /// ±250 dps
     Dps250 = 0b00,
@@ -13,6 +11,24 @@ pub enum FsGScale {
     Dps1000 = 0b10,
     /// ±2000 dps
     Dps2000 = 0b11,
+}
+
+impl From<u8> for FsGScale {
+    fn from(val: u8) -> Self {
+        match val {
+            0b00 => FsGScale::Dps250,
+            0b01 => FsGScale::Dps500,
+            0b10 => FsGScale::Dps1000,
+            0b11 => FsGScale::Dps2000,
+            _ => FsGScale::Dps250,
+        }
+    }
+}
+
+impl From<FsGScale> for u8 {
+    fn from(val: FsGScale) -> u8 {
+        val as u8
+    }
 }
 
 /// Helper enum for all available gyroscope full-scale ranges.
@@ -41,8 +57,7 @@ impl FsG {
 }
 
 /// Gyroscope output data rate.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
-#[bits = 4]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 pub enum OdrG {
     /// Power-down
     Off = 0b0000,
@@ -68,22 +83,66 @@ pub enum OdrG {
     Hz6667 = 0b1010,
 }
 
-/// Control register 2 (Gyroscope).
-#[bitfield]
-#[derive(Debug, Copy, Clone)]
-pub struct Ctrl2G {
+impl From<u8> for OdrG {
+    fn from(val: u8) -> Self {
+        match val {
+            0b0000 => OdrG::Off,
+            0b0001 => OdrG::Hz12_5,
+            0b0010 => OdrG::Hz26,
+            0b0011 => OdrG::Hz52,
+            0b0100 => OdrG::Hz104,
+            0b0101 => OdrG::Hz208,
+            0b0110 => OdrG::Hz416,
+            0b0111 => OdrG::Hz833,
+            0b1000 => OdrG::Hz1667,
+            0b1001 => OdrG::Hz3333,
+            0b1010 => OdrG::Hz6667,
+            _ => OdrG::Off,
+        }
+    }
+}
+
+impl From<OdrG> for u8 {
+    fn from(val: OdrG) -> u8 {
+        val as u8
+    }
+}
+
+bitfield! {
+    /// Control register 2 (Gyroscope).
+    pub struct Ctrl2G(u8);
+    impl Debug;
     /// Full-scale 4000 dps enable.
-    pub fs_4000: bool,
+    pub fs_4000, set_fs_4000: 0;
     /// Full-scale 125 dps enable.
-    pub fs_125: bool,
+    pub fs_125, set_fs_125: 1;
     /// Full-scale selection.
-    pub fs_g: FsGScale,
+    pub from into FsGScale, fs_g, set_fs_g: 3, 2;
     /// Output data rate selection.
-    pub odr_g: OdrG,
+    pub from into OdrG, odr_g, set_odr_g: 7, 4;
+}
+
+impl Ctrl2G {
+    pub fn new() -> Self {
+        Self(0)
+    }
+    pub fn from_bytes(bytes: [u8; 1]) -> Self {
+        Self(bytes[0])
+    }
+    pub fn into_bytes(self) -> [u8; 1] {
+        [self.0]
+    }
 }
 
 impl Default for Ctrl2G {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Copy for Ctrl2G {}
+impl Clone for Ctrl2G {
+    fn clone(&self) -> Self {
+        *self
     }
 }
