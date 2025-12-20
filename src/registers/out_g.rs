@@ -1,7 +1,35 @@
-use crate::registers::FsG;
+use crate::Ism330Dhcx;
+use crate::registers::{Ctrl2G, Ctrl7G, FsG, FsGScale, OdrG, Register};
+use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Conversion factor from Degrees Per Second to Radians Per Second.
 pub const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
+
+bitfield! {
+    /// Gyroscope output register (r).
+    pub struct OutG(u64);
+    impl Debug;
+    /// X-axis output.
+    pub x, _: 15, 0;
+    /// Y-axis output.
+    pub y, _: 31, 16;
+    /// Z-axis output.
+    pub z, _: 47, 32;
+}
+
+impl OutG {
+    pub fn from_bytes(bytes: [u8; 6]) -> Self {
+        let mut full_bytes = [0u8; 8];
+        full_bytes[..6].copy_from_slice(&bytes);
+        Self(u64::from_le_bytes(full_bytes))
+    }
+
+    /// Returns raw counts as [x, y, z]
+    pub fn counts(&self) -> [i16; 3] {
+        [self.x() as i16, self.y() as i16, self.z() as i16]
+    }
+}
 
 /// High-level gyroscope reading.
 #[derive(Copy, Clone, Debug, defmt::Format)]
@@ -18,12 +46,10 @@ impl GyroValue {
 
     /// Create a new `GyroValue` from raw byte measurements (little-endian).
     pub fn from_msr(range: FsG, measurements: &[u8; 6]) -> GyroValue {
-        let raw_gyro_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-        let raw_gyro_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-        let raw_gyro_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+        let out = OutG::from_bytes(*measurements);
         GyroValue {
             range,
-            count: [raw_gyro_x, raw_gyro_y, raw_gyro_z],
+            count: out.counts(),
         }
     }
 
@@ -48,10 +74,6 @@ impl GyroValue {
         self.as_mdps().map(|v| v / 1000.)
     }
 }
-
-use crate::Ism330Dhcx;
-use crate::registers::{Ctrl2G, Ctrl7G, FsGScale, OdrG, Register};
-use embedded_hal::i2c::I2c;
 
 /// Gyroscope sensor methods.
 pub trait Gyroscope {
@@ -161,9 +183,10 @@ impl Gyroscope for Ism330Dhcx {
         let scale = self.get_gyro_scale(i2c)?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[0x22], &mut measurements)?;
+        i2c.write_read(self.address, &[Register::OutXLG.addr()], &mut measurements)?;
 
-        Ok(GyroValue::from_msr(scale, &measurements))
+        let out = OutG::from_bytes(measurements);
+        Ok(GyroValue::new(scale, out.counts()))
     }
 
     fn set_chain_full_scale<I2C>(

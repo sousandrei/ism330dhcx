@@ -1,26 +1,35 @@
-#![allow(unused_parens)]
-use modular_bitfield::{bitfield, specifiers::B1};
+use bitfield::bitfield;
 
-/// Control register 3.
-#[bitfield]
-#[derive(Debug, Copy, Clone)]
-pub struct Ctrl3C {
+bitfield! {
+    /// Control register 3.
+    pub struct Ctrl3C(u8);
+    impl Debug;
     /// Software reset.
-    pub sw_reset: bool,
-    #[skip]
-    pub __: B1,
+    pub sw_reset, set_sw_reset: 0;
     /// Register address increment enable.
-    pub if_inc: bool,
+    pub if_inc, set_if_inc: 2;
     /// SPI serial interface mode selection.
-    pub sim: bool,
+    pub sim, set_sim: 3;
     /// Push-pull/open-drain selection on INT1 and INT2 pads.
-    pub pp_od: bool,
+    pub pp_od, set_pp_od: 4;
     /// Interrupt activation level.
-    pub h_lactive: bool,
+    pub h_lactive, set_h_lactive: 5;
     /// Block Data Update.
-    pub bdu: bool,
+    pub bdu, set_bdu: 6;
     /// Reboot memory content.
-    pub boot: bool,
+    pub boot, set_boot: 7;
+}
+
+impl Ctrl3C {
+    pub fn new() -> Self {
+        Self(0)
+    }
+    pub fn from_bytes(bytes: [u8; 1]) -> Self {
+        Self(bytes[0])
+    }
+    pub fn into_bytes(self) -> [u8; 1] {
+        [self.0]
+    }
 }
 
 impl Default for Ctrl3C {

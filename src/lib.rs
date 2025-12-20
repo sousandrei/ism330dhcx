@@ -23,17 +23,36 @@
 
 #![cfg_attr(not(test), no_std)]
 
-pub mod accelerometer;
-pub mod fifo;
-pub mod gyroscope;
 pub mod registers;
-pub mod temperature;
 
-pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
-pub use fifo::Fifo;
-pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
-pub use registers::ctrl3_c::Ctrl3CConfig;
-pub use temperature::Temperature;
+pub use registers::{
+    AccelValue, Accelerometer, FifoOut, GyroValue, Gyroscope, SENSORS_DPS_TO_RADS,
+    SENSORS_GRAVITY_STANDARD, TagSensor, Temperature, Value,
+    counter_bdr::{CounterBdrReg1Config, CounterBdrReg2Config},
+    ctrl1_xl::Ctrl1XlConfig,
+    ctrl2_g::Ctrl2GConfig,
+    ctrl3_c::Ctrl3CConfig,
+    ctrl4_c::Ctrl4CConfig,
+    ctrl5_c::Ctrl5CConfig,
+    ctrl6_c::Ctrl6CConfig,
+    ctrl7_g::Ctrl7GConfig,
+    ctrl8_xl::Ctrl8XlConfig,
+    ctrl9_xl::Ctrl9XlConfig,
+    ctrl10_c::Ctrl10CConfig,
+    fifo::{Fifo, FifoCtrl2Config, FifoCtrl3Config, FifoCtrl4Config},
+    free_fall::FreeFallConfig,
+    func_cfg_access::FuncCfgAccessConfig,
+    int_ctrl::{Int1CtrlConfig, Int2CtrlConfig},
+    int_dur2::IntDur2Config,
+    internal_freq_fine::InternalFreqFineConfig,
+    md_cfg::{Md1CfgConfig, Md2CfgConfig},
+    ofs_usr::OfsUsrConfig,
+    pin_ctrl::PinCtrlConfig,
+    tap_cfg::{TapCfg0Config, TapCfg1Config, TapCfg2Config},
+    tap_ths_6d::TapThs6dConfig,
+    wake_up_dur::WakeUpDurConfig,
+    wake_up_ths::WakeUpThsConfig,
+};
 
 use embedded_hal::i2c::I2c;
 use registers::*;

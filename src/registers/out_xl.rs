@@ -1,7 +1,35 @@
-use crate::registers::FsXl;
+use crate::Ism330Dhcx;
+use crate::registers::{Ctrl1Xl, FsXl, OdrXl, Register};
+use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Standard gravity constant [m/s²]
 pub const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
+
+bitfield! {
+    /// Accelerometer output register (r).
+    pub struct OutXl(u64);
+    impl Debug;
+    /// X-axis output.
+    pub x, _: 15, 0;
+    /// Y-axis output.
+    pub y, _: 31, 16;
+    /// Z-axis output.
+    pub z, _: 47, 32;
+}
+
+impl OutXl {
+    pub fn from_bytes(bytes: [u8; 6]) -> Self {
+        let mut full_bytes = [0u8; 8];
+        full_bytes[..6].copy_from_slice(&bytes);
+        Self(u64::from_le_bytes(full_bytes))
+    }
+
+    /// Returns raw counts as [x, y, z]
+    pub fn counts(&self) -> [i16; 3] {
+        [self.x() as i16, self.y() as i16, self.z() as i16]
+    }
+}
 
 /// High-level accelerometer reading.
 #[derive(Copy, Clone, Debug, defmt::Format)]
@@ -18,12 +46,10 @@ impl AccelValue {
 
     /// Create a new `AccelValue` from raw byte measurements (little-endian).
     pub fn from_msr(range: FsXl, measurements: &[u8; 6]) -> AccelValue {
-        let raw_acc_x = (measurements[1] as i16) << 8 | (measurements[0] as i16);
-        let raw_acc_y = (measurements[3] as i16) << 8 | (measurements[2] as i16);
-        let raw_acc_z = (measurements[5] as i16) << 8 | (measurements[4] as i16);
+        let out = OutXl::from_bytes(*measurements);
         AccelValue {
             range,
-            count: [raw_acc_x, raw_acc_y, raw_acc_z],
+            count: out.counts(),
         }
     }
 
@@ -48,10 +74,6 @@ impl AccelValue {
         self.as_mg().map(|v| v / 1000.)
     }
 }
-
-use crate::Ism330Dhcx;
-use crate::registers::{Ctrl1Xl, OdrXl, Register};
-use embedded_hal::i2c::I2c;
 
 /// Accelerometer sensor methods.
 pub trait Accelerometer {
@@ -187,8 +209,9 @@ impl Accelerometer for Ism330Dhcx {
         let scale = self.get_accel_scale(i2c)?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[0x28], &mut measurements)?;
+        i2c.write_read(self.address, &[Register::OutXLA.addr()], &mut measurements)?;
 
-        Ok(AccelValue::from_msr(scale, &measurements))
+        let out = OutXl::from_bytes(measurements);
+        Ok(AccelValue::new(scale, out.counts()))
     }
 }
