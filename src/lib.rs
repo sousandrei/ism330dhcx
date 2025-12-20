@@ -27,13 +27,11 @@ pub mod accelerometer;
 pub mod fifo;
 pub mod gyroscope;
 pub mod registers;
-pub mod temperature;
 
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
 pub use fifo::Fifo;
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use registers::ctrl3_c::Ctrl3CConfig;
-pub use temperature::Temperature;
 
 use embedded_hal::i2c::I2c;
 use registers::*;

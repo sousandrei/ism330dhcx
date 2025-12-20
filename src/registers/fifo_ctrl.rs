@@ -217,12 +217,76 @@ impl From<FifoMode> for u8 {
     }
 }
 
+/// Decimation for timestamp batching in FIFO.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+pub enum DecTsBatch {
+    /// Not batched
+    Off = 0b00,
+    /// Decimation 1
+    Dec1 = 0b01,
+    /// Decimation 8
+    Dec8 = 0b10,
+    /// Decimation 32
+    Dec32 = 0b11,
+}
+
+impl From<u8> for DecTsBatch {
+    fn from(val: u8) -> Self {
+        match val {
+            0b01 => DecTsBatch::Dec1,
+            0b10 => DecTsBatch::Dec8,
+            0b11 => DecTsBatch::Dec32,
+            _ => DecTsBatch::Off,
+        }
+    }
+}
+
+impl From<DecTsBatch> for u8 {
+    fn from(val: DecTsBatch) -> u8 {
+        val as u8
+    }
+}
+
+/// Batch data rate for temperature data.
+#[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+pub enum OdrTBatch {
+    /// Not batched
+    Off = 0b00,
+    /// 1.6 Hz
+    Hz1_6 = 0b01,
+    /// 12.5 Hz
+    Hz12_5 = 0b10,
+    /// 52 Hz
+    Hz52 = 0b11,
+}
+
+impl From<u8> for OdrTBatch {
+    fn from(val: u8) -> Self {
+        match val {
+            0b01 => OdrTBatch::Hz1_6,
+            0b10 => OdrTBatch::Hz12_5,
+            0b11 => OdrTBatch::Hz52,
+            _ => OdrTBatch::Off,
+        }
+    }
+}
+
+impl From<OdrTBatch> for u8 {
+    fn from(val: OdrTBatch) -> u8 {
+        val as u8
+    }
+}
+
 bitfield! {
     /// FIFO control register 4.
     pub struct FifoCtrl4(u8);
     impl Debug;
     /// FIFO mode selection.
     pub from into FifoMode, fifo_mode, set_fifo_mode: 2, 0;
+    /// Selects batch data rate for temperature data.
+    pub from into OdrTBatch, odr_t_batch, set_odr_t_batch: 5, 4;
+    /// Selects decimation for timestamp batching in FIFO.
+    pub from into DecTsBatch, dec_ts_batch, set_dec_ts_batch: 7, 6;
 }
 
 impl FifoCtrl4 {

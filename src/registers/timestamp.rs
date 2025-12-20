@@ -2,19 +2,19 @@ use bitfield::bitfield;
 
 bitfield! {
     /// Timestamp registers (40h - 43h)
-    pub struct Timestamp(u8);
+    pub struct Timestamp(u32);
     impl Debug;
-    pub value, set_value: 7, 0;
+    pub value, set_value: 32, 0;
 }
 
 impl Timestamp {
     pub fn new() -> Self {
         Self(0)
     }
-    pub fn from_bytes(bytes: [u8; 1]) -> Self {
+    pub fn from_bytes(bytes: [u32; 1]) -> Self {
         Self(bytes[0])
     }
-    pub fn into_bytes(self) -> [u8; 1] {
+    pub fn into_bytes(self) -> [u32; 1] {
         [self.0]
     }
 }

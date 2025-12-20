@@ -5,7 +5,7 @@ bitfield! {
     pub struct Ctrl10C(u8);
     impl Debug;
     /// Enables timestamp counter.
-    pub timestamp_en, set_timestamp_en: 2;
+    pub timestamp_en, set_timestamp_en: 5;
 }
 
 impl Ctrl10C {

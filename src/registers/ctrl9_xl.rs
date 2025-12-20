@@ -12,12 +12,12 @@ bitfield! {
     pub den_xl_en, set_den_xl_en: 3;
     /// DEN stamping on gyroscope axis.
     pub den_xl_g, set_den_xl_g: 4;
-    /// DEN value stored in LSB of X-axis.
-    pub den_x, set_den_x: 5;
+    /// DEN value stored in LSB of Z-axis.
+    pub den_z, set_den_z: 5;
     /// DEN value stored in LSB of Y-axis.
     pub den_y, set_den_y: 6;
-    /// DEN value stored in LSB of Z-axis.
-    pub den_z, set_den_z: 7;
+    /// DEN value stored in LSB of X-axis.
+    pub den_x, set_den_x: 7;
 }
 
 impl Ctrl9Xl {

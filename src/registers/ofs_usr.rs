@@ -1,10 +1,12 @@
 use bitfield::bitfield;
 
+// TODO: one of this for each axis: X, Y, Z
+
 bitfield! {
     /// Accelerometer user offset correction registers (73h - 75h)
     pub struct OfsUsr(u8);
     impl Debug;
-    /// Accelerometer user offset correction.
+    /// Accelerometer user offset correction value
     pub ofs_usr, set_ofs_usr: 7, 0;
 }
 

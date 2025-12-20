@@ -6,10 +6,16 @@ bitfield! {
     impl Debug;
     /// Unread FIFO samples (lower 10 bits).
     pub diff_fifo, _: 9, 0;
-    /// FIFO Overrun interrupt status.
-    pub fifo_ovr_ia, _: 11;
-    /// FIFO Full interrupt status.
-    pub fifo_full_ia, _: 12;
+    /// FIFO Overrun Latched.
+    pub fifo_ovr_latched, _: 11;
+    /// Counter BDR reaches the CNT_BDR_TH_[10:0] threshold.
+    pub counter_bdr_ia, _: 12;
+    /// FIFO Full status.
+    pub fifo_full_ia, _: 13;
+    /// FIFO Overrun status.
+    pub fifo_ovr_ia, _: 14;
+    /// Set FIFO Watermark Status.
+    pub fifo_wtm_ia, _: 15;
 }
 
 impl FifoStatus {

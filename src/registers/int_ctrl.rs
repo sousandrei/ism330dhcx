@@ -65,8 +65,6 @@ bitfield! {
     pub int2_fifo_full, set_int2_fifo_full: 5;
     /// Enables COUNTER_BDR_IA interrupt on INT2.
     pub int2_cnt_bdr, set_int2_cnt_bdr: 6;
-    /// Enables sleep change state interrupt on INT2 pin.
-    pub int2_sleep_change, set_int2_sleep_change: 7;
 }
 
 impl Int2Ctrl {
