@@ -8,7 +8,8 @@ use embassy_executor::Spawner;
 use embassy_stm32::i2c::I2c;
 use embassy_time::Timer;
 
-use ism330dhcx::{ctrl1xl, ctrl2g, Ism330Dhcx};
+use ism330dhcx::registers::{FsG, FsXl, OdrG, OdrXl};
+use ism330dhcx::{Accelerometer, Ctrl3CConfig, Gyroscope, Ism330Dhcx, Temperature};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -34,7 +35,7 @@ async fn main(_spawner: Spawner) {
     };
 
     // Initializing sensor
-    boot_sensor(&mut sensor, &mut i2c);
+    boot_sensor(&mut i2c, &mut sensor);
 
     // =======================================
 
@@ -54,54 +55,40 @@ async fn main(_spawner: Spawner) {
 }
 
 // Booting the sensor accoring to Adafruit's driver
-fn boot_sensor<I2C>(sensor: &mut Ism330Dhcx, i2c: &mut I2C)
+fn boot_sensor<I2C>(i2c: &mut I2C, sensor: &mut Ism330Dhcx)
 where
     I2C: embedded_hal::i2c::I2c,
 {
     // =======================================
     // CTRL3_C
 
-    sensor.ctrl3c.set_boot(i2c, true).unwrap();
-    sensor.ctrl3c.set_bdu(i2c, true).unwrap();
-    sensor.ctrl3c.set_if_inc(i2c, true).unwrap();
+    sensor.set_boot(i2c, true).unwrap();
+    sensor.set_bdu(i2c, true).unwrap();
+    sensor.set_if_inc(i2c, true).unwrap();
 
     // =======================================
     // CTRL9_XL
 
-    sensor.ctrl9xl.set_den_x(i2c, true).unwrap();
-    sensor.ctrl9xl.set_den_y(i2c, true).unwrap();
-    sensor.ctrl9xl.set_den_z(i2c, true).unwrap();
-    sensor.ctrl9xl.set_device_conf(i2c, true).unwrap();
+    sensor.set_den_x(i2c, true).unwrap();
+    sensor.set_den_y(i2c, true).unwrap();
+    sensor.set_den_z(i2c, true).unwrap();
+    sensor.set_den_device_conf(i2c, true).unwrap();
 
     // =======================================
     // CTRL1_XL
 
-    sensor
-        .ctrl1xl
-        .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz52)
-        .unwrap();
-
-    sensor
-        .ctrl1xl
-        .set_chain_full_scale(i2c, ctrl1xl::Fs_Xl::G4)
-        .unwrap();
-    sensor.ctrl1xl.set_lpf2_xl_en(i2c, true).unwrap();
+    sensor.set_accel_odr(i2c, OdrXl::Hz52).unwrap();
+    sensor.set_accel_scale(i2c, FsXl::G4).unwrap();
+    sensor.set_lpf2_xl_en(i2c, true).unwrap();
 
     // =======================================
     // CTRL2_G
 
-    sensor
-        .ctrl2g
-        .set_gyroscope_data_rate(i2c, ctrl2g::Odr::Hz52)
-        .unwrap();
-
-    sensor
-        .ctrl2g
-        .set_chain_full_scale(i2c, ctrl2g::Fs::Dps500)
-        .unwrap();
+    sensor.set_gyro_odr(i2c, OdrG::Hz52).unwrap();
+    sensor.set_gyro_scale(i2c, FsG::Dps500).unwrap();
 
     // =======================================
     // CTRL7_G
 
-    sensor.ctrl7g.set_g_hm_mode(i2c, true).unwrap();
+    sensor.set_g_hm_mode(i2c, true).unwrap();
 }
