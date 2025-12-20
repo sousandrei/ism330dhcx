@@ -37,10 +37,3 @@ impl Default for WakeUpSrc {
         Self::new()
     }
 }
-
-impl Copy for WakeUpSrc {}
-impl Clone for WakeUpSrc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

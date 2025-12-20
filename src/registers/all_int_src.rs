@@ -37,10 +37,3 @@ impl Default for AllIntSrc {
         Self::new()
     }
 }
-
-impl Copy for AllIntSrc {}
-impl Clone for AllIntSrc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

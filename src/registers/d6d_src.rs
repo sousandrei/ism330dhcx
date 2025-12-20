@@ -39,10 +39,3 @@ impl Default for D6dSrc {
         Self::new()
     }
 }
-
-impl Copy for D6dSrc {}
-impl Clone for D6dSrc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

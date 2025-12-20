@@ -37,10 +37,3 @@ impl Default for TapSrc {
         Self::new()
     }
 }
-
-impl Copy for TapSrc {}
-impl Clone for TapSrc {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

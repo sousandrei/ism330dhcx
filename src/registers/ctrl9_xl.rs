@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Control register 9 (XL).
@@ -38,9 +41,119 @@ impl Default for Ctrl9Xl {
     }
 }
 
-impl Copy for Ctrl9Xl {}
-impl Clone for Ctrl9Xl {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL9_XL register.
+pub trait Ctrl9XlConfig {
+    /// Device configuration.
+    fn set_device_conf<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// DEN active level.
+    fn set_den_lh<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// DEN stamping on accelerometer axis.
+    fn set_den_xl_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// DEN stamping on gyroscope axis.
+    fn set_den_xl_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// DEN value stored in LSB of Z-axis.
+    fn set_den_z<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// DEN value stored in LSB of Y-axis.
+    fn set_den_y<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// DEN value stored in LSB of X-axis.
+    fn set_den_x<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl9XlConfig for Ism330Dhcx {
+    fn set_device_conf<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_device_conf(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_den_lh<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_den_lh(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_den_xl_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_den_xl_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_den_xl_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_den_xl_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_den_z<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_den_z(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_den_y<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_den_y(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_den_x<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
+            let mut reg = Ctrl9Xl::from_bytes([v]);
+            reg.set_den_x(val);
+            reg.into_bytes()[0]
+        })
     }
 }

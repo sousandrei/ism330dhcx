@@ -32,13 +32,6 @@ impl Default for FsmStatusAMainpage {
     }
 }
 
-impl Copy for FsmStatusAMainpage {}
-impl Clone for FsmStatusAMainpage {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 bitfield! {
     /// Finite State Machine status register B (37h)
     pub struct FsmStatusBMainpage(u8);
@@ -68,12 +61,5 @@ impl FsmStatusBMainpage {
 impl Default for FsmStatusBMainpage {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl Copy for FsmStatusBMainpage {}
-impl Clone for FsmStatusBMainpage {
-    fn clone(&self) -> Self {
-        *self
     }
 }

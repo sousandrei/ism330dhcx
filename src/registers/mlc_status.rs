@@ -31,10 +31,3 @@ impl Default for MlcStatusMainpage {
         Self::new()
     }
 }
-
-impl Copy for MlcStatusMainpage {}
-impl Clone for MlcStatusMainpage {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

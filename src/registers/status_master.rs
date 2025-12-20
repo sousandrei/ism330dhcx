@@ -35,10 +35,3 @@ impl Default for StatusMasterMainpage {
         Self::new()
     }
 }
-
-impl Copy for StatusMasterMainpage {}
-impl Clone for StatusMasterMainpage {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

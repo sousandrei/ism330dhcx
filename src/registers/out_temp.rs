@@ -42,13 +42,6 @@ impl Default for OutTemp {
     }
 }
 
-impl Copy for OutTemp {}
-impl Clone for OutTemp {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 /// Temperature sensor methods.
 pub trait Temperature {
     /// Get temperature in Celsius.

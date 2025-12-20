@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Internal frequency register (63h)
@@ -26,9 +29,23 @@ impl Default for InternalFreqFine {
     }
 }
 
-impl Copy for InternalFreqFine {}
-impl Clone for InternalFreqFine {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for INTERNAL_FREQ_FINE register.
+pub trait InternalFreqFineConfig {
+    /// Difference in percentage of the effective ODR. 8-bit format, 2's complement.
+    fn set_freq_fine<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl InternalFreqFineConfig for Ism330Dhcx {
+    fn set_freq_fine<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::InternalFreqFine, |v| {
+            let mut reg = InternalFreqFine::from_bytes([v]);
+            reg.set_freq_fine(val);
+            reg.into_bytes()[0]
+        })
     }
 }

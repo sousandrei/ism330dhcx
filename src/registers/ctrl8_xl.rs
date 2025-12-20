@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Accelerometer LPF2 and HP filter configuration and cutoff setting.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -77,9 +80,87 @@ impl Default for Ctrl8Xl {
     }
 }
 
-impl Copy for Ctrl8Xl {}
-impl Clone for Ctrl8Xl {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL8_XL register.
+pub trait Ctrl8XlConfig {
+    /// LPF2 on 6D function selection.
+    fn set_low_pass_on_6d<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Accelerometer slope filter / high-pass filter selection.
+    fn set_hp_slope_xl_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enables accelerometer LPF2 and HPF fast-settling mode.
+    fn set_fastsettl_mode_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enables accelerometer high-pass filter reference mode.
+    fn set_hp_ref_mode_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Accelerometer LPF2 and HP filter configuration and cutoff setting.
+    fn set_hpcf_xl<I2C>(&self, i2c: &mut I2C, val: HpcfXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl8XlConfig for Ism330Dhcx {
+    fn set_low_pass_on_6d<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
+            let mut reg = Ctrl8Xl::from_bytes([v]);
+            reg.set_low_pass_on_6d(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_hp_slope_xl_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
+            let mut reg = Ctrl8Xl::from_bytes([v]);
+            reg.set_hp_slope_xl_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fastsettl_mode_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
+            let mut reg = Ctrl8Xl::from_bytes([v]);
+            reg.set_fastsettl_mode_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_hp_ref_mode_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
+            let mut reg = Ctrl8Xl::from_bytes([v]);
+            reg.set_hp_ref_mode_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_hpcf_xl<I2C>(&self, i2c: &mut I2C, val: HpcfXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
+            let mut reg = Ctrl8Xl::from_bytes([v]);
+            reg.set_hpcf_xl(val);
+            reg.into_bytes()[0]
+        })
     }
 }

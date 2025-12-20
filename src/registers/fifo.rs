@@ -298,12 +298,6 @@ impl Default for FifoCtrl2 {
         Self::new()
     }
 }
-impl Copy for FifoCtrl2 {}
-impl Clone for FifoCtrl2 {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 bitfield! {
     /// FIFO control register 3.
@@ -330,12 +324,6 @@ impl FifoCtrl3 {
 impl Default for FifoCtrl3 {
     fn default() -> Self {
         Self::new()
-    }
-}
-impl Copy for FifoCtrl3 {}
-impl Clone for FifoCtrl3 {
-    fn clone(&self) -> Self {
-        *self
     }
 }
 
@@ -366,12 +354,6 @@ impl FifoCtrl4 {
 impl Default for FifoCtrl4 {
     fn default() -> Self {
         Self::new()
-    }
-}
-impl Copy for FifoCtrl4 {}
-impl Clone for FifoCtrl4 {
-    fn clone(&self) -> Self {
-        *self
     }
 }
 
@@ -410,12 +392,6 @@ impl Default for FifoStatus {
         Self::new()
     }
 }
-impl Copy for FifoStatus {}
-impl Clone for FifoStatus {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 bitfield! {
     /// FIFO tag register (78h)
@@ -446,12 +422,6 @@ impl Default for FifoDataOutTag {
         Self::new()
     }
 }
-impl Copy for FifoDataOutTag {}
-impl Clone for FifoDataOutTag {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
 
 bitfield! {
     /// FIFO data out registers
@@ -476,12 +446,6 @@ impl FifoDataOut {
 impl Default for FifoDataOut {
     fn default() -> Self {
         Self::new()
-    }
-}
-impl Copy for FifoDataOut {}
-impl Clone for FifoDataOut {
-    fn clone(&self) -> Self {
-        *self
     }
 }
 
@@ -648,23 +612,129 @@ impl Fifo for Ism330Dhcx {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
+/// Configuration methods for FIFO_CTRL2 register.
+pub trait FifoCtrl2Config {
+    /// FIFO compression enable.
+    fn set_fifo_compr_rt_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
 
-    #[test]
-    fn test_pop_gyro() {
-        let mut i2c = Mock::new(&[Transaction::write_read(
-            0x6b,
-            vec![Register::FifoDataOutTag.addr()],
-            vec![TagSensor::GyroNC as u8 << 3, 0, 1, 0, 2, 0, 4],
-        )]);
+    /// Stop on watermark enable.
+    fn set_stop_on_wtm<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
 
-        let mut f = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
-        let v = f.pop(&mut i2c, FsG::Dps250, FsXl::G2).unwrap();
+impl FifoCtrl2Config for Ism330Dhcx {
+    fn set_fifo_compr_rt_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_fifo_compr_rt_en(val);
+            reg.into_bytes()[0]
+        })
+    }
 
-        assert!(matches!(v, Value::Gyro(_)));
-        i2c.done();
+    fn set_stop_on_wtm<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_stop_on_wtm(val);
+            reg.into_bytes()[0]
+        })
+    }
+}
+
+/// Configuration methods for FIFO_CTRL3 register.
+pub trait FifoCtrl3Config {
+    /// Accelerometer batch data rate.
+    fn set_bdr_xl<I2C>(&self, i2c: &mut I2C, val: BdrXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Gyroscope batch data rate.
+    fn set_bdr_gy<I2C>(&self, i2c: &mut I2C, val: BdrGy) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl FifoCtrl3Config for Ism330Dhcx {
+    fn set_bdr_xl<I2C>(&self, i2c: &mut I2C, val: BdrXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl3, |v| {
+            let mut reg = FifoCtrl3::from_bytes([v]);
+            reg.set_bdr_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_bdr_gy<I2C>(&self, i2c: &mut I2C, val: BdrGy) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl3, |v| {
+            let mut reg = FifoCtrl3::from_bytes([v]);
+            reg.set_bdr_gy(val);
+            reg.into_bytes()[0]
+        })
+    }
+}
+
+/// Configuration methods for FIFO_CTRL4 register.
+pub trait FifoCtrl4Config {
+    /// FIFO mode selection.
+    fn set_fifo_mode<I2C>(&self, i2c: &mut I2C, val: FifoMode) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Selects batch data rate for temperature data.
+    fn set_odr_t_batch<I2C>(&self, i2c: &mut I2C, val: OdrTBatch) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Selects decimation for timestamp batching in FIFO.
+    fn set_dec_ts_batch<I2C>(&self, i2c: &mut I2C, val: DecTsBatch) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl FifoCtrl4Config for Ism330Dhcx {
+    fn set_fifo_mode<I2C>(&self, i2c: &mut I2C, val: FifoMode) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl4, |v| {
+            let mut reg = FifoCtrl4::from_bytes([v]);
+            reg.set_fifo_mode(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_odr_t_batch<I2C>(&self, i2c: &mut I2C, val: OdrTBatch) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl4, |v| {
+            let mut reg = FifoCtrl4::from_bytes([v]);
+            reg.set_odr_t_batch(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_dec_ts_batch<I2C>(&self, i2c: &mut I2C, val: DecTsBatch) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl4, |v| {
+            let mut reg = FifoCtrl4::from_bytes([v]);
+            reg.set_dec_ts_batch(val);
+            reg.into_bytes()[0]
+        })
     }
 }

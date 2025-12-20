@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Activity/inactivity functions, configuration of filtering, and tap recognition functions (56h)
@@ -35,13 +38,6 @@ impl TapCfg0 {
 impl Default for TapCfg0 {
     fn default() -> Self {
         Self::new()
-    }
-}
-
-impl Copy for TapCfg0 {}
-impl Clone for TapCfg0 {
-    fn clone(&self) -> Self {
-        *self
     }
 }
 
@@ -116,13 +112,6 @@ impl Default for TapCfg1 {
     }
 }
 
-impl Copy for TapCfg1 {}
-impl Clone for TapCfg1 {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 /// Activity/inactivity (sleep) function enable selection.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 pub enum InactEn {
@@ -184,9 +173,209 @@ impl Default for TapCfg2 {
     }
 }
 
-impl Copy for TapCfg2 {}
-impl Clone for TapCfg2 {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for TAP_CFG0 register.
+pub trait TapCfg0Config {
+    /// Latched Interrupt.
+    fn set_lir<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable Z direction in tap recognition.
+    fn set_tap_z_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable Y direction in tap recognition.
+    fn set_tap_y_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable X direction in tap recognition.
+    fn set_tap_x_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// HPF or SLOPE filter selection on wake-up and Activity/Inactivity functions.
+    fn set_slope_fds<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Activity/inactivity interrupt mode configuration.
+    fn set_sleep_status_on_int<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Immediately clearing the latched interrupts upon the read of status register.
+    fn set_int_clr_on_read<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl TapCfg0Config for Ism330Dhcx {
+    fn set_lir<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_lir(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_tap_z_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_tap_z_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_tap_y_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_tap_y_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_tap_x_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_tap_x_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_slope_fds<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_slope_fds(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_sleep_status_on_int<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_sleep_status_on_int(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_int_clr_on_read<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg0, |v| {
+            let mut reg = TapCfg0::from_bytes([v]);
+            reg.set_int_clr_on_read(val);
+            reg.into_bytes()[0]
+        })
+    }
+}
+
+/// Configuration methods for TAP_CFG1 register.
+pub trait TapCfg1Config {
+    /// X-axis tap recognition threshold.
+    fn set_tap_ths_x<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Selection of axis priority for TAP detection.
+    fn set_tap_priority<I2C>(&self, i2c: &mut I2C, val: TapPriority) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl TapCfg1Config for Ism330Dhcx {
+    fn set_tap_ths_x<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg1, |v| {
+            let mut reg = TapCfg1::from_bytes([v]);
+            reg.set_tap_ths_x(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_tap_priority<I2C>(&self, i2c: &mut I2C, val: TapPriority) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg1, |v| {
+            let mut reg = TapCfg1::from_bytes([v]);
+            reg.set_tap_priority(val);
+            reg.into_bytes()[0]
+        })
+    }
+}
+
+/// Configuration methods for TAP_CFG2 register.
+pub trait TapCfg2Config {
+    /// Y-axis tap recognition threshold.
+    fn set_tap_ths_y<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable activity/inactivity (sleep) function.
+    fn set_inact_en<I2C>(&self, i2c: &mut I2C, val: InactEn) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable basic interrupts.
+    fn set_interrupts_enable<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl TapCfg2Config for Ism330Dhcx {
+    fn set_tap_ths_y<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg2, |v| {
+            let mut reg = TapCfg2::from_bytes([v]);
+            reg.set_tap_ths_y(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_inact_en<I2C>(&self, i2c: &mut I2C, val: InactEn) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg2, |v| {
+            let mut reg = TapCfg2::from_bytes([v]);
+            reg.set_inact_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_interrupts_enable<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapCfg2, |v| {
+            let mut reg = TapCfg2::from_bytes([v]);
+            reg.set_interrupts_enable(val);
+            reg.into_bytes()[0]
+        })
     }
 }

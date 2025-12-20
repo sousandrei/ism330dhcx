@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Free-fall, wakeup and sleep mode functions duration setting register (5Ch)
@@ -32,9 +35,71 @@ impl Default for WakeUpDur {
     }
 }
 
-impl Copy for WakeUpDur {}
-impl Clone for WakeUpDur {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for WAKE_UP_DUR register.
+pub trait WakeUpDurConfig {
+    /// Duration to go in sleep mode.
+    fn set_sleep_dur<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Weight of 1 LSB of wakeup threshold.
+    fn set_wake_ths_w<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Wake up duration event.
+    fn set_wake_dur<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Free fall duration event (MSB).
+    fn set_ff_dur5<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl WakeUpDurConfig for Ism330Dhcx {
+    fn set_sleep_dur<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::WakeUpDur, |v| {
+            let mut reg = WakeUpDur::from_bytes([v]);
+            reg.set_sleep_dur(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_wake_ths_w<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::WakeUpDur, |v| {
+            let mut reg = WakeUpDur::from_bytes([v]);
+            reg.set_wake_ths_w(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_wake_dur<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::WakeUpDur, |v| {
+            let mut reg = WakeUpDur::from_bytes([v]);
+            reg.set_wake_dur(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_ff_dur5<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::WakeUpDur, |v| {
+            let mut reg = WakeUpDur::from_bytes([v]);
+            reg.set_ff_dur5(val);
+            reg.into_bytes()[0]
+        })
     }
 }

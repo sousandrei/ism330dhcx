@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Gyroscope high-pass filter cutoff selection.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -71,9 +74,103 @@ impl Default for Ctrl7G {
     }
 }
 
-impl Copy for Ctrl7G {}
-impl Clone for Ctrl7G {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL7_G register.
+pub trait Ctrl7GConfig {
+    /// OIS enable.
+    fn set_ois_on<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// User off on out enable.
+    fn set_usr_off_on_out<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// OIS enable.
+    fn set_ois_on_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// High-pass filter cutoff freq.
+    fn set_hpm_g<I2C>(&self, i2c: &mut I2C, val: HpmG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// High-pass filter enable.
+    fn set_hp_en_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// High-performance operating mode disable (0 = enabled).
+    fn set_g_hm_mode<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl7GConfig for Ism330Dhcx {
+    fn set_ois_on<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            reg.set_ois_on(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_usr_off_on_out<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            reg.set_usr_off_on_out(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_ois_on_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            reg.set_ois_on_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_hpm_g<I2C>(&self, i2c: &mut I2C, val: HpmG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            reg.set_hpm_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_hp_en_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            reg.set_hp_en_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_g_hm_mode<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut reg = Ctrl7G::from_bytes([v]);
+            reg.set_g_hm_mode(val);
+            reg.into_bytes()[0]
+        })
     }
 }

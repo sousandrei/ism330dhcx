@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// SDO, OCS_AUX, SDO_AUX pins pull-up enable/disable register (02h)
@@ -37,9 +40,39 @@ impl Default for PinCtrl {
     }
 }
 
-impl Copy for PinCtrl {}
-impl Clone for PinCtrl {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for PIN_CTRL register.
+pub trait PinCtrlConfig {
+    /// Enable pull-up on SDO pin.
+    fn set_sdo_pu_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Disable pull-up on both OCS_Aux and SDO_Aux pins.
+    fn set_ois_pu_dis<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl PinCtrlConfig for Ism330Dhcx {
+    fn set_sdo_pu_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::PinCtrl, |v| {
+            let mut reg = PinCtrl::from_bytes([v]);
+            reg.set_sdo_pu_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_ois_pu_dis<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::PinCtrl, |v| {
+            let mut reg = PinCtrl::from_bytes([v]);
+            reg.set_ois_pu_dis(val);
+            reg.into_bytes()[0]
+        })
     }
 }

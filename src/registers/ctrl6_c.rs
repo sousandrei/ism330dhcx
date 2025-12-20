@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Gyroscope low-pass filter (LPF1) bandwidth selection.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -79,9 +82,103 @@ impl Default for Ctrl6C {
     }
 }
 
-impl Copy for Ctrl6C {}
-impl Clone for Ctrl6C {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL6_C register.
+pub trait Ctrl6CConfig {
+    /// Gyroscope low-pass filter (LPF1) bandwidth selection.
+    fn set_ftype<I2C>(&self, i2c: &mut I2C, val: Ftype) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Weight of XL user offset bits.
+    fn set_usr_off_w<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Disables high-performance operating mode for accelerometer.
+    fn set_xl_hm_mode<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enables DEN level-sensitive latched mode.
+    fn set_lvl2_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enables DEN data level-sensitive trigger mode.
+    fn set_lvl1_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enables DEN data edge-sensitive trigger mode.
+    fn set_trig_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl6CConfig for Ism330Dhcx {
+    fn set_ftype<I2C>(&self, i2c: &mut I2C, val: Ftype) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut reg = Ctrl6C::from_bytes([v]);
+            reg.set_ftype(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_usr_off_w<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut reg = Ctrl6C::from_bytes([v]);
+            reg.set_usr_off_w(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_xl_hm_mode<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut reg = Ctrl6C::from_bytes([v]);
+            reg.set_xl_hm_mode(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_lvl2_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut reg = Ctrl6C::from_bytes([v]);
+            reg.set_lvl2_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_lvl1_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut reg = Ctrl6C::from_bytes([v]);
+            reg.set_lvl1_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_trig_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut reg = Ctrl6C::from_bytes([v]);
+            reg.set_trig_en(val);
+            reg.into_bytes()[0]
+        })
     }
 }

@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Threshold for 4D/6D function.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -61,9 +64,55 @@ impl Default for TapThs6d {
     }
 }
 
-impl Copy for TapThs6d {}
-impl Clone for TapThs6d {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for TAP_THS_6D register.
+pub trait TapThs6dConfig {
+    /// Z-axis recognition threshold.
+    fn set_tap_ths_z<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Threshold for 4D/6D function.
+    fn set_sixd_ths<I2C>(&self, i2c: &mut I2C, val: SixdThs) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enables detection of 4D orientation.
+    fn set_d4d_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl TapThs6dConfig for Ism330Dhcx {
+    fn set_tap_ths_z<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapThs6d, |v| {
+            let mut reg = TapThs6d::from_bytes([v]);
+            reg.set_tap_ths_z(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_sixd_ths<I2C>(&self, i2c: &mut I2C, val: SixdThs) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapThs6d, |v| {
+            let mut reg = TapThs6d::from_bytes([v]);
+            reg.set_sixd_ths(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_d4d_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::TapThs6d, |v| {
+            let mut reg = TapThs6d::from_bytes([v]);
+            reg.set_d4d_en(val);
+            reg.into_bytes()[0]
+        })
     }
 }

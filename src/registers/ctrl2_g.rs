@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Gyroscope full-scale selection.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -140,9 +143,71 @@ impl Default for Ctrl2G {
     }
 }
 
-impl Copy for Ctrl2G {}
-impl Clone for Ctrl2G {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL2_G register.
+pub trait Ctrl2GConfig {
+    /// Full-scale 4000 dps enable.
+    fn set_fs_4000<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Full-scale 125 dps enable.
+    fn set_fs_125<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Full-scale selection.
+    fn set_fs_g<I2C>(&self, i2c: &mut I2C, val: FsGScale) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Output data rate selection.
+    fn set_odr_g<I2C>(&self, i2c: &mut I2C, val: OdrG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl2GConfig for Ism330Dhcx {
+    fn set_fs_4000<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl2G, |v| {
+            let mut reg = Ctrl2G::from_bytes([v]);
+            reg.set_fs_4000(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fs_125<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl2G, |v| {
+            let mut reg = Ctrl2G::from_bytes([v]);
+            reg.set_fs_125(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fs_g<I2C>(&self, i2c: &mut I2C, val: FsGScale) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl2G, |v| {
+            let mut reg = Ctrl2G::from_bytes([v]);
+            reg.set_fs_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_odr_g<I2C>(&self, i2c: &mut I2C, val: OdrG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl2G, |v| {
+            let mut reg = Ctrl2G::from_bytes([v]);
+            reg.set_odr_g(val);
+            reg.into_bytes()[0]
+        })
     }
 }

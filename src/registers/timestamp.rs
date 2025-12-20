@@ -24,10 +24,3 @@ impl Default for Timestamp {
         Self::new()
     }
 }
-
-impl Copy for Timestamp {}
-impl Clone for Timestamp {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

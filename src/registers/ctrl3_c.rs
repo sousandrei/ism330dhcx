@@ -38,13 +38,6 @@ impl Default for Ctrl3C {
     }
 }
 
-impl Copy for Ctrl3C {}
-impl Clone for Ctrl3C {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 use crate::Ism330Dhcx;
 use crate::registers::Register;
 use embedded_hal::i2c::I2c;

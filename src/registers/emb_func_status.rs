@@ -31,10 +31,3 @@ impl Default for EmbFuncStatusMainpage {
         Self::new()
     }
 }
-
-impl Copy for EmbFuncStatusMainpage {}
-impl Clone for EmbFuncStatusMainpage {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Free-fall threshold setting.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -71,9 +74,39 @@ impl Default for FreeFall {
     }
 }
 
-impl Copy for FreeFall {}
-impl Clone for FreeFall {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for FREE_FALL register.
+pub trait FreeFallConfig {
+    /// Free-fall threshold setting.
+    fn set_ff_ths<I2C>(&self, i2c: &mut I2C, val: FfThs) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Free-fall duration event (LSBs).
+    fn set_ff_dur<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl FreeFallConfig for Ism330Dhcx {
+    fn set_ff_ths<I2C>(&self, i2c: &mut I2C, val: FfThs) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FreeFall, |v| {
+            let mut reg = FreeFall::from_bytes([v]);
+            reg.set_ff_ths(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_ff_dur<I2C>(&self, i2c: &mut I2C, val: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FreeFall, |v| {
+            let mut reg = FreeFall::from_bytes([v]);
+            reg.set_ff_dur(val);
+            reg.into_bytes()[0]
+        })
     }
 }

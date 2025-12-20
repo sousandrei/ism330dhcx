@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Accelerometer full-scale selection.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -125,9 +128,55 @@ impl Default for Ctrl1Xl {
     }
 }
 
-impl Copy for Ctrl1Xl {}
-impl Clone for Ctrl1Xl {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL1_XL register.
+pub trait Ctrl1XlConfig {
+    /// Low-pass filter 2 enable.
+    fn set_lpf2_xl_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Full-scale selection.
+    fn set_fs_xl<I2C>(&self, i2c: &mut I2C, val: FsXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Output data rate selection.
+    fn set_odr_xl<I2C>(&self, i2c: &mut I2C, val: OdrXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl1XlConfig for Ism330Dhcx {
+    fn set_lpf2_xl_en<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl1Xl, |v| {
+            let mut reg = Ctrl1Xl::from_bytes([v]);
+            reg.set_lpf2_xl_en(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fs_xl<I2C>(&self, i2c: &mut I2C, val: FsXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl1Xl, |v| {
+            let mut reg = Ctrl1Xl::from_bytes([v]);
+            reg.set_fs_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_odr_xl<I2C>(&self, i2c: &mut I2C, val: OdrXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl1Xl, |v| {
+            let mut reg = Ctrl1Xl::from_bytes([v]);
+            reg.set_odr_xl(val);
+            reg.into_bytes()[0]
+        })
     }
 }

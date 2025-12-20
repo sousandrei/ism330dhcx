@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// INT1 pin control register (0Dh)
@@ -40,13 +43,6 @@ impl Default for Int1Ctrl {
     }
 }
 
-impl Copy for Int1Ctrl {}
-impl Clone for Int1Ctrl {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
-
 bitfield! {
     /// INT2 pin control register (0Eh)
     pub struct Int2Ctrl(u8);
@@ -85,9 +81,226 @@ impl Default for Int2Ctrl {
     }
 }
 
-impl Copy for Int2Ctrl {}
-impl Clone for Int2Ctrl {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for INT1_CTRL register.
+pub trait Int1CtrlConfig {
+    /// Enables accelerometer data-ready interrupt on INT1 pin.
+    fn set_int1_drdy_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables gyroscope data-ready interrupt on INT1 pin.
+    fn set_int1_drdy_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables boot status on INT1 pin.
+    fn set_int1_boot<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables FIFO threshold interrupt on INT1 pin.
+    fn set_int1_fifo_th<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables FIFO overrun interrupt on INT1 pin.
+    fn set_int1_fifo_ovr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables FIFO full flag interrupt on INT1 pin.
+    fn set_int1_fifo_full<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables COUNTER_BDR_IA interrupt on INT1.
+    fn set_int1_cnt_bdr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Sends DEN_DRDY (DEN stamped on Sensor Data flag) to INT1 pin.
+    fn set_den_drdy_flag<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Int1CtrlConfig for Ism330Dhcx {
+    fn set_int1_drdy_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_drdy_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int1_drdy_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_drdy_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int1_boot<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_boot(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int1_fifo_th<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_fifo_th(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int1_fifo_ovr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_fifo_ovr(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int1_fifo_full<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_fifo_full(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int1_cnt_bdr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_int1_cnt_bdr(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_den_drdy_flag<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int1Ctrl, |v| {
+            let mut reg = Int1Ctrl::from_bytes([v]);
+            reg.set_den_drdy_flag(val);
+            reg.into_bytes()[0]
+        })
+    }
+}
+
+/// Configuration methods for INT2_CTRL register.
+pub trait Int2CtrlConfig {
+    /// Enables accelerometer data-ready interrupt on INT2 pin.
+    fn set_int2_drdy_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables gyroscope data-ready interrupt on INT2 pin.
+    fn set_int2_drdy_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables DRDY on INT2 pin.
+    fn set_int2_drdy_temp<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables FIFO threshold interrupt on INT2 pin.
+    fn set_int2_fifo_th<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables FIFO overrun interrupt on INT2 pin.
+    fn set_int2_fifo_ovr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables FIFO full flag interrupt on INT2 pin.
+    fn set_int2_fifo_full<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enables COUNTER_BDR_IA interrupt on INT2.
+    fn set_int2_cnt_bdr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Int2CtrlConfig for Ism330Dhcx {
+    fn set_int2_drdy_xl<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_drdy_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int2_drdy_g<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_drdy_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int2_drdy_temp<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_drdy_temp(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int2_fifo_th<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_fifo_th(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int2_fifo_ovr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_fifo_ovr(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int2_fifo_full<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_fifo_full(val);
+            reg.into_bytes()[0]
+        })
+    }
+    fn set_int2_cnt_bdr<I2C>(&self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Int2Ctrl, |v| {
+            let mut reg = Int2Ctrl::from_bytes([v]);
+            reg.set_int2_cnt_bdr(val);
+            reg.into_bytes()[0]
+        })
     }
 }

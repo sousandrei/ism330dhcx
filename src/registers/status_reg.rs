@@ -29,10 +29,3 @@ impl Default for StatusReg {
         Self::new()
     }
 }
-
-impl Copy for StatusReg {}
-impl Clone for StatusReg {
-    fn clone(&self) -> Self {
-        *self
-    }
-}

@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 /// Linear acceleration sensor self-test mode selection.
 #[derive(Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -117,9 +120,55 @@ impl Default for Ctrl5C {
     }
 }
 
-impl Copy for Ctrl5C {}
-impl Clone for Ctrl5C {
-    fn clone(&self) -> Self {
-        *self
+/// Configuration methods for CTRL5_C register.
+pub trait Ctrl5CConfig {
+    /// Linear acceleration sensor self-test enable.
+    fn set_st_xl<I2C>(&self, i2c: &mut I2C, val: StXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Angular rate sensor self-test enable.
+    fn set_st_g<I2C>(&self, i2c: &mut I2C, val: StG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Circular burst-mode (rounding) read of the output registers.
+    fn set_rounding<I2C>(&self, i2c: &mut I2C, val: Rounding) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl Ctrl5CConfig for Ism330Dhcx {
+    fn set_st_xl<I2C>(&self, i2c: &mut I2C, val: StXl) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl5C, |v| {
+            let mut reg = Ctrl5C::from_bytes([v]);
+            reg.set_st_xl(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_st_g<I2C>(&self, i2c: &mut I2C, val: StG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl5C, |v| {
+            let mut reg = Ctrl5C::from_bytes([v]);
+            reg.set_st_g(val);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_rounding<I2C>(&self, i2c: &mut I2C, val: Rounding) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl5C, |v| {
+            let mut reg = Ctrl5C::from_bytes([v]);
+            reg.set_rounding(val);
+            reg.into_bytes()[0]
+        })
     }
 }
