@@ -28,6 +28,8 @@ pub enum Register {
     FifoCtrl3 = 0x09,
     /// FIFO control register 4
     FifoCtrl4 = 0x0A,
+    /// Who am I register
+    WhoAmI = 0x0F,
     /// Accelerometer control register 1
     Ctrl1Xl = 0x10,
     /// Gyroscope control register 2

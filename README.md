@@ -40,25 +40,17 @@ Or alter it after the fact
 sensor.set_address(0x6au8);
 ```
 
-All registers have the bits addressed by their function, for example here se set the `BOOT` register in the `CTRL_3C` register to `1`
+To configure the sensor, use the high-level methods:
 
 ```rust
-sensor.ctrl3c.set_boot(i2c, true).unwrap();
+sensor.set_accel_odr(&mut i2c, OdrXl::Hz52).unwrap();
+sensor.set_boot(&mut i2c, true).unwrap();
 ```
 
 For bits that operate together, they have their custom type abstracted. For example, to set the accelerometer data rate you have to operate 4 bits. But here you just have to specify your desired data rate and the driver takes care of it.
 
 ```rust
-// Sets the following bits
-// ODR_XL3 to 0
-// ODR_XL2 to 0
-// ODR_XL1 to 1
-// ODR_XL0 to 1
-
-sensor
-    .ctrl1xl
-    .set_accelerometer_data_rate(i2c, ctrl1xl::Odr_Xl::Hz52)
-    .unwrap();
+sensor.set_accel_odr(&mut i2c, OdrXl::Hz52).unwrap();
 ```
 
 ## <a name="help-wanted"></a> Help wanted 🤝

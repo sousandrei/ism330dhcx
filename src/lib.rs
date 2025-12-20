@@ -38,53 +38,83 @@ use registers::*;
 /// Datasheet write address for the device. (D6h)
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 
-// SENSORS_DPS_TO_RADS moved to gyroscope.rs
 // SENSORS_GRAVITY_STANDARD moved to accelerometer.rs
 
-/// Driver for the ISM330DHCX sensor.
-pub struct Ism330Dhcx<I2C> {
-    /// I2C address.
-    pub address: u8,
-    i2c: I2C,
+/// Errors for the ISM330DHCX driver.
+#[derive(Debug, Copy, Clone, defmt::Format)]
+pub enum Error<E> {
+    /// I2C bus error.
+    I2c(E),
+    /// Invalid device found (WHO_AM_I mismatch).
+    InvalidDevice(u8),
 }
 
-impl<I2C, E> Ism330Dhcx<I2C>
-where
-    I2C: I2c<Error = E>,
-{
+impl<E> From<E> for Error<E> {
+    fn from(error: E) -> Self {
+        Self::I2c(error)
+    }
+}
+
+/// Driver for the ISM330DHCX sensor.
+pub struct Ism330Dhcx {
+    /// I2C address.
+    pub address: u8,
+}
+
+impl Ism330Dhcx {
     /// Create a new driver instance with the default I2C address (0x6B).
-    pub fn new(i2c: I2C) -> Result<Self, E> {
+    pub fn new<I2C>(i2c: &mut I2C) -> Result<Self, Error<I2C::Error>>
+    where
+        I2C: I2c,
+    {
         Self::new_with_address(i2c, DEFAULT_I2C_ADDRESS)
     }
 
     /// Create a new driver instance with a specific I2C address.
-    pub fn new_with_address(i2c: I2C, address: u8) -> Result<Self, E> {
-        Ok(Self { address, i2c })
-    }
-
-    /// Destroy the driver and return the underlying I2C interface.
-    pub fn destroy(self) -> I2C {
-        self.i2c
-    }
-
-    pub(crate) fn read_reg(&mut self, reg: Register) -> Result<u8, E> {
+    pub fn new_with_address<I2C>(i2c: &mut I2C, address: u8) -> Result<Self, Error<I2C::Error>>
+    where
+        I2C: I2c,
+    {
         let mut buffer = [0u8];
-        self.i2c
-            .write_read(self.address, &[reg.addr()], &mut buffer)?;
+        i2c.write_read(address, &[Register::WhoAmI.addr()], &mut buffer)?;
+
+        if buffer[0] != 0x6b {
+            return Err(Error::InvalidDevice(buffer[0]));
+        }
+
+        let sensor = Self { address };
+
+        // Set sane defaults: BDU and IF_INC
+        sensor.set_bdu(i2c, true)?;
+        sensor.set_if_inc(i2c, true)?;
+
+        Ok(sensor)
+    }
+
+    pub(crate) fn read_reg<I2C>(&self, i2c: &mut I2C, reg: Register) -> Result<u8, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let mut buffer = [0u8];
+        i2c.write_read(self.address, &[reg.addr()], &mut buffer)?;
         Ok(buffer[0])
     }
 
-    pub(crate) fn write_reg(&mut self, reg: Register, value: u8) -> Result<(), E> {
-        self.i2c.write(self.address, &[reg.addr(), value])
+    pub(crate) fn write_reg<I2C>(&self, i2c: &mut I2C, reg: Register, value: u8) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        i2c.write(self.address, &[reg.addr(), value])
     }
 
-    pub(crate) fn modify_reg<F>(&mut self, reg: Register, f: F) -> Result<(), E>
+    pub(crate) fn modify_reg<I2C, F>(&self, i2c: &mut I2C, reg: Register, f: F) -> Result<(), I2C::Error>
     where
+        I2C: I2c,
         F: FnOnce(u8) -> u8,
     {
-        let value = self.read_reg(reg)?;
+        let value = self.read_reg(i2c, reg)?;
         let new_value = f(value);
-        self.write_reg(reg, new_value)
+        self.write_reg(i2c, reg, new_value)
     }
 
     /// Set the I2C address.
@@ -97,8 +127,11 @@ where
     // ===========================================
 
     /// Reboot memory content.
-    pub fn set_boot(&mut self, boot: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl3C, |v| {
+    pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, boot: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_boot(boot);
             reg.into_bytes()[0]
@@ -108,8 +141,11 @@ where
     /// Block Data Update.
     ///
     /// If true, output registers are not updated until MSB and LSB have been read.
-    pub fn set_bdu(&mut self, bdu: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl3C, |v| {
+    pub fn set_bdu<I2C>(&self, i2c: &mut I2C, bdu: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_bdu(bdu);
             reg.into_bytes()[0]
@@ -117,8 +153,11 @@ where
     }
 
     /// Register address automatically incremented during a multiple byte access with a serial interface.
-    pub fn set_if_inc(&mut self, if_inc: bool) -> Result<(), E> {
-        self.modify_reg(Register::Ctrl3C, |v| {
+    pub fn set_if_inc<I2C>(&self, i2c: &mut I2C, if_inc: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_if_inc(if_inc);
             reg.into_bytes()[0]
@@ -130,10 +169,12 @@ where
     // ===========================================
 
     /// Get temperature in Celsius.
-    pub fn get_temperature(&mut self) -> Result<f32, E> {
+    pub fn get_temperature<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: I2c,
+    {
         let mut measurements = [0u8; 2];
-        self.i2c
-            .write_read(self.address, &[0x20], &mut measurements)?;
+        i2c.write_read(self.address, &[0x20], &mut measurements)?;
 
         let raw_temp = (measurements[1] as i16) << 8 | measurements[0] as i16;
         let temp: f32 = (raw_temp as f32 / 256.0) + 25.0;
@@ -142,8 +183,15 @@ where
     }
 
     /// Set chain full scale.
-    pub fn set_chain_full_scale(&mut self) -> Result<&mut Self, E> {
-        self.set_gyro_scale(FsG::Dps500)?;
+    pub fn set_chain_full_scale<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        scale: FsG,
+    ) -> Result<&mut Self, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.set_gyro_scale(i2c, scale)?;
         Ok(self)
     }
 }
@@ -202,18 +250,40 @@ mod tests {
 
     #[test]
     fn test_set_fifo_mode() {
-        // Read register 0x0A (FifoCtrl4), modify it, write back.
-        let i2c = Mock::new(&[
+        // Read WhoAmI, then BDU and IF_INC modification (read Ctrl3C, write Ctrl3C)
+        // Note: set_bdu(true) and set_if_inc(true) will each read and write Ctrl3C.
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::WhoAmI.addr()], vec![0x6b]),
+            // set_bdu(true)
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0b00000000]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0b01000000]),
+            // set_if_inc(true)
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0b01000000]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0b01000100]),
+            // set_fifo_mode
             Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![0x0A], vec![0b00000000]),
             Transaction::write(DEFAULT_I2C_ADDRESS, vec![0x0A, 0b00000001]),
         ]);
 
-        // Pass the mock by value to the sensor
-        let mut sensor = Ism330Dhcx::new(i2c).unwrap();
-        sensor.set_fifo_mode(FifoMode::FifoMode).unwrap();
+        // Pass the mock by reference to the sensor
+        let mut sensor = Ism330Dhcx::new(&mut i2c).unwrap();
+        sensor.set_fifo_mode(&mut i2c, FifoMode::FifoMode).unwrap();
 
-        // Destroy sensor to get i2c back and verify expectations
-        let mut i2c = sensor.destroy();
+        // Verify expectations
+        i2c.done();
+    }
+
+    #[test]
+    fn test_new_invalid_device() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::WhoAmI.addr()],
+            vec![0xFF],
+        )]);
+
+        let sensor = Ism330Dhcx::new(&mut i2c);
+        let err = sensor.err().unwrap();
+        assert!(matches!(err, Error::InvalidDevice(0xFF)));
         i2c.done();
     }
 }

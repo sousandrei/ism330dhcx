@@ -26,7 +26,7 @@ async fn main(_spawner: Spawner) {
     //==============================================
     // Declaring sensor
 
-    let mut sensor = match Ism330Dhcx::new(i2c) {
+    let mut sensor = match Ism330Dhcx::new(&mut i2c) {
         Ok(sensor) => sensor,
         Err(error) => {
             defmt::error!("{:?}", error);
@@ -35,16 +35,19 @@ async fn main(_spawner: Spawner) {
     };
 
     // Initializing sensor
-    boot_sensor(&mut sensor);
+    boot_sensor(&mut i2c, &mut sensor);
 
     // =======================================
 
     loop {
-        defmt::info!("Temperature: {}", sensor.get_temperature().unwrap());
-        defmt::info!("Gyroscope: {:?}", sensor.get_gyroscope().unwrap().as_dps());
+        defmt::info!("Temperature: {}", sensor.get_temperature(&mut i2c).unwrap());
+        defmt::info!(
+            "Gyroscope: {:?}",
+            sensor.get_gyroscope(&mut i2c).unwrap().as_dps()
+        );
         defmt::info!(
             "Accelerometer: {:?}",
-            sensor.get_accelerometer().unwrap().as_m_ss()
+            sensor.get_accelerometer(&mut i2c).unwrap().as_m_ss()
         );
 
         Timer::after_millis(500).await;
@@ -52,41 +55,40 @@ async fn main(_spawner: Spawner) {
 }
 
 // Booting the sensor accoring to Adafruit's driver
-fn boot_sensor<I2C, E>(sensor: &mut Ism330Dhcx<I2C>)
+fn boot_sensor<I2C>(i2c: &mut I2C, sensor: &mut Ism330Dhcx)
 where
-    I2C: embedded_hal::i2c::I2c<Error = E>,
-    E: core::fmt::Debug,
+    I2C: embedded_hal::i2c::I2c,
 {
     // =======================================
     // CTRL3_C
 
-    sensor.set_boot(true).unwrap();
-    sensor.set_bdu(true).unwrap();
-    sensor.set_if_inc(true).unwrap();
+    sensor.set_boot(i2c, true).unwrap();
+    sensor.set_bdu(i2c, true).unwrap();
+    sensor.set_if_inc(i2c, true).unwrap();
 
     // =======================================
     // CTRL9_XL
 
-    sensor.set_den_x(true).unwrap();
-    sensor.set_den_y(true).unwrap();
-    sensor.set_den_z(true).unwrap();
-    sensor.set_den_device_conf(true).unwrap();
+    sensor.set_den_x(i2c, true).unwrap();
+    sensor.set_den_y(i2c, true).unwrap();
+    sensor.set_den_z(i2c, true).unwrap();
+    sensor.set_den_device_conf(i2c, true).unwrap();
 
     // =======================================
     // CTRL1_XL
 
-    sensor.set_accel_odr(OdrXl::Hz52).unwrap();
-    sensor.set_accel_scale(FsXl::G4).unwrap();
-    sensor.set_lpf2_xl_en(true).unwrap();
+    sensor.set_accel_odr(i2c, OdrXl::Hz52).unwrap();
+    sensor.set_accel_scale(i2c, FsXl::G4).unwrap();
+    sensor.set_lpf2_xl_en(i2c, true).unwrap();
 
     // =======================================
     // CTRL2_G
 
-    sensor.set_gyro_odr(OdrG::Hz52).unwrap();
-    sensor.set_gyro_scale(FsG::Dps500).unwrap();
+    sensor.set_gyro_odr(i2c, OdrG::Hz52).unwrap();
+    sensor.set_gyro_scale(i2c, FsG::Dps500).unwrap();
 
     // =======================================
     // CTRL7_G
 
-    sensor.set_g_hm_mode(true).unwrap();
+    sensor.set_g_hm_mode(i2c, true).unwrap();
 }
