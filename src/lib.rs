@@ -23,15 +23,13 @@
 
 #![cfg_attr(not(test), no_std)]
 
-pub mod accelerometer;
-pub mod fifo;
-pub mod gyroscope;
 pub mod registers;
 
-pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
-pub use fifo::Fifo;
-pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
+pub use registers::Temperature;
 pub use registers::ctrl3_c::Ctrl3CConfig;
+pub use registers::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
+pub use registers::{Fifo, FifoOut, TagSensor, Value};
+pub use registers::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 
 use embedded_hal::i2c::I2c;
 use registers::*;
