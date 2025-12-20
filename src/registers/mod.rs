@@ -40,6 +40,10 @@ pub enum Register {
     Ctrl7G = 0x16,
     /// Accelerometer control register 9
     Ctrl9Xl = 0x18,
+    /// Temperature output register (low)
+    OutTempL = 0x20,
+    /// Temperature output register (high)
+    OutTempH = 0x21,
     /// FIFO status register 1
     FifoStatus1 = 0x3A,
     /// FIFO status register 2

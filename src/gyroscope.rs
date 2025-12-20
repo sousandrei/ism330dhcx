@@ -75,6 +75,15 @@ pub trait Gyroscope {
     fn get_gyroscope<I2C>(&self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
         I2C: I2c;
+
+    /// Set chain full scale.
+    fn set_chain_full_scale<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        scale: FsG,
+    ) -> Result<&mut Self, I2C::Error>
+    where
+        I2C: I2c;
 }
 
 impl Gyroscope for Ism330Dhcx {
@@ -152,8 +161,20 @@ impl Gyroscope for Ism330Dhcx {
         let scale = self.get_gyro_scale(i2c)?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[Register::Ctrl2G.addr()], &mut measurements)?;
+        i2c.write_read(self.address, &[0x22], &mut measurements)?;
 
         Ok(GyroValue::from_msr(scale, &measurements))
+    }
+
+    fn set_chain_full_scale<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        scale: FsG,
+    ) -> Result<&mut Self, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.set_gyro_scale(i2c, scale)?;
+        Ok(self)
     }
 }

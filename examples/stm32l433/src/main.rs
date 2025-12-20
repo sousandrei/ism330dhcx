@@ -9,7 +9,7 @@ use embassy_stm32::i2c::I2c;
 use embassy_time::Timer;
 
 use ism330dhcx::registers::{FsG, FsXl, OdrG, OdrXl};
-use ism330dhcx::{Accelerometer, Gyroscope, Ism330Dhcx};
+use ism330dhcx::{Accelerometer, Ctrl3CConfig, Gyroscope, Ism330Dhcx, Temperature};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -21,7 +21,7 @@ async fn main(_spawner: Spawner) {
     //==========================================
     // Declaring I2C1
 
-    let i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Default::default());
+    let mut i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Default::default());
 
     //==============================================
     // Declaring sensor
