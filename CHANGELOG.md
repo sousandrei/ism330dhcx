@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.0](https://github.com/sousandrei/ism330dhcx/compare/v0.6.0...v1.0.0) (2025-12-22)
+
+
+### ⚠ BREAKING CHANGES
+
+* refactor driver ([#74](https://github.com/sousandrei/ism330dhcx/issues/74))
+
+### Features
+
+* more-registers ([#76](https://github.com/sousandrei/ism330dhcx/issues/76)) ([bec3e02](https://github.com/sousandrei/ism330dhcx/commit/bec3e02440cb98700061a4695b865ff3bc702947))
+* refactor driver ([#74](https://github.com/sousandrei/ism330dhcx/issues/74)) ([2d1e9cd](https://github.com/sousandrei/ism330dhcx/commit/2d1e9cdd8cc102b64e18125d7c7f15e5855aa0ed))
+
 ## [0.6.0](https://github.com/sousandrei/ism330dhcx/compare/v0.5.2...v0.6.0) (2024-06-05)
 
 
