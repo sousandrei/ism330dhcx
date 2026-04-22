@@ -494,7 +494,11 @@ impl FifoOut {
             TagSensor::Empty => Ok(Value::Empty),
             TagSensor::GyroNC => Ok(Value::Gyro(GyroValue::from_msr(gyro_scale, data))),
             TagSensor::AccelNC => Ok(Value::Accel(AccelValue::from_msr(accel_scale, data))),
-            TagSensor::SensorHubNack => Ok(Value::Empty), // Handle as empty for now or use TagSensor
+            TagSensor::Timestamp => {
+                let _ts_raw = [data[0], data[1], data[2], data[3]];
+                Ok(Value::Other(TagSensor::Timestamp as u8, data.clone()))
+            }
+            TagSensor::SensorHubNack => Ok(Value::Empty),
             _ => Ok(Value::Other(tag.tag_sensor() as u8, *data)),
         }
     }

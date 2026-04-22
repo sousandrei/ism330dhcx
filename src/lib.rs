@@ -28,6 +28,7 @@ pub mod registers;
 pub use registers::{
     AccelValue, Accelerometer, FifoOut, GyroValue, Gyroscope, SENSORS_DPS_TO_RADS,
     SENSORS_GRAVITY_STANDARD, TagSensor, Temperature, Value,
+    all_int_src::AllIntSrcConfig,
     counter_bdr::{CounterBdrReg1Config, CounterBdrReg2Config},
     ctrl1_xl::Ctrl1XlConfig,
     ctrl2_g::Ctrl2GConfig,
@@ -48,9 +49,12 @@ pub use registers::{
     md_cfg::{Md1CfgConfig, Md2CfgConfig},
     ofs_usr::OfsUsrConfig,
     pin_ctrl::PinCtrlConfig,
+    status_reg::StatusRegConfig,
     tap_cfg::{TapCfg0Config, TapCfg1Config, TapCfg2Config},
     tap_ths_6d::TapThs6dConfig,
+    timestamp::TimestampConfig,
     wake_up_dur::WakeUpDurConfig,
+    wake_up_src::WakeUpSrcConfig,
     wake_up_ths::WakeUpThsConfig,
 };
 

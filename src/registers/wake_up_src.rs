@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Wake-up interrupt source register (1Bh)
@@ -35,5 +38,23 @@ impl WakeUpSrc {
 impl Default for WakeUpSrc {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Configuration methods for WAKE_UP_SRC register.
+pub trait WakeUpSrcConfig {
+    /// Read the wake-up source register to check for sleep/activity state.
+    fn get_wake_up_src<I2C>(&self, i2c: &mut I2C) -> Result<WakeUpSrc, I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl WakeUpSrcConfig for Ism330Dhcx {
+    fn get_wake_up_src<I2C>(&self, i2c: &mut I2C) -> Result<WakeUpSrc, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let v = self.read_reg(i2c, Register::WakeUpSrc)?;
+        Ok(WakeUpSrc::from_bytes([v]))
     }
 }

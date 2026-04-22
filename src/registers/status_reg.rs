@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Status register (1Eh)
@@ -27,5 +30,23 @@ impl StatusReg {
 impl Default for StatusReg {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Configuration methods for STATUS_REG register.
+pub trait StatusRegConfig {
+    /// Read the status register to check for new data.
+    fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl StatusRegConfig for Ism330Dhcx {
+    fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let v = self.read_reg(i2c, Register::StatusReg)?;
+        Ok(StatusReg::from_bytes([v]))
     }
 }

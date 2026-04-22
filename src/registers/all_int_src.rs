@@ -1,4 +1,7 @@
+use crate::Ism330Dhcx;
+use crate::registers::Register;
 use bitfield::bitfield;
+use embedded_hal::i2c::I2c;
 
 bitfield! {
     /// Source register for all interrupts (1Ah)
@@ -35,5 +38,23 @@ impl AllIntSrc {
 impl Default for AllIntSrc {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Configuration methods for ALL_INT_SRC register.
+pub trait AllIntSrcConfig {
+    /// Read the source register for all interrupts.
+    fn get_all_int_src<I2C>(&self, i2c: &mut I2C) -> Result<AllIntSrc, I2C::Error>
+    where
+        I2C: I2c;
+}
+
+impl AllIntSrcConfig for Ism330Dhcx {
+    fn get_all_int_src<I2C>(&self, i2c: &mut I2C) -> Result<AllIntSrc, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let v = self.read_reg(i2c, Register::AllIntSrc)?;
+        Ok(AllIntSrc::from_bytes([v]))
     }
 }
