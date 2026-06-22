@@ -17,7 +17,7 @@ jobs:
         folder: ['.', 'examples/stm32l433']
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -46,9 +46,9 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: googleapis/release-please-action@v4
+      - uses: googleapis/release-please-action@v5
         id: release
         with:
           release-type: rust
