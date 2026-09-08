@@ -6,7 +6,7 @@ use modular_bitfield::{bitfield, specifiers::B6};
 
 /// Enable access to the embedded functions configuration registers. (01h)
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FuncCfgAccess {
     #[skip]
     pub __: B6,

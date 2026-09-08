@@ -1,6 +1,6 @@
 use modular_bitfield::{bitfield, specifiers::B6};
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct WakeUpThs {
     pub wk_ths: B6,
     pub usr_off_on_wu: bool,

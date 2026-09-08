@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use modular_bitfield::{
     bitfield,
     specifiers::{B1, B2, B3, B5},
@@ -6,7 +5,7 @@ use modular_bitfield::{
 
 /// Tap and interrupt configuration register 0.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TapCfg0 {
     pub lir: bool,
     pub tap_x_en: bool,
@@ -26,7 +25,7 @@ impl Default for TapCfg0 {
 
 /// Tap threshold and axis priority configuration register 1.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TapCfg1 {
     pub tap_ths_x: B5,
     pub tap_priority: B3,
@@ -39,7 +38,7 @@ impl Default for TapCfg1 {
 
 /// Tap threshold and axis priority configuration register 2.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TapCfg2 {
     pub tap_ths_y: B5,
     pub inact_en: B2,

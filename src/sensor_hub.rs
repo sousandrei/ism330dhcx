@@ -173,7 +173,7 @@ impl SensorHub for Ism330Dhcx {
             )?;
             bus.write(
                 sensor.address,
-                &[SensorHubRegister::DatawriteSlv0.addr(), value],
+                &[SensorHubRegister::DataWriteSlv0.addr(), value],
             )?;
             bus.write(
                 sensor.address,
@@ -292,7 +292,7 @@ mod tests {
             ),
             Transaction::write(
                 DEFAULT_I2C_ADDRESS,
-                vec![SensorHubRegister::DatawriteSlv0.addr(), 0x55],
+                vec![SensorHubRegister::DataWriteSlv0.addr(), 0x55],
             ),
             Transaction::write(
                 DEFAULT_I2C_ADDRESS,

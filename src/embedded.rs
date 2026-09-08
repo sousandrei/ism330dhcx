@@ -2,8 +2,8 @@ use embedded_hal::i2c::I2c;
 
 use crate::Ism330Dhcx;
 use crate::registers::{
-    EmbFuncEnA, EmbFuncEnB, EmbFuncFifoCfg, EmbFuncInitA, EmbFuncInitB, EmbFuncInt, EmbFuncOdrCfg,
-    EmbFuncSrc, EmbFuncStatus, EmbeddedRegister, PageSel, Register,
+    EmbFuncEnA, EmbFuncEnB, EmbFuncFifoCfg, EmbFuncInitA, EmbFuncInitB, EmbFuncInt, EmbFuncOdrCfgB,
+    EmbFuncOdrCfgC, EmbFuncSrc, EmbFuncStatus, EmbeddedRegister, PageSel, Register,
 };
 
 /// Embedded-function page and register access.
@@ -305,7 +305,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
                 &[EmbeddedRegister::EmbFuncOdrCfgB.addr()],
                 &mut raw,
             )?;
-            let mut reg = EmbFuncOdrCfg::from_bytes(raw);
+            let mut reg = EmbFuncOdrCfgB::from_bytes(raw);
             reg.set_odr(odr);
             bus.write(
                 sensor.address,
@@ -326,7 +326,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
                 &[EmbeddedRegister::EmbFuncOdrCfgC.addr()],
                 &mut raw,
             )?;
-            let mut reg = EmbFuncOdrCfg::from_bytes(raw);
+            let mut reg = EmbFuncOdrCfgC::from_bytes(raw);
             reg.set_odr(odr);
             bus.write(
                 sensor.address,

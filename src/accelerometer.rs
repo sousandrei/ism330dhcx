@@ -79,7 +79,7 @@ pub trait Accelerometer {
     ) -> Result<(), I2C::Error>
     where
         I2C: I2c;
-    /// Set an accelerometer filter control bit in CTRL8_XL.
+    /// Set the accelerometer low-pass filter output used by 6D detection.
     fn set_low_pass_on_6d<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
         I2C: I2c;
@@ -93,9 +93,6 @@ pub trait Accelerometer {
     where
         I2C: I2c;
     fn set_hp_ref_mode<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c;
-    fn set_lpf2_xl_hm<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
         I2C: I2c;
     /// Select accelerometer self-test mode.
@@ -241,17 +238,6 @@ impl Accelerometer for Ism330Dhcx {
             r.into_bytes()[0]
         })
     }
-    fn set_lpf2_xl_hm<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
-            let mut r = Ctrl8Xl::from_bytes([v]);
-            r.set_lpf2_xl_hm(enable);
-            r.into_bytes()[0]
-        })
-    }
-
     fn set_accel_self_test<I2C>(&self, i2c: &mut I2C, mode: StXl) -> Result<(), I2C::Error>
     where
         I2C: I2c,
@@ -419,7 +405,7 @@ mod tests {
         };
     }
 
-    ctrl8_modify_test!(test_set_hpcf_xl, set_hpcf_xl, HpcfXl::OdrDiv45, 0xa1, 0xe1);
+    ctrl8_modify_test!(test_set_hpcf_xl, set_hpcf_xl, HpcfXl::OdrDiv45, 0xa1, 0x61);
     ctrl8_modify_test!(
         test_set_low_pass_on_6d,
         set_low_pass_on_6d,
@@ -432,18 +418,17 @@ mod tests {
         set_hp_slope_xl_en,
         true,
         0xa0,
-        0xa2
+        0xa4
     );
     ctrl8_modify_test!(
         test_set_fast_settling_mode_xl,
         set_fast_settling_mode_xl,
         true,
         0xa0,
-        0xa4
+        0xa8
     );
-    ctrl8_modify_test!(test_set_slope_fds, set_slope_fds, true, 0xa0, 0xa8);
+    ctrl8_modify_test!(test_set_slope_fds, set_slope_fds, true, 0xa0, 0xa2);
     ctrl8_modify_test!(test_set_hp_ref_mode, set_hp_ref_mode, true, 0xa0, 0xb0);
-    ctrl8_modify_test!(test_set_lpf2_xl_hm, set_lpf2_xl_hm, true, 0x00, 0x80);
 
     macro_rules! ctrl9_modify_test {
         ($name:ident, $method:ident, $read:expr, $write:expr) => {

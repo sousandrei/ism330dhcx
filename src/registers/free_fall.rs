@@ -3,7 +3,7 @@ use modular_bitfield::{
     specifiers::{B3, B5},
 };
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FreeFall {
     pub ff_ths: B3,
     pub ff_dur: B5,

@@ -57,7 +57,7 @@ pub enum OdrXl {
 
 /// Control register 1 (XL) - Accelerometer settings.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl1Xl {
     #[skip]
     pub __: B1,

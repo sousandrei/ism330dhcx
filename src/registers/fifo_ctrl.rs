@@ -6,7 +6,7 @@ use modular_bitfield::{
 
 /// FIFO control register 1.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FifoCtrl1 {
     /// FIFO watermark threshold low byte.
     pub wtm: B8,
@@ -20,12 +20,12 @@ impl Default for FifoCtrl1 {
 
 /// FIFO control register 2.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FifoCtrl2 {
     /// FIFO watermark threshold bit 8.
     pub wtm8: bool,
     /// Rate of uncompressed FIFO data.
-    pub uncoptr_rate: UncompressedDataRate,
+    pub uncompressed_rate: UncompressedDataRate,
     #[skip]
     pub __: B1,
     /// Enable FIFO ODR change batching.
@@ -120,7 +120,7 @@ pub enum BdrXl {
 
 /// FIFO control register 3.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FifoCtrl3 {
     /// Accelerometer batch data rate.
     pub bdr_xl: BdrXl,
@@ -154,7 +154,7 @@ pub enum FifoMode {
 
 /// FIFO control register 4.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct FifoCtrl4 {
     /// FIFO mode selection.
     pub fifo_mode: FifoMode,

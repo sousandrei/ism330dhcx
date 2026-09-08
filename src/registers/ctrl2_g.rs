@@ -70,7 +70,7 @@ pub enum OdrG {
 
 /// Control register 2 (Gyroscope).
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl2G {
     /// Full-scale 4000 dps enable.
     pub fs_4000: bool,

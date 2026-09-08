@@ -17,7 +17,7 @@ pub enum HpmG {
 
 /// Control register 7 (Gyroscope).
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl7G {
     /// OIS enable.
     pub ois_on: bool,

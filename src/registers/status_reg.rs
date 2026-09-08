@@ -1,15 +1,15 @@
-#![allow(non_snake_case)]
 use crate::Ism330Dhcx;
 use crate::registers::Register;
 use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B5};
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct StatusReg {
     pub xl_da: bool,
     pub g_da: bool,
     pub t_da: bool,
-    pub __: B5,
+    #[skip]
+    pub reserved: B5,
 }
 impl Default for StatusReg {
     fn default() -> Self {

@@ -1,10 +1,9 @@
-#![allow(non_snake_case)]
 use crate::Ism330Dhcx;
 use crate::registers::Register;
 use embedded_hal::i2c::I2c;
-use modular_bitfield::{bitfield, specifiers::B1};
+use modular_bitfield::bitfield;
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct D6dSrc {
     pub xl: bool,
     pub xh: bool,
@@ -13,7 +12,7 @@ pub struct D6dSrc {
     pub zl: bool,
     pub zh: bool,
     pub d6d_ia: bool,
-    pub __: B1,
+    pub den_drdy: bool,
 }
 impl Default for D6dSrc {
     fn default() -> Self {
@@ -44,5 +43,13 @@ mod tests {
         let mut r = D6dSrc::new();
         r.set_d6d_ia(true);
         assert_eq!(r.into_bytes(), [0x40]);
+        r.set_den_drdy(true);
+        r.set_zh(true);
+        r.set_zl(true);
+        r.set_yh(true);
+        r.set_yl(true);
+        r.set_xh(true);
+        r.set_xl(true);
+        assert_eq!(r.into_bytes(), [0xff]);
     }
 }

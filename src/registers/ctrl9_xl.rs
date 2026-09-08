@@ -3,7 +3,7 @@ use modular_bitfield::{bitfield, specifiers::B1};
 
 /// Control register 9 (XL).
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl9Xl {
     #[skip]
     pub __: B1,
@@ -25,6 +25,16 @@ pub struct Ctrl9Xl {
 
 impl Default for Ctrl9Xl {
     fn default() -> Self {
-        Self::new()
+        Self::from_bytes([0xe0])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_matches_reset_value() {
+        assert_eq!(Ctrl9Xl::default().into_bytes(), [0xe0]);
     }
 }

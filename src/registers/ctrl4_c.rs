@@ -1,9 +1,8 @@
-#![allow(non_snake_case)]
 use modular_bitfield::{bitfield, specifiers::B1};
 
 /// Control register 4.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl4C {
     pub den_xl_en: bool,
     pub sleep_g: bool,

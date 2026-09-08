@@ -3,7 +3,7 @@ use modular_bitfield::{
     specifiers::{B2, B4},
 };
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct WakeUpDur {
     pub sleep_dur: B4,
     pub wake_ths_w: bool,

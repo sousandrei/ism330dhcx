@@ -3,7 +3,7 @@ use modular_bitfield::{
     specifiers::{B2, B5},
 };
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct TapThs6d {
     pub tap_ths_z: B5,
     pub sixd_ths: B2,

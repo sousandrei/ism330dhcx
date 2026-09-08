@@ -15,7 +15,7 @@ pub enum Ftype {
 
 /// Control register 6.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl6C {
     pub ftype: Ftype,
     pub usr_off_w: bool,

@@ -134,6 +134,16 @@ pub enum Register {
     OutZLA = 0x2C,
     /// Accelerometer Z-axis output register (high)
     OutZHA = 0x2D,
+    /// Embedded-function status register on the main page
+    EmbFuncStatusMainpage = 0x35,
+    /// FSM status register A on the main page
+    FsmStatusAMainpage = 0x36,
+    /// FSM status register B on the main page
+    FsmStatusBMainpage = 0x37,
+    /// MLC status register on the main page
+    MlcStatusMainpage = 0x38,
+    /// Sensor-hub master status register on the main page
+    StatusMasterMainpage = 0x39,
     /// Gyroscope control register 7
     Ctrl7G = 0x16,
     /// Accelerometer control register 8
@@ -180,6 +190,8 @@ pub enum Register {
     Md1Cfg = 0x5E,
     /// Interrupt routing register 2 for embedded events
     Md2Cfg = 0x5F,
+    /// Internal frequency correction register
+    InternalFreqFine = 0x63,
     /// User X-axis offset register
     XOfsUsr = 0x73,
     /// User Y-axis offset register
@@ -268,6 +280,11 @@ mod tests {
             (Register::OutYHA, 0x2B),
             (Register::OutZLA, 0x2C),
             (Register::OutZHA, 0x2D),
+            (Register::EmbFuncStatusMainpage, 0x35),
+            (Register::FsmStatusAMainpage, 0x36),
+            (Register::FsmStatusBMainpage, 0x37),
+            (Register::MlcStatusMainpage, 0x38),
+            (Register::StatusMasterMainpage, 0x39),
             (Register::FifoStatus1, 0x3A),
             (Register::FifoStatus2, 0x3B),
             (Register::Timestamp0, 0x40),
@@ -284,6 +301,11 @@ mod tests {
             (Register::FreeFall, 0x5D),
             (Register::Md1Cfg, 0x5E),
             (Register::Md2Cfg, 0x5F),
+            (Register::InternalFreqFine, 0x63),
+            (Register::IntOis, 0x6F),
+            (Register::Ctrl1Ois, 0x70),
+            (Register::Ctrl2Ois, 0x71),
+            (Register::Ctrl3Ois, 0x72),
             (Register::XOfsUsr, 0x73),
             (Register::YOfsUsr, 0x74),
             (Register::ZOfsUsr, 0x75),

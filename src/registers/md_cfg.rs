@@ -1,6 +1,6 @@
 use modular_bitfield::bitfield;
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Md1Cfg {
     pub int1_sleep_change: bool,
     pub int1_single_tap: bool,
@@ -17,7 +17,7 @@ impl Default for Md1Cfg {
     }
 }
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Md2Cfg {
     pub int2_sleep_change: bool,
     pub int2_single_tap: bool,

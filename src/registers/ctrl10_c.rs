@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use crate::Ism330Dhcx;
 use crate::registers::Register;
 use embedded_hal::i2c::I2c;
@@ -6,9 +5,10 @@ use modular_bitfield::{bitfield, specifiers::B3};
 
 /// Control register 10.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl10C {
-    pub __: B3,
+    #[skip]
+    pub reserved: B3,
     pub den_lh: bool,
     pub pedo_rst_step: bool,
     pub timestamp_en: bool,

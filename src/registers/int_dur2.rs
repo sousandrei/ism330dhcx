@@ -1,10 +1,9 @@
-#![allow(non_snake_case)]
 use modular_bitfield::{
     bitfield,
     specifiers::{B2, B4},
 };
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct IntDur2 {
     pub shock: B2,
     pub quiet: B2,

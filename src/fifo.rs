@@ -90,8 +90,8 @@ impl FifoOut {
 
 use crate::Ism330Dhcx;
 use crate::registers::{
-    BdrGy, BdrXl, FifoCtrl1, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode, FifoStatus, Register,
-    TemperatureBatchRate, TimestampBatchDecimation, UncompressedDataRate,
+    BdrGy, BdrXl, FifoCtrl1, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode, FifoStatus1, FifoStatus2,
+    Register, TemperatureBatchRate, TimestampBatchDecimation, UncompressedDataRate,
 };
 
 /// FIFO methods.
@@ -161,7 +161,7 @@ pub trait Fifo {
     where
         I2C: I2c;
     /// Get FIFO status.
-    fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<FifoStatus, I2C::Error>
+    fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<(FifoStatus1, FifoStatus2), I2C::Error>
     where
         I2C: I2c;
     /// Pop a value from the FIFO.
@@ -209,7 +209,7 @@ impl Fifo for Ism330Dhcx {
     {
         self.modify_reg(i2c, Register::FifoCtrl2, |v| {
             let mut reg = FifoCtrl2::from_bytes([v]);
-            reg.set_uncoptr_rate(rate);
+            reg.set_uncompressed_rate(rate);
             reg.into_bytes()[0]
         })
     }
@@ -307,13 +307,16 @@ impl Fifo for Ism330Dhcx {
         })
     }
 
-    fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<FifoStatus, I2C::Error>
+    fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<(FifoStatus1, FifoStatus2), I2C::Error>
     where
         I2C: I2c,
     {
         let mut out = [0u8; 2];
         i2c.write_read(self.address, &[Register::FifoStatus1.addr()], &mut out)?;
-        Ok(FifoStatus::from_bytes(out))
+        Ok((
+            FifoStatus1::from_bytes([out[0]]),
+            FifoStatus2::from_bytes([out[1]]),
+        ))
     }
 
     fn fifo_pop<I2C>(&self, i2c: &mut I2C) -> Result<Value, I2C::Error>
@@ -373,6 +376,25 @@ mod tests {
         ]);
 
         sensor.set_fifo_watermark(&mut i2c, 0x123).unwrap();
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_fifo_status_decodes_both_registers() {
+        let sensor = crate::Ism330Dhcx {
+            address: crate::DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            crate::DEFAULT_I2C_ADDRESS,
+            vec![Register::FifoStatus1.addr()],
+            vec![0xaa, 0xfb],
+        )]);
+
+        let (status1, status2) = sensor.get_fifo_status(&mut i2c).unwrap();
+        assert_eq!(status1.diff_fifo(), 0xaa);
+        assert_eq!(status2.diff_fifo(), 0b11);
+        assert!(status2.fifo_wtm_ia());
+        assert!(status2.fifo_ovr_latched());
         i2c.done();
     }
 

@@ -2,7 +2,7 @@ use modular_bitfield::{bitfield, specifiers::B1};
 
 /// Interrupt routing control for INT1.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Int1Ctrl {
     pub int1_drdy_xl: bool,
     pub int1_drdy_g: bool,
@@ -21,7 +21,7 @@ impl Default for Int1Ctrl {
 
 /// Interrupt routing control for INT2.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Int2Ctrl {
     pub int2_drdy_xl: bool,
     pub int2_drdy_g: bool,

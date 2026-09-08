@@ -6,7 +6,7 @@ use modular_bitfield::{bitfield, specifiers::B3};
 
 /// Counter batch data rate register 1 (0Bh)
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CounterBdrReg1 {
     /// In conjunction with CNT_BDR_TH_[7:0] in COUNTER_BDR_REG2 (0Ch), sets the threshold for the
     /// internal counter of batch events.
@@ -31,7 +31,7 @@ impl Default for CounterBdrReg1 {
 
 /// Counter batch data rate register 2 (0Ch)
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CounterBdrReg2 {
     /// In conjunction with CNT_BDR_TH_[10:8] in COUNTER_BDR_REG1 (0Bh), sets the threshold for the
     /// internal counter of batch events.
@@ -62,13 +62,10 @@ pub trait CounterBdrExt {
         I2C: I2c;
 
     /// Sets the threshold for the internal counter of batch events (11 bits).
-    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u11) -> Result<(), I2C::Error>
+    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
     where
         I2C: I2c;
 }
-
-#[allow(non_camel_case_types)]
-type u11 = u16;
 
 impl CounterBdrExt for Ism330Dhcx {
     fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
@@ -104,7 +101,7 @@ impl CounterBdrExt for Ism330Dhcx {
         })
     }
 
-    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u11) -> Result<(), I2C::Error>
+    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
     where
         I2C: I2c,
     {

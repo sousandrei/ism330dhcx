@@ -3,7 +3,7 @@ use modular_bitfield::{bitfield, specifiers::B1};
 
 /// Control register 3.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl3C {
     /// Software reset.
     pub sw_reset: bool,
@@ -25,7 +25,7 @@ pub struct Ctrl3C {
 
 impl Default for Ctrl3C {
     fn default() -> Self {
-        Self::new()
+        Self::from_bytes([0x04])
     }
 }
 
@@ -44,5 +44,6 @@ mod tests {
         reg.set_bdu(true);
         reg.set_boot(true);
         assert_eq!(reg.into_bytes(), [0xfd]);
+        assert_eq!(Ctrl3C::default().into_bytes(), [0x04]);
     }
 }

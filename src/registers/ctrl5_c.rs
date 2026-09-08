@@ -1,4 +1,3 @@
-#![allow(non_snake_case)]
 use modular_bitfield::{Specifier, bitfield, specifiers::B1, specifiers::B2};
 
 #[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
@@ -19,11 +18,12 @@ pub enum StG {
 
 /// Control register 5.
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct Ctrl5C {
     pub st_xl: StXl,
     pub st_g: StG,
-    pub __: B1,
+    #[skip]
+    pub reserved: B1,
     pub rounding: B2,
     pub rounding_status: bool,
 }

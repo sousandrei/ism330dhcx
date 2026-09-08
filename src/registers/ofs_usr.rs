@@ -1,9 +1,10 @@
 use modular_bitfield::bitfield;
 
 macro_rules! offset_register {
-    ($name:ident) => {
+    ($name:ident, $doc:literal) => {
         #[bitfield]
-        #[derive(Debug, Copy, Clone)]
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+        #[doc = $doc]
         pub struct $name {
             pub offset: u8,
         }
@@ -14,9 +15,9 @@ macro_rules! offset_register {
         }
     };
 }
-offset_register!(XOfsUsr);
-offset_register!(YOfsUsr);
-offset_register!(ZOfsUsr);
+offset_register!(XOfsUsr, "User X-axis offset register.");
+offset_register!(YOfsUsr, "User Y-axis offset register.");
+offset_register!(ZOfsUsr, "User Z-axis offset register.");
 
 #[cfg(test)]
 mod tests {

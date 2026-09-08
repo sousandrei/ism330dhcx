@@ -6,7 +6,7 @@ use modular_bitfield::{bitfield, specifiers::B6};
 
 /// SDO, OCS_AUX, SDO_AUX pins pull-up enable/disable register. (02h)
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct PinCtrl {
     /// Reserved bits, must be set to 1 for correct operation.
     pub reserved: B6,

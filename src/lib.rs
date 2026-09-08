@@ -475,7 +475,7 @@ mod tests {
 
         let source = sensor.get_all_int_src(&mut i2c).unwrap();
         assert!(source.ff_ia());
-        assert!(!source.tilt_ia());
+        assert!(!source.d6d_ia());
         i2c.done();
     }
 

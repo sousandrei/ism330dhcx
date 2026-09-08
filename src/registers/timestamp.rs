@@ -4,9 +4,10 @@ use embedded_hal::i2c::I2c;
 use modular_bitfield::bitfield;
 
 macro_rules! timestamp_register {
-    ($name:ident) => {
+    ($name:ident, $doc:literal) => {
         #[bitfield]
-        #[derive(Debug, Copy, Clone)]
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+        #[doc = $doc]
         pub struct $name {
             pub value: u8,
         }
@@ -17,10 +18,10 @@ macro_rules! timestamp_register {
         }
     };
 }
-timestamp_register!(Timestamp0);
-timestamp_register!(Timestamp1);
-timestamp_register!(Timestamp2);
-timestamp_register!(Timestamp3);
+timestamp_register!(Timestamp0, "Timestamp register 0.");
+timestamp_register!(Timestamp1, "Timestamp register 1.");
+timestamp_register!(Timestamp2, "Timestamp register 2.");
+timestamp_register!(Timestamp3, "Timestamp register 3.");
 
 pub trait TimestampConfig {
     fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>

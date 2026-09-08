@@ -1,21 +1,19 @@
-#![allow(non_snake_case)]
 use crate::Ism330Dhcx;
 use crate::registers::Register;
 use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B1};
 #[bitfield]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct WakeUpSrc {
-    pub z_wu: bool,
-    pub y_wu: bool,
-    pub x_wu: bool,
-    pub wu_ia: bool,
-    pub sleep_state: bool,
+    pub sleep_change_ia: bool,
     pub ff_ia: bool,
+    pub sleep_state: bool,
+    pub wu_ia: bool,
+    pub x_wu: bool,
+    pub y_wu: bool,
+    pub z_wu: bool,
     #[skip]
     pub __: B1,
-    #[skip]
-    pub ___: B1,
 }
 impl Default for WakeUpSrc {
     fn default() -> Self {
@@ -48,5 +46,12 @@ mod tests {
         let mut r = WakeUpSrc::new();
         r.set_wu_ia(true);
         assert_eq!(r.into_bytes(), [8]);
+        r.set_sleep_change_ia(true);
+        r.set_ff_ia(true);
+        r.set_sleep_state(true);
+        r.set_x_wu(true);
+        r.set_y_wu(true);
+        r.set_z_wu(true);
+        assert_eq!(r.into_bytes(), [0x7f]);
     }
 }
