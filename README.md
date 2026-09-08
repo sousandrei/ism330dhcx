@@ -107,6 +107,11 @@ sensor
 Sensor-hub pull-ups, pass-through, auxiliary-sensor mode, reset, and operation
 status are exposed through the `SensorHub` trait.
 
+FIFO words are seven bytes: one tag byte followed by six data bytes. Use
+`fifo_pop_entry` when tag counters and parity are needed; it decodes physical
+sensor, temperature, timestamp, step-counter, sensor-hub, configuration-change,
+and compressed-data entries while preserving reserved payloads.
+
 For bits that operate together, the driver provides typed register fields. For
 example, to set the accelerometer data rate you specify the desired data rate
 and the driver updates the corresponding four bits.

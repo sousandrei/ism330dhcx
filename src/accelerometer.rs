@@ -4,7 +4,7 @@ use crate::registers::FsXl;
 pub const SENSORS_GRAVITY_STANDARD: f32 = 9.80665;
 
 /// High-level accelerometer reading.
-#[derive(Copy, Clone, Debug, defmt::Format)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, defmt::Format)]
 pub struct AccelValue {
     range: FsXl,
     count: [i16; 3],

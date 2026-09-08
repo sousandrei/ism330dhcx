@@ -53,7 +53,7 @@ pub mod spi;
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
 pub use configuration::{Configuration, CoreField};
 pub use embedded::EmbeddedFunctions;
-pub use fifo::{Fifo, Value};
+pub use fifo::{Fifo, FifoEntry, FifoTag, SensorTag, Value};
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;

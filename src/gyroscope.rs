@@ -4,7 +4,7 @@ use crate::registers::FsG;
 pub const SENSORS_DPS_TO_RADS: f32 = 0.017453292;
 
 /// High-level gyroscope reading.
-#[derive(Copy, Clone, Debug, defmt::Format)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq, defmt::Format)]
 pub struct GyroValue {
     range: FsG,
     count: [i16; 3],
