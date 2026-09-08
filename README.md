@@ -135,6 +135,14 @@ sensor
 Advanced FSM/MLC page data can be accessed with bounded
 `read_embedded_page` and `write_embedded_page` operations.
 
+Accelerometer and gyroscope self-tests are available through
+`run_accel_self_test` and `run_gyro_self_test`. These methods configure the
+recommended self-test data rate and range, wait for the sensor to settle,
+acquire five samples with the supplied `SelfTestDelay`, evaluate the measured
+change against the datasheet limits, and restore the previous configuration.
+The returned `SelfTestResult` contains the per-axis output change and the
+overall pass/fail result.
+
 FIFO words are seven bytes: one tag byte followed by six data bytes. Use
 `fifo_pop_entry` when tag counters and parity are needed; it decodes physical
 sensor, temperature, timestamp, step-counter, sensor-hub, configuration-change,

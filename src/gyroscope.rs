@@ -54,6 +54,9 @@ use crate::RegisterBus;
 use crate::registers::{
     Ctrl2G, Ctrl5C, Ctrl6C, Ctrl7G, FsGScale, Ftype, HpmG, OdrG, Register, StG,
 };
+use crate::self_test::{
+    SELF_TEST_SAMPLES, SELF_TEST_SETTLE_MS, SelfTestDelay, SelfTestResult, average, evaluate,
+};
 
 /// Gyroscope sensor methods.
 pub trait Gyroscope {
@@ -91,6 +94,15 @@ pub trait Gyroscope {
     fn set_gyro_self_test<I2C>(&self, i2c: &mut I2C, mode: StG) -> Result<(), I2C::Error>
     where
         I2C: RegisterBus;
+    /// Run the gyroscope self-test and restore the previous configuration.
+    fn run_gyro_self_test<I2C, D>(
+        &self,
+        i2c: &mut I2C,
+        delay: &mut D,
+    ) -> Result<SelfTestResult, I2C::Error>
+    where
+        I2C: RegisterBus,
+        D: SelfTestDelay;
     /// Get gyroscope reading.
     fn get_gyroscope<I2C>(&self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
@@ -202,6 +214,65 @@ impl Gyroscope for Ism330Dhcx {
             r.set_st_g(mode);
             r.into_bytes()[0]
         })
+    }
+
+    fn run_gyro_self_test<I2C, D>(
+        &self,
+        i2c: &mut I2C,
+        delay: &mut D,
+    ) -> Result<SelfTestResult, I2C::Error>
+    where
+        I2C: RegisterBus,
+        D: SelfTestDelay,
+    {
+        let ctrl2 = self.read_reg(i2c, Register::Ctrl2G)?;
+        let ctrl5 = self.read_reg(i2c, Register::Ctrl5C)?;
+
+        let result = (|| {
+            let mut configuration = Ctrl2G::from_bytes([ctrl2]);
+            configuration.set_odr_g(OdrG::Hz208);
+            configuration.set_fs_g(FsGScale::Dps2000);
+            configuration.set_fs_125(false);
+            configuration.set_fs_4000(false);
+            self.write_reg(i2c, Register::Ctrl2G, configuration.into_bytes()[0])?;
+            self.set_gyro_self_test(i2c, StG::Positive)?;
+            delay.delay_ms(SELF_TEST_SETTLE_MS);
+
+            let mut self_test_samples = [[0.0; 3]; SELF_TEST_SAMPLES];
+            for sample in &mut self_test_samples {
+                *sample = self.get_gyroscope(i2c)?.as_dps();
+            }
+
+            self.set_gyro_self_test(i2c, StG::Normal)?;
+            delay.delay_ms(SELF_TEST_SETTLE_MS);
+
+            let mut normal_samples = [[0.0; 3]; SELF_TEST_SAMPLES];
+            for sample in &mut normal_samples {
+                *sample = self.get_gyroscope(i2c)?.as_dps();
+            }
+
+            Ok(evaluate(
+                average(&normal_samples),
+                average(&self_test_samples),
+                20.0,
+                80.0,
+            ))
+        })();
+
+        let mut restore = || {
+            self.write_reg(i2c, Register::Ctrl5C, ctrl5)?;
+            self.write_reg(i2c, Register::Ctrl2G, ctrl2)
+        };
+        match result {
+            Ok(value) => {
+                restore()?;
+                Ok(value)
+            }
+            Err(error) => {
+                let _ = restore();
+                Err(error)
+            }
+        }
     }
 
     fn get_gyroscope<I2C>(&self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
@@ -316,6 +387,77 @@ mod tests {
         };
 
         sensor.set_gyro_hpf(&mut i2c, true, HpmG::Hpmg65).unwrap();
+        i2c.done();
+    }
+
+    struct TestDelay;
+
+    impl SelfTestDelay for TestDelay {
+        fn delay_ms(&mut self, _milliseconds: u32) {}
+    }
+
+    #[test]
+    fn gyroscope_self_test_fails_and_restores_configuration() {
+        let mut transactions = vec![
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl2G.addr()],
+                vec![0x12],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl5C.addr()],
+                vec![0xa0],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl2G.addr(), 0x5c]),
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr()], vec![0]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr(), 0x04]),
+        ];
+        for _ in 0..SELF_TEST_SAMPLES {
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl2G.addr()],
+                vec![0x5c],
+            ));
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::OutXLG.addr()],
+                vec![0, 0, 0, 0, 0, 0],
+            ));
+        }
+        transactions.extend([
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl5C.addr()],
+                vec![0x04],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr(), 0]),
+        ]);
+        for _ in 0..SELF_TEST_SAMPLES {
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl2G.addr()],
+                vec![0x5c],
+            ));
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::OutXLG.addr()],
+                vec![0, 0, 0, 0, 0, 0],
+            ));
+        }
+        transactions.extend([
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr(), 0xa0]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl2G.addr(), 0x12]),
+        ]);
+
+        let mut i2c = Mock::new(&transactions);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+        let result = sensor.run_gyro_self_test(&mut i2c, &mut TestDelay).unwrap();
+
+        assert!(!result.passed);
+        assert_eq!(result.delta, [0.0, 0.0, 0.0]);
         i2c.done();
     }
 }

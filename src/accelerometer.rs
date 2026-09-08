@@ -52,6 +52,9 @@ impl AccelValue {
 use crate::Ism330Dhcx;
 use crate::RegisterBus;
 use crate::registers::{Ctrl1Xl, Ctrl5C, Ctrl8Xl, Ctrl9Xl, OdrXl, Register, StXl};
+use crate::self_test::{
+    SELF_TEST_SAMPLES, SELF_TEST_SETTLE_MS, SelfTestDelay, SelfTestResult, average, evaluate,
+};
 
 /// Accelerometer sensor methods.
 pub trait Accelerometer {
@@ -107,6 +110,15 @@ pub trait Accelerometer {
     fn set_accel_self_test<I2C>(&self, i2c: &mut I2C, mode: StXl) -> Result<(), I2C::Error>
     where
         I2C: RegisterBus;
+    /// Run the accelerometer self-test and restore the previous configuration.
+    fn run_accel_self_test<I2C, D>(
+        &self,
+        i2c: &mut I2C,
+        delay: &mut D,
+    ) -> Result<SelfTestResult, I2C::Error>
+    where
+        I2C: RegisterBus,
+        D: SelfTestDelay;
     /// Set DEN value on X axis.
     fn set_den_x<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
@@ -269,6 +281,63 @@ impl Accelerometer for Ism330Dhcx {
             r.set_st_xl(mode);
             r.into_bytes()[0]
         })
+    }
+
+    fn run_accel_self_test<I2C, D>(
+        &self,
+        i2c: &mut I2C,
+        delay: &mut D,
+    ) -> Result<SelfTestResult, I2C::Error>
+    where
+        I2C: RegisterBus,
+        D: SelfTestDelay,
+    {
+        let ctrl1 = self.read_reg(i2c, Register::Ctrl1Xl)?;
+        let ctrl5 = self.read_reg(i2c, Register::Ctrl5C)?;
+
+        let result = (|| {
+            let mut configuration = Ctrl1Xl::from_bytes([ctrl1]);
+            configuration.set_odr_xl(OdrXl::Hz52);
+            configuration.set_fs_xl(crate::registers::FsXl::G2);
+            self.write_reg(i2c, Register::Ctrl1Xl, configuration.into_bytes()[0])?;
+            self.set_accel_self_test(i2c, StXl::Positive)?;
+            delay.delay_ms(SELF_TEST_SETTLE_MS);
+
+            let mut self_test_samples = [[0.0; 3]; SELF_TEST_SAMPLES];
+            for sample in &mut self_test_samples {
+                *sample = self.get_accelerometer(i2c)?.as_mg();
+            }
+
+            self.set_accel_self_test(i2c, StXl::Normal)?;
+            delay.delay_ms(SELF_TEST_SETTLE_MS);
+
+            let mut normal_samples = [[0.0; 3]; SELF_TEST_SAMPLES];
+            for sample in &mut normal_samples {
+                *sample = self.get_accelerometer(i2c)?.as_mg();
+            }
+
+            Ok(evaluate(
+                average(&normal_samples),
+                average(&self_test_samples),
+                90.0,
+                1700.0,
+            ))
+        })();
+
+        let mut restore = || {
+            self.write_reg(i2c, Register::Ctrl5C, ctrl5)?;
+            self.write_reg(i2c, Register::Ctrl1Xl, ctrl1)
+        };
+        match result {
+            Ok(value) => {
+                restore()?;
+                Ok(value)
+            }
+            Err(error) => {
+                let _ = restore();
+                Err(error)
+            }
+        }
     }
 
     fn set_den_x<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
@@ -521,6 +590,79 @@ mod tests {
         sensor
             .set_accel_self_test(&mut i2c, StXl::Negative)
             .unwrap();
+        i2c.done();
+    }
+
+    struct TestDelay;
+
+    impl SelfTestDelay for TestDelay {
+        fn delay_ms(&mut self, _milliseconds: u32) {}
+    }
+
+    #[test]
+    fn accelerometer_self_test_passes_and_restores_configuration() {
+        let mut transactions = vec![
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl1Xl.addr()],
+                vec![0x12],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl5C.addr()],
+                vec![0xa0],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl1Xl.addr(), 0x32]),
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr()], vec![0]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr(), 0x01]),
+        ];
+        for _ in 0..SELF_TEST_SAMPLES {
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl1Xl.addr()],
+                vec![0x32],
+            ));
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::OutXLA.addr()],
+                vec![0xcf, 0x0c, 0xcf, 0x0c, 0xcf, 0x0c],
+            ));
+        }
+        transactions.extend([
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl5C.addr()],
+                vec![0x01],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr(), 0]),
+        ]);
+        for _ in 0..SELF_TEST_SAMPLES {
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl1Xl.addr()],
+                vec![0x32],
+            ));
+            transactions.push(Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::OutXLA.addr()],
+                vec![0, 0, 0, 0, 0, 0],
+            ));
+        }
+        transactions.extend([
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl5C.addr(), 0xa0]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl1Xl.addr(), 0x12]),
+        ]);
+
+        let mut i2c = Mock::new(&transactions);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+        let result = sensor
+            .run_accel_self_test(&mut i2c, &mut TestDelay)
+            .unwrap();
+
+        assert!(result.passed);
+        assert!(result.delta[0] > 90.0 && result.delta[0] < 1700.0);
         i2c.done();
     }
 }

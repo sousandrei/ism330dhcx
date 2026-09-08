@@ -28,7 +28,8 @@
 //! defined in [`registers`]. Feature modules expose the public I2C API through
 //! [`Accelerometer`], [`Gyroscope`], [`Configuration`], [`Fifo`], [`Motion`],
 //! [`InterruptStatus`], [`EmbeddedFunctions`], [`SensorHub`], [`Offsets`], and
-//! [`Ois`].
+//! [`Ois`]. Self-test execution is exposed through [`SelfTestDelay`] and
+//! [`SelfTestResult`].
 //!
 //! # Reference
 //!
@@ -47,6 +48,7 @@ pub mod motion;
 pub mod offsets;
 pub mod ois;
 pub mod registers;
+pub mod self_test;
 pub mod sensor_hub;
 pub mod spi;
 
@@ -59,6 +61,7 @@ pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;
 pub use offsets::Offsets;
 pub use ois::Ois;
+pub use self_test::{SelfTestDelay, SelfTestResult};
 pub use sensor_hub::{SensorHub, SensorHubReadConfig, SensorHubSlave};
 pub use spi::SpiDeviceBus;
 
