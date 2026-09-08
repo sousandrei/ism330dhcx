@@ -4,7 +4,7 @@ use modular_bitfield::{bitfield, specifiers::B3};
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CounterBdrReg1 {
-    /// In conjunction with CNT_BDR_TH_[7:0] in COUNTER_BDR_REG2 (0Ch), sets the threshold for the
+    /// In conjunction with CNT_BDR_TH_\[7:0\] in COUNTER_BDR_REG2 (0Ch), sets the threshold for the
     /// internal counter of batch events.
     pub cnt_bdr_th_msb: B3,
     #[skip]
@@ -29,7 +29,7 @@ impl Default for CounterBdrReg1 {
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct CounterBdrReg2 {
-    /// In conjunction with CNT_BDR_TH_[10:8] in COUNTER_BDR_REG1 (0Bh), sets the threshold for the
+    /// In conjunction with CNT_BDR_TH_\[10:8\] in COUNTER_BDR_REG1 (0Bh), sets the threshold for the
     /// internal counter of batch events.
     pub cnt_bdr_th_lsb: u8,
 }

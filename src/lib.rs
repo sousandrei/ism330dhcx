@@ -16,6 +16,12 @@
 //! sensor.set_boot(true).unwrap();
 //! ```
 //!
+//! Register layouts, typed fields, reset values, and address namespaces are
+//! defined in [`registers`]. Feature modules expose the public I2C API through
+//! [`Accelerometer`], [`Gyroscope`], [`Configuration`], [`Fifo`], [`Motion`],
+//! [`InterruptStatus`], [`EmbeddedFunctions`], [`SensorHub`], [`Offsets`], and
+//! [`Ois`].
+//!
 //! # Reference
 //!
 //! - [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
@@ -51,8 +57,6 @@ use registers::*;
 
 /// Datasheet write address for the device. (D6h)
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
-
-// SENSORS_GRAVITY_STANDARD moved to accelerometer.rs
 
 /// Errors for the ISM330DHCX driver.
 #[derive(Debug, Copy, Clone, defmt::Format)]
