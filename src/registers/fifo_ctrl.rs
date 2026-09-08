@@ -1,7 +1,8 @@
 #![allow(unused_parens)]
 use modular_bitfield::{
-    BitfieldSpecifier, bitfield,
+    bitfield,
     specifiers::{B5, B6},
+    BitfieldSpecifier,
 };
 
 /// FIFO control register 2.

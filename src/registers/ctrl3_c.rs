@@ -28,3 +28,21 @@ impl Default for Ctrl3C {
         Self::new()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn fields_match_register_bits() {
+        let mut reg = Ctrl3C::new();
+        reg.set_sw_reset(true);
+        reg.set_if_inc(true);
+        reg.set_sim(true);
+        reg.set_pp_od(true);
+        reg.set_h_lactive(true);
+        reg.set_bdu(true);
+        reg.set_boot(true);
+        assert_eq!(reg.into_bytes(), [0xfd]);
+    }
+}

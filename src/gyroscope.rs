@@ -50,7 +50,9 @@ impl GyroValue {
 }
 
 use crate::Ism330Dhcx;
-use crate::registers::{Ctrl2G, Ctrl7G, FsGScale, OdrG, Register};
+use crate::registers::{
+    Ctrl2G, Ctrl5C, Ctrl6C, Ctrl7G, FsGScale, Ftype, HpmG, OdrG, Register, StG,
+};
 use embedded_hal::i2c::I2c;
 
 /// Gyroscope sensor methods.
@@ -69,6 +71,20 @@ pub trait Gyroscope {
         I2C: I2c;
     /// Enable Gyroscope High-Performance mode (disable g_hm_mode bit).
     fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    fn set_gyro_filter_type<I2C>(&self, i2c: &mut I2C, filter: Ftype) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    fn set_gyro_hpf<I2C>(
+        &self,
+        i2c: &mut I2C,
+        enable: bool,
+        cutoff: HpmG,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    fn set_gyro_self_test<I2C>(&self, i2c: &mut I2C, mode: StG) -> Result<(), I2C::Error>
     where
         I2C: I2c;
     /// Get gyroscope reading.
@@ -145,6 +161,38 @@ impl Gyroscope for Ism330Dhcx {
         })
     }
 
+    fn set_gyro_filter_type<I2C>(&self, i2c: &mut I2C, filter: Ftype) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl6C, |v| {
+            let mut r = Ctrl6C::from_bytes([v]);
+            r.set_ftype(filter);
+            r.into_bytes()[0]
+        })
+    }
+    fn set_gyro_hpf<I2C>(&self, i2c: &mut I2C, enable: bool, cutoff: HpmG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl7G, |v| {
+            let mut r = Ctrl7G::from_bytes([v]);
+            r.set_hp_en_g(enable);
+            r.set_hpm_g(cutoff);
+            r.into_bytes()[0]
+        })
+    }
+    fn set_gyro_self_test<I2C>(&self, i2c: &mut I2C, mode: StG) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl5C, |v| {
+            let mut r = Ctrl5C::from_bytes([v]);
+            r.set_st_g(mode);
+            r.into_bytes()[0]
+        })
+    }
+
     fn get_gyroscope<I2C>(&self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
         I2C: I2c,
@@ -200,6 +248,63 @@ mod tests {
         let reading = sensor.get_gyroscope(&mut i2c).unwrap();
 
         assert_eq!(reading.count(), [0x1234, 0x5678, -0x6544]);
+        i2c.done();
+    }
+
+    macro_rules! gyro_modify_test {
+        ($name:ident, $method:ident, $value:expr, $register:expr, $read:expr, $write:expr) => {
+            #[test]
+            fn $name() {
+                let mut i2c = Mock::new(&[
+                    Transaction::write_read(
+                        DEFAULT_I2C_ADDRESS,
+                        vec![$register.addr()],
+                        vec![$read],
+                    ),
+                    Transaction::write(DEFAULT_I2C_ADDRESS, vec![$register.addr(), $write]),
+                ]);
+                let sensor = Ism330Dhcx {
+                    address: DEFAULT_I2C_ADDRESS,
+                };
+
+                sensor.$method(&mut i2c, $value).unwrap();
+                i2c.done();
+            }
+        };
+    }
+
+    gyro_modify_test!(
+        test_set_gyro_filter_type,
+        set_gyro_filter_type,
+        Ftype::Bw3,
+        Register::Ctrl6C,
+        0xa8,
+        0xab
+    );
+    gyro_modify_test!(
+        test_set_gyro_self_test,
+        set_gyro_self_test,
+        StG::Negative,
+        Register::Ctrl5C,
+        0xa8,
+        0xac
+    );
+
+    #[test]
+    fn test_set_gyro_hpf() {
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl7G.addr()],
+                vec![0x01],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl7G.addr(), 0x49]),
+        ]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        sensor.set_gyro_hpf(&mut i2c, true, HpmG::Hpmg65).unwrap();
         i2c.done();
     }
 }

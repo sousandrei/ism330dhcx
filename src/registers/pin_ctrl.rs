@@ -1,6 +1,6 @@
 #![allow(unused_parens)]
-use crate::Ism330Dhcx;
 use crate::registers::Register;
+use crate::Ism330Dhcx;
 use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B6};
 

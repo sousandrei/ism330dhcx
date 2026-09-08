@@ -1,5 +1,5 @@
 #![allow(unused_parens)]
-use modular_bitfield::{BitfieldSpecifier, bitfield, specifiers::B1};
+use modular_bitfield::{bitfield, specifiers::B1, BitfieldSpecifier};
 
 /// Gyroscope high-pass filter cutoff selection.
 #[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
