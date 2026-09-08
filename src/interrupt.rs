@@ -2,7 +2,7 @@ use embedded_hal::i2c::I2c;
 
 use crate::Ism330Dhcx;
 use crate::registers::{
-    AllIntSrc, D6dSrc, Int1Ctrl, Int2Ctrl, Md1Cfg, Md2Cfg, Register, TapSrc, WakeUpSrc,
+    AllIntSrc, D6dSrc, Int1Ctrl, Int2Ctrl, Md1Cfg, Md2Cfg, Register, StatusReg, TapSrc, WakeUpSrc,
 };
 
 /// Interrupt routing configuration.
@@ -99,6 +99,12 @@ pub trait InterruptStatus {
     fn get_int2_event_routing<I2C>(&self, i2c: &mut I2C) -> Result<Md2Cfg, I2C::Error>
     where
         I2C: I2c;
+    fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
+    where
+        I2C: I2c;
+    fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
+    where
+        I2C: I2c;
 }
 
 impl InterruptStatus for Ism330Dhcx {
@@ -164,6 +170,24 @@ impl InterruptStatus for Ism330Dhcx {
         I2C: I2c,
     {
         Ok(Md2Cfg::from_bytes([self.read_reg(i2c, Register::Md2Cfg)?]))
+    }
+
+    fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        Ok(StatusReg::from_bytes([
+            self.read_reg(i2c, Register::StatusReg)?
+        ]))
+    }
+
+    fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let mut bytes = [0u8; 3];
+        i2c.write_read(self.address, &[Register::Timestamp0.addr()], &mut bytes)?;
+        Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], 0]))
     }
 }
 

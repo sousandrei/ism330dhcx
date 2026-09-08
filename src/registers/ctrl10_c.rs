@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B3};
 
 /// Control register 10.
@@ -21,24 +18,6 @@ impl Default for Ctrl10C {
     }
 }
 
-pub trait Ctrl10CConfig {
-    fn set_timestamp_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl Ctrl10CConfig for Ism330Dhcx {
-    fn set_timestamp_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl10C, |v| {
-            let mut reg = Ctrl10C::from_bytes([v]);
-            reg.set_timestamp_en(enable);
-            reg.into_bytes()[0]
-        })
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

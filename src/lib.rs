@@ -44,10 +44,6 @@ pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;
 pub use offsets::Offsets;
 pub use ois::Ois;
-pub use registers::{
-    AllIntSrcConfig, Ctrl10CConfig, D6dSrcConfig, StatusRegConfig, TapSrcConfig, TimestampConfig,
-    WakeUpSrcConfig,
-};
 pub use sensor_hub::SensorHub;
 
 use embedded_hal::i2c::I2c;
@@ -477,7 +473,7 @@ mod tests {
             address: DEFAULT_I2C_ADDRESS,
         };
 
-        let source = sensor.get_all_int_src(&mut i2c).unwrap();
+        let source = sensor.get_interrupt_sources(&mut i2c).unwrap();
         assert!(source.ff_ia());
         assert!(!source.d6d_ia());
         i2c.done();
@@ -494,7 +490,7 @@ mod tests {
             address: DEFAULT_I2C_ADDRESS,
         };
 
-        assert!(sensor.get_wake_up_src(&mut i2c).unwrap().wu_ia());
+        assert!(sensor.get_wake_up_source(&mut i2c).unwrap().wu_ia());
         i2c.done();
     }
 
@@ -509,7 +505,7 @@ mod tests {
             address: DEFAULT_I2C_ADDRESS,
         };
 
-        assert!(sensor.get_tap_src(&mut i2c).unwrap().tap_ia());
+        assert!(sensor.get_tap_source(&mut i2c).unwrap().tap_ia());
         i2c.done();
     }
 
@@ -524,7 +520,7 @@ mod tests {
             address: DEFAULT_I2C_ADDRESS,
         };
 
-        assert!(sensor.get_d6d_src(&mut i2c).unwrap().d6d_ia());
+        assert!(sensor.get_6d_source(&mut i2c).unwrap().d6d_ia());
         i2c.done();
     }
 }

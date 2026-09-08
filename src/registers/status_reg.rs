@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B5};
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -17,22 +14,6 @@ impl Default for StatusReg {
     }
 }
 
-pub trait StatusRegConfig {
-    fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl StatusRegConfig for Ism330Dhcx {
-    fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        Ok(StatusReg::from_bytes([
-            self.read_reg(i2c, Register::StatusReg)?
-        ]))
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

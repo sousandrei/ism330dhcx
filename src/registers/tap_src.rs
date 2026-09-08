@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B1};
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -21,20 +18,6 @@ impl Default for TapSrc {
     }
 }
 
-pub trait TapSrcConfig {
-    fn get_tap_src<I2C>(&self, i2c: &mut I2C) -> Result<TapSrc, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl TapSrcConfig for Ism330Dhcx {
-    fn get_tap_src<I2C>(&self, i2c: &mut I2C) -> Result<TapSrc, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        Ok(TapSrc::from_bytes([self.read_reg(i2c, Register::TapSrc)?]))
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

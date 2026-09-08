@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B1};
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -21,22 +18,6 @@ impl Default for AllIntSrc {
     }
 }
 
-pub trait AllIntSrcConfig {
-    fn get_all_int_src<I2C>(&self, i2c: &mut I2C) -> Result<AllIntSrc, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl AllIntSrcConfig for Ism330Dhcx {
-    fn get_all_int_src<I2C>(&self, i2c: &mut I2C) -> Result<AllIntSrc, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        Ok(AllIntSrc::from_bytes([
-            self.read_reg(i2c, Register::AllIntSrc)?
-        ]))
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

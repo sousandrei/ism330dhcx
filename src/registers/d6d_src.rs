@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::bitfield;
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -20,20 +17,6 @@ impl Default for D6dSrc {
     }
 }
 
-pub trait D6dSrcConfig {
-    fn get_d6d_src<I2C>(&self, i2c: &mut I2C) -> Result<D6dSrc, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl D6dSrcConfig for Ism330Dhcx {
-    fn get_d6d_src<I2C>(&self, i2c: &mut I2C) -> Result<D6dSrc, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        Ok(D6dSrc::from_bytes([self.read_reg(i2c, Register::D6dSrc)?]))
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

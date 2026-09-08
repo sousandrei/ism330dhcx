@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B1};
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -21,22 +18,6 @@ impl Default for WakeUpSrc {
     }
 }
 
-pub trait WakeUpSrcConfig {
-    fn get_wake_up_src<I2C>(&self, i2c: &mut I2C) -> Result<WakeUpSrc, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl WakeUpSrcConfig for Ism330Dhcx {
-    fn get_wake_up_src<I2C>(&self, i2c: &mut I2C) -> Result<WakeUpSrc, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        Ok(WakeUpSrc::from_bytes([
-            self.read_reg(i2c, Register::WakeUpSrc)?
-        ]))
-    }
-}
 #[cfg(test)]
 mod tests {
     use super::*;

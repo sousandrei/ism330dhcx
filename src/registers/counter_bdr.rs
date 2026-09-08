@@ -1,7 +1,3 @@
-#![allow(unused_parens)]
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B3};
 
 /// Counter batch data rate register 1 (0Bh)
@@ -44,86 +40,13 @@ impl Default for CounterBdrReg2 {
     }
 }
 
-pub trait CounterBdrExt {
-    /// Enables pulsed data-ready mode.
-    fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c;
-
-    /// Resets the internal counter of batch events for a single sensor.
-    fn reset_counter_bdr<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
-    where
-        I2C: I2c;
-
-    /// Selects the trigger for the internal counter of batch events between XL and gyro.
-    /// false: XL batch event; true: GYRO batch event
-    fn set_trig_counter_bdr<I2C>(&self, i2c: &mut I2C, gyro: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c;
-
-    /// Sets the threshold for the internal counter of batch events (11 bits).
-    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl CounterBdrExt for Ism330Dhcx {
-    fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::CounterBdrReg1, |v| {
-            let mut reg = CounterBdrReg1::from_bytes([v]);
-            reg.set_dataready_pulsed(pulsed);
-            reg.into_bytes()[0]
-        })
-    }
-
-    fn reset_counter_bdr<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::CounterBdrReg1, |v| {
-            let mut reg = CounterBdrReg1::from_bytes([v]);
-            reg.set_rst_counter_bdr(true);
-            reg.into_bytes()[0]
-        })
-    }
-
-    fn set_trig_counter_bdr<I2C>(&self, i2c: &mut I2C, gyro: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::CounterBdrReg1, |v| {
-            let mut reg = CounterBdrReg1::from_bytes([v]);
-            reg.set_trig_counter_bdr(gyro);
-            reg.into_bytes()[0]
-        })
-    }
-
-    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        let threshold = threshold & 0x07FF; // 11 bits
-        let msb = (threshold >> 8) as u8;
-        let lsb = (threshold & 0xFF) as u8;
-
-        self.modify_reg(i2c, Register::CounterBdrReg1, |v| {
-            let mut reg = CounterBdrReg1::from_bytes([v]);
-            reg.set_cnt_bdr_th_msb(msb);
-            reg.into_bytes()[0]
-        })?;
-
-        self.write_reg(i2c, Register::CounterBdrReg2, lsb)
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::DEFAULT_I2C_ADDRESS;
+    use crate::Fifo;
     use crate::Ism330Dhcx;
+    use crate::registers::Register;
     use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]

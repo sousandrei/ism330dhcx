@@ -1,6 +1,3 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use embedded_hal::i2c::I2c;
 use modular_bitfield::bitfield;
 
 macro_rules! timestamp_register {
@@ -22,23 +19,6 @@ timestamp_register!(Timestamp0, "Timestamp register 0.");
 timestamp_register!(Timestamp1, "Timestamp register 1.");
 timestamp_register!(Timestamp2, "Timestamp register 2.");
 timestamp_register!(Timestamp3, "Timestamp register 3.");
-
-pub trait TimestampConfig {
-    fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl TimestampConfig for Ism330Dhcx {
-    fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        let mut bytes = [0u8; 3];
-        i2c.write_read(self.address, &[Register::Timestamp0.addr()], &mut bytes)?;
-        Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], 0]))
-    }
-}
 
 #[cfg(test)]
 mod tests {

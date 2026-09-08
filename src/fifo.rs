@@ -91,8 +91,9 @@ impl FifoOut {
 
 use crate::Ism330Dhcx;
 use crate::registers::{
-    BdrGy, BdrXl, FifoCtrl1, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode, FifoStatus1, FifoStatus2,
-    Register, TemperatureBatchRate, TimestampBatchDecimation, UncompressedDataRate,
+    BdrGy, BdrXl, CounterBdrReg1, FifoCtrl1, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode,
+    FifoStatus1, FifoStatus2, Register, TemperatureBatchRate, TimestampBatchDecimation,
+    UncompressedDataRate,
 };
 
 /// FIFO methods.
@@ -171,6 +172,22 @@ pub trait Fifo {
         I2C: I2c;
     /// Pop a value from the FIFO.
     fn fifo_pop<I2C>(&self, i2c: &mut I2C) -> Result<Value, I2C::Error>
+    where
+        I2C: I2c;
+    /// Enable pulsed data-ready mode.
+    fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Reset the internal counter of batch events.
+    fn reset_counter_bdr<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Select the accelerometer or gyroscope batch-event counter trigger.
+    fn set_trig_counter_bdr<I2C>(&self, i2c: &mut I2C, gyro: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Set the 11-bit batch-event counter threshold.
+    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
     where
         I2C: I2c;
 }
@@ -343,6 +360,52 @@ impl Fifo for Ism330Dhcx {
         let accel_scale = self.get_accel_scale(i2c)?;
 
         FifoOut::new(self.address).pop(i2c, gyro_scale, accel_scale)
+    }
+
+    fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
+            let mut reg = CounterBdrReg1::from_bytes([value]);
+            reg.set_dataready_pulsed(pulsed);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn reset_counter_bdr<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
+            let mut reg = CounterBdrReg1::from_bytes([value]);
+            reg.set_rst_counter_bdr(true);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_trig_counter_bdr<I2C>(&self, i2c: &mut I2C, gyro: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
+            let mut reg = CounterBdrReg1::from_bytes([value]);
+            reg.set_trig_counter_bdr(gyro);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let threshold = threshold & 0x07ff;
+        self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
+            let mut reg = CounterBdrReg1::from_bytes([value]);
+            reg.set_cnt_bdr_th_msb((threshold >> 8) as u8);
+            reg.into_bytes()[0]
+        })?;
+        self.write_reg(i2c, Register::CounterBdrReg2, threshold as u8)
     }
 }
 

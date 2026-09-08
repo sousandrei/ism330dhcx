@@ -1,7 +1,7 @@
 use embedded_hal::i2c::I2c;
 
 use crate::Ism330Dhcx;
-use crate::registers::{Ctrl4C, Ctrl5C, Ctrl6C, Ctrl7G, Ctrl10C, Register, Rounding};
+use crate::registers::{Ctrl4C, Ctrl5C, Ctrl6C, Ctrl7G, Ctrl10C, PinCtrl, Register, Rounding};
 
 /// Core sensor configuration methods.
 pub trait Configuration {
@@ -22,6 +22,21 @@ pub trait Configuration {
 
     /// Get the configured output-register rounding mode.
     fn get_rounding<I2C>(&self, i2c: &mut I2C) -> Result<Rounding, I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable or disable timestamping.
+    fn set_timestamp_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable or disable the SDO pin pull-up.
+    fn set_sdo_pu_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+
+    /// Enable or disable the OIS auxiliary pin pull-down.
+    fn set_ois_pu_dis<I2C>(&self, i2c: &mut I2C, disable: bool) -> Result<(), I2C::Error>
     where
         I2C: I2c;
 }
@@ -181,6 +196,39 @@ impl Configuration for Ism330Dhcx {
     {
         Ok(Ctrl5C::from_bytes([self.read_reg(i2c, Register::Ctrl5C)?]).rounding())
     }
+
+    fn set_timestamp_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl10C, |value| {
+            let mut reg = Ctrl10C::from_bytes([value]);
+            reg.set_timestamp_en(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_sdo_pu_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::PinCtrl, |value| {
+            let mut reg = PinCtrl::from_bytes([value]);
+            reg.set_sdo_pu_en(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_ois_pu_dis<I2C>(&self, i2c: &mut I2C, disable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::PinCtrl, |value| {
+            let mut reg = PinCtrl::from_bytes([value]);
+            reg.set_ois_pu_dis(disable);
+            reg.into_bytes()[0]
+        })
+    }
 }
 
 #[cfg(test)]
@@ -209,6 +257,24 @@ mod tests {
             .set_core_field(&mut i2c, CoreField::SleepG, true)
             .unwrap();
         sensor.set_rounding(&mut i2c, Rounding::Gyroscope).unwrap();
+        i2c.done();
+    }
+
+    #[test]
+    fn pin_configuration_preserves_unrelated_bits() {
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::PinCtrl.addr()],
+                vec![0x20],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::PinCtrl.addr(), 0x60]),
+        ]);
+
+        sensor.set_sdo_pu_en(&mut i2c, true).unwrap();
         i2c.done();
     }
 }
