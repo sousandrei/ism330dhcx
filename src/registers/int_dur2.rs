@@ -1,12 +1,14 @@
 #![allow(non_snake_case)]
-use modular_bitfield::{bitfield, specifiers::B2};
+use modular_bitfield::{
+    bitfield,
+    specifiers::{B2, B4},
+};
 #[bitfield]
 #[derive(Debug, Copy, Clone)]
 pub struct IntDur2 {
     pub shock: B2,
     pub quiet: B2,
-    pub dur: B2,
-    pub __: B2,
+    pub dur: B4,
 }
 impl Default for IntDur2 {
     fn default() -> Self {

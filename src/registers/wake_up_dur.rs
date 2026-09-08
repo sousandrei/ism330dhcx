@@ -6,8 +6,9 @@ use modular_bitfield::{
 #[derive(Debug, Copy, Clone)]
 pub struct WakeUpDur {
     pub sleep_dur: B4,
-    pub wake_ths_w: B2,
-    pub ff_dur: B2,
+    pub wake_ths_w: bool,
+    pub wake_dur: B2,
+    pub ff_dur: bool,
 }
 impl Default for WakeUpDur {
     fn default() -> Self {
@@ -22,6 +23,9 @@ mod tests {
         assert_eq!(WakeUpDur::default().into_bytes(), [0]);
         let mut r = WakeUpDur::new();
         r.set_sleep_dur(0xf);
-        assert_eq!(r.into_bytes(), [0x0f]);
+        r.set_wake_ths_w(true);
+        r.set_wake_dur(3);
+        r.set_ff_dur(true);
+        assert_eq!(r.into_bytes(), [0xff]);
     }
 }

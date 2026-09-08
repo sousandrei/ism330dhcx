@@ -21,6 +21,7 @@ mod tests {
         assert_eq!(FreeFall::default().into_bytes(), [0]);
         let mut r = FreeFall::new();
         r.set_ff_ths(7);
-        assert_eq!(r.into_bytes(), [7]);
+        r.set_ff_dur(0x1f);
+        assert_eq!(r.into_bytes(), [0xff]);
     }
 }

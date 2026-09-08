@@ -27,12 +27,14 @@ pub mod accelerometer;
 pub mod fifo;
 pub mod gyroscope;
 pub mod interrupt;
+pub mod motion;
 pub mod registers;
 
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
 pub use fifo::Fifo;
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::Interrupts;
+pub use motion::Motion;
 pub use registers::{
     AllIntSrcConfig, Ctrl10CConfig, D6dSrcConfig, StatusRegConfig, TapSrcConfig, TimestampConfig,
     WakeUpSrcConfig,

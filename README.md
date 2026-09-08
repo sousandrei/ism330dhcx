@@ -47,6 +47,16 @@ sensor.set_accel_odr(&mut i2c, OdrXl::Hz52).unwrap();
 sensor.set_boot(&mut i2c, true).unwrap();
 ```
 
+Motion events can be configured through the `Motion` trait and routed to either
+interrupt pin through the event-routing methods:
+
+```rust
+sensor.set_tap_x(&mut i2c, true).unwrap();
+sensor.set_tap_threshold_x(&mut i2c, 8).unwrap();
+sensor.set_4d(&mut i2c, true).unwrap();
+sensor.set_int1_double_tap(&mut i2c, true).unwrap();
+```
+
 For bits that operate together, they have their custom type abstracted. For example, to set the accelerometer data rate you have to operate 4 bits. But here you just have to specify your desired data rate and the driver takes care of it.
 
 ```rust
