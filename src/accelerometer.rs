@@ -1,7 +1,7 @@
 use crate::registers::FsXl;
 
 /// Standard gravity constant [m/s²]
-pub const SENSORS_GRAVITY_STANDARD: f64 = 9.80665;
+pub const SENSORS_GRAVITY_STANDARD: f32 = 9.80665;
 
 /// High-level accelerometer reading.
 #[derive(Copy, Clone, Debug, defmt::Format)]
@@ -33,18 +33,18 @@ impl AccelValue {
     }
 
     /// Return acceleration in meters per second squared [m/s²].
-    pub fn as_m_ss(&self) -> [f64; 3] {
+    pub fn as_m_ss(&self) -> [f32; 3] {
         self.as_mg().map(|v| v * SENSORS_GRAVITY_STANDARD / 1000.)
     }
 
     /// Return acceleration in milli-g \[mg\].
-    pub fn as_mg(&self) -> [f64; 3] {
-        let sensitivity = self.range.sensitivity() as f64;
-        self.count.map(|r| r as f64 * sensitivity)
+    pub fn as_mg(&self) -> [f32; 3] {
+        let sensitivity = self.range.sensitivity();
+        self.count.map(|r| r as f32 * sensitivity)
     }
 
     /// Return acceleration in g \[g\].
-    pub fn as_g(&self) -> [f64; 3] {
+    pub fn as_g(&self) -> [f32; 3] {
         self.as_mg().map(|v| v / 1000.)
     }
 }

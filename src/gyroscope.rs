@@ -1,7 +1,7 @@
 use crate::registers::FsG;
 
 /// Conversion factor from Degrees Per Second to Radians Per Second.
-pub const SENSORS_DPS_TO_RADS: f64 = 0.017453292;
+pub const SENSORS_DPS_TO_RADS: f32 = 0.017453292;
 
 /// High-level gyroscope reading.
 #[derive(Copy, Clone, Debug, defmt::Format)]
@@ -33,18 +33,18 @@ impl GyroValue {
     }
 
     /// Return angular velocity in radians per second [rad/s].
-    pub fn as_rad(&self) -> [f64; 3] {
+    pub fn as_rad(&self) -> [f32; 3] {
         self.as_mdps().map(|v| v * SENSORS_DPS_TO_RADS / 1000.)
     }
 
     /// Return angular velocity in milli-degrees per second \[mdps\].
-    pub fn as_mdps(&self) -> [f64; 3] {
-        let sensitivity = self.range.sensitivity() as f64;
-        self.count.map(|r| r as f64 * sensitivity)
+    pub fn as_mdps(&self) -> [f32; 3] {
+        let sensitivity = self.range.sensitivity();
+        self.count.map(|r| r as f32 * sensitivity)
     }
 
     /// Return angular velocity in degrees per second \[dps\].
-    pub fn as_dps(&self) -> [f64; 3] {
+    pub fn as_dps(&self) -> [f32; 3] {
         self.as_mdps().map(|v| v / 1000.)
     }
 }
