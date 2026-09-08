@@ -30,6 +30,7 @@ pub mod fifo;
 pub mod gyroscope;
 pub mod interrupt;
 pub mod motion;
+pub mod offsets;
 pub mod ois;
 pub mod registers;
 pub mod sensor_hub;
@@ -41,6 +42,7 @@ pub use fifo::Fifo;
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;
+pub use offsets::Offsets;
 pub use ois::Ois;
 pub use registers::{
     AllIntSrcConfig, Ctrl10CConfig, D6dSrcConfig, StatusRegConfig, TapSrcConfig, TimestampConfig,
@@ -432,11 +434,11 @@ mod tests {
     }
 
     #[test]
-    fn test_get_timestamp_reads_four_bytes() {
+    fn test_get_timestamp_reads_three_bytes() {
         let mut i2c = Mock::new(&[Transaction::write_read(
             DEFAULT_I2C_ADDRESS,
             vec![Register::Timestamp0.addr()],
-            vec![0x34, 0x12, 0xab, 0xff],
+            vec![0x34, 0x12, 0xab],
         )]);
         let sensor = Ism330Dhcx {
             address: DEFAULT_I2C_ADDRESS,

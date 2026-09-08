@@ -34,9 +34,9 @@ impl TimestampConfig for Ism330Dhcx {
     where
         I2C: I2c,
     {
-        let mut bytes = [0u8; 4];
+        let mut bytes = [0u8; 3];
         i2c.write_read(self.address, &[Register::Timestamp0.addr()], &mut bytes)?;
-        Ok(u32::from_le_bytes(bytes) & 0x00ff_ffff)
+        Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], 0]))
     }
 }
 

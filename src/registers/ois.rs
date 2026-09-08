@@ -72,6 +72,12 @@ pub struct Ctrl3Ois {
     pub fs_xl_ois: B2,
 }
 
+impl Default for Ctrl3Ois {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -82,11 +88,5 @@ mod tests {
         assert_eq!(Ctrl1Ois::default().into_bytes(), [0]);
         assert_eq!(Ctrl2Ois::default().into_bytes(), [0]);
         assert_eq!(Ctrl3Ois::default().into_bytes(), [0]);
-    }
-}
-
-impl Default for Ctrl3Ois {
-    fn default() -> Self {
-        Self::new()
     }
 }
