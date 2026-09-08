@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.7.0](https://github.com/sousandrei/ism330dhcx/compare/v0.6.0...v0.7.0) (2026-09-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* refactor driver ([#74](https://github.com/sousandrei/ism330dhcx/issues/74))
+
+### Features
+
+* add register configuration traits for status, interrupts, and timestamps, and update FIFO parsing logic ([a82f0ac](https://github.com/sousandrei/ism330dhcx/commit/a82f0ac112f7d8d7d2ac528570425d90b62ab370))
+* more-registers ([#76](https://github.com/sousandrei/ism330dhcx/issues/76)) ([bec3e02](https://github.com/sousandrei/ism330dhcx/commit/bec3e02440cb98700061a4695b865ff3bc702947))
+* refactor ([#84](https://github.com/sousandrei/ism330dhcx/issues/84)) ([c2abf59](https://github.com/sousandrei/ism330dhcx/commit/c2abf59d5a54c6a0474652485a03a9fe9639346c))
+* refactor driver ([#74](https://github.com/sousandrei/ism330dhcx/issues/74)) ([2d1e9cd](https://github.com/sousandrei/ism330dhcx/commit/2d1e9cdd8cc102b64e18125d7c7f15e5855aa0ed))
+
 ## [0.6.0](https://github.com/sousandrei/ism330dhcx/compare/v0.5.2...v0.6.0) (2024-06-05)
 
 
