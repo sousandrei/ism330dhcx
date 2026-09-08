@@ -20,14 +20,14 @@ jobs:
         folder: [".", "examples/stm32l433"]
     
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
           targets: thumbv7em-none-eabi
 
-      - uses: Swatinem/rust-cache@v2.9.1
+      - uses: Swatinem/rust-cache@v2.9.2
       
       - run: cargo fmt --all -- --check
         working-directory: ${{ matrix.folder }}
