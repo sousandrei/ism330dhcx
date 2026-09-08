@@ -1,4 +1,4 @@
-use modular_bitfield::bitfield;
+use modular_bitfield::{bitfield, specifiers::B1};
 
 /// Interrupt routing control for INT1.
 #[bitfield]
@@ -11,7 +11,7 @@ pub struct Int1Ctrl {
     pub int1_fifo_ovr: bool,
     pub int1_fifo_full: bool,
     pub int1_cnt_bdr: bool,
-    pub int1_6d: bool,
+    pub den_drdy_flag: bool,
 }
 impl Default for Int1Ctrl {
     fn default() -> Self {
@@ -25,12 +25,13 @@ impl Default for Int1Ctrl {
 pub struct Int2Ctrl {
     pub int2_drdy_xl: bool,
     pub int2_drdy_g: bool,
-    pub int2_boot: bool,
+    pub int2_drdy_temp: bool,
     pub int2_fifo_th: bool,
     pub int2_fifo_ovr: bool,
     pub int2_fifo_full: bool,
     pub int2_cnt_bdr: bool,
-    pub int2_6d: bool,
+    #[skip]
+    pub __: B1,
 }
 impl Default for Int2Ctrl {
     fn default() -> Self {
@@ -45,7 +46,7 @@ mod tests {
         assert_eq!(Int1Ctrl::default().into_bytes(), [0]);
         assert_eq!(Int2Ctrl::default().into_bytes(), [0]);
         let mut r = Int1Ctrl::new();
-        r.set_int1_6d(true);
+        r.set_den_drdy_flag(true);
         assert_eq!(r.into_bytes(), [0x80]);
     }
 }

@@ -90,11 +90,52 @@ impl FifoOut {
 
 use crate::Ism330Dhcx;
 use crate::registers::{
-    BdrGy, BdrXl, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode, FifoStatus, Register,
+    BdrGy, BdrXl, FifoCtrl1, FifoCtrl2, FifoCtrl3, FifoCtrl4, FifoMode, FifoStatus, Register,
+    TemperatureBatchRate, TimestampBatchDecimation, UncompressedDataRate,
 };
 
 /// FIFO methods.
 pub trait Fifo {
+    /// Set the FIFO watermark threshold in samples (0..=511).
+    fn set_fifo_watermark<I2C>(&self, i2c: &mut I2C, watermark: u16) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Stop collecting FIFO samples when the watermark is reached.
+    fn set_fifo_stop_on_watermark<I2C>(
+        &self,
+        i2c: &mut I2C,
+        enable: bool,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Set the rate used for uncompressed FIFO data.
+    fn set_fifo_uncompressed_rate<I2C>(
+        &self,
+        i2c: &mut I2C,
+        rate: UncompressedDataRate,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Enable batching when the sensor output data rate changes.
+    fn set_fifo_odr_change<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Set FIFO timestamp batching decimation.
+    fn set_fifo_timestamp_batching<I2C>(
+        &self,
+        i2c: &mut I2C,
+        decimation: TimestampBatchDecimation,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Set FIFO temperature batching rate.
+    fn set_fifo_temperature_batch_rate<I2C>(
+        &self,
+        i2c: &mut I2C,
+        rate: TemperatureBatchRate,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
     /// Set FIFO mode.
     fn set_fifo_mode<I2C>(&mut self, i2c: &mut I2C, mode: FifoMode) -> Result<(), I2C::Error>
     where
@@ -130,6 +171,90 @@ pub trait Fifo {
 }
 
 impl Fifo for Ism330Dhcx {
+    fn set_fifo_watermark<I2C>(&self, i2c: &mut I2C, watermark: u16) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        assert!(watermark <= 0x01ff, "FIFO watermark must fit in 9 bits");
+        self.write_reg(
+            i2c,
+            Register::FifoCtrl1,
+            FifoCtrl1::new().with_wtm(watermark as u8).into_bytes()[0],
+        )?;
+        self.modify_reg(i2c, Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_wtm8(watermark & 0x0100 != 0);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_stop_on_watermark<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_stop_on_wtm(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_uncompressed_rate<I2C>(
+        &self,
+        i2c: &mut I2C,
+        rate: UncompressedDataRate,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_uncoptr_rate(rate);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_odr_change<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl2, |v| {
+            let mut reg = FifoCtrl2::from_bytes([v]);
+            reg.set_odrchg_en(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_timestamp_batching<I2C>(
+        &self,
+        i2c: &mut I2C,
+        decimation: TimestampBatchDecimation,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl4, |v| {
+            let mut reg = FifoCtrl4::from_bytes([v]);
+            reg.set_dec_ts_batch(decimation);
+            reg.into_bytes()[0]
+        })
+    }
+
+    fn set_fifo_temperature_batch_rate<I2C>(
+        &self,
+        i2c: &mut I2C,
+        rate: TemperatureBatchRate,
+    ) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::FifoCtrl4, |v| {
+            let mut reg = FifoCtrl4::from_bytes([v]);
+            reg.set_odr_t_batch(rate);
+            reg.into_bytes()[0]
+        })
+    }
+
     fn set_fifo_mode<I2C>(&mut self, i2c: &mut I2C, mode: FifoMode) -> Result<(), I2C::Error>
     where
         I2C: I2c,
@@ -223,6 +348,54 @@ mod tests {
 
         assert!(matches!(v, Value::Gyro(_)));
         println!("{:?}", v);
+        i2c.done();
+    }
+
+    #[test]
+    fn test_set_fifo_watermark() {
+        let sensor = crate::Ism330Dhcx {
+            address: crate::DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[
+            Transaction::write(
+                crate::DEFAULT_I2C_ADDRESS,
+                vec![Register::FifoCtrl1.addr(), 0x23],
+            ),
+            Transaction::write_read(
+                crate::DEFAULT_I2C_ADDRESS,
+                vec![Register::FifoCtrl2.addr()],
+                vec![0x40],
+            ),
+            Transaction::write(
+                crate::DEFAULT_I2C_ADDRESS,
+                vec![Register::FifoCtrl2.addr(), 0x41],
+            ),
+        ]);
+
+        sensor.set_fifo_watermark(&mut i2c, 0x123).unwrap();
+        i2c.done();
+    }
+
+    #[test]
+    fn test_set_fifo_timestamp_batching_preserves_mode() {
+        let sensor = crate::Ism330Dhcx {
+            address: crate::DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                crate::DEFAULT_I2C_ADDRESS,
+                vec![Register::FifoCtrl4.addr()],
+                vec![FifoMode::Continuous as u8],
+            ),
+            Transaction::write(
+                crate::DEFAULT_I2C_ADDRESS,
+                vec![Register::FifoCtrl4.addr(), 0x86],
+            ),
+        ]);
+
+        sensor
+            .set_fifo_timestamp_batching(&mut i2c, TimestampBatchDecimation::Every8)
+            .unwrap();
         i2c.done();
     }
 }
