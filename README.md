@@ -107,6 +107,34 @@ sensor
 Sensor-hub pull-ups, pass-through, auxiliary-sensor mode, reset, and operation
 status are exposed through the `SensorHub` trait.
 
+The embedded-function block includes two programmable processing engines:
+
+- **FSM (Finite State Machine):** up to 16 programmable event-detection
+  programs that can evaluate sensor data and generate individual interrupt
+  outputs.
+- **MLC (Machine Learning Core):** a configurable classifier with up to 8
+  output signals for recognizing patterns in sensor data.
+
+The driver provides enable and initialization controls, typed interrupt routing,
+status accessors, FSM output and MLC source reads, long-counter operations, and
+bounded access to the advanced configuration pages. The actual FSM and MLC
+programs or models must be supplied by the application according to ST's
+configuration tools and device documentation.
+
+FSM and MLC routing and status are available through typed selectors:
+
+```rust
+sensor
+    .set_fsm_int1(&mut i2c, FsmProgram::Program1, true)
+    .unwrap();
+sensor
+    .set_mlc_int2(&mut i2c, MlcOutput::Output1, true)
+    .unwrap();
+```
+
+Advanced FSM/MLC page data can be accessed with bounded
+`read_embedded_page` and `write_embedded_page` operations.
+
 FIFO words are seven bytes: one tag byte followed by six data bytes. Use
 `fifo_pop_entry` when tag counters and parity are needed; it decodes physical
 sensor, temperature, timestamp, step-counter, sensor-hub, configuration-change,

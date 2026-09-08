@@ -2,7 +2,7 @@
 
 use modular_bitfield::{
     bitfield,
-    specifiers::{B1, B2, B3, B4, B6, B8},
+    specifiers::{B1, B2, B3, B4, B5, B6, B8},
 };
 
 /// Registers in the embedded-function bank.
@@ -212,8 +212,16 @@ pub type MlcInt2 = FsmBits;
 pub type PageAddress = EmbeddedByte;
 /// Embedded page value register.
 pub type PageValue = EmbeddedByte;
-/// Embedded page read/write register.
-pub type PageRw = EmbeddedByte;
+/// Embedded advanced-page read/write control.
+#[bitfield]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct PageRw {
+    #[skip]
+    pub __: B5,
+    pub page_read: bool,
+    pub page_write: bool,
+    pub emb_func_lir: bool,
+}
 /// FSM long-counter low byte.
 pub type FsmLongCounterL = EmbeddedByte;
 /// FSM long-counter high byte.
@@ -387,6 +395,12 @@ pub struct EmbFuncInitB {
 }
 
 impl Default for EmbFuncInitB {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Default for PageRw {
     fn default() -> Self {
         Self::new()
     }
