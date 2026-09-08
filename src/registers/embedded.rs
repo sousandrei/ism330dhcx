@@ -179,6 +179,100 @@ impl Default for FsmBits {
     }
 }
 
+/// Raw one-byte embedded-function register.
+#[bitfield]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct EmbeddedByte {
+    pub value: B8,
+}
+
+impl Default for EmbeddedByte {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+/// FSM interrupt routing register for programs 1 through 8.
+pub type FsmInt1A = FsmBits;
+/// FSM interrupt routing register for programs 9 through 16.
+pub type FsmInt1B = FsmBits;
+/// FSM interrupt routing register for programs 1 through 8.
+pub type FsmInt2A = FsmBits;
+/// FSM interrupt routing register for programs 9 through 16.
+pub type FsmInt2B = FsmBits;
+/// FSM status register for programs 1 through 8.
+pub type FsmStatusA = FsmBits;
+/// FSM status register for programs 9 through 16.
+pub type FsmStatusB = FsmBits;
+/// MLC interrupt routing register for outputs 0 through 7.
+pub type MlcInt1 = FsmBits;
+/// MLC interrupt routing register for outputs 0 through 7.
+pub type MlcInt2 = FsmBits;
+/// Embedded page address register.
+pub type PageAddress = EmbeddedByte;
+/// Embedded page value register.
+pub type PageValue = EmbeddedByte;
+/// Embedded page read/write register.
+pub type PageRw = EmbeddedByte;
+/// FSM long-counter low byte.
+pub type FsmLongCounterL = EmbeddedByte;
+/// FSM long-counter high byte.
+pub type FsmLongCounterH = EmbeddedByte;
+/// FSM long-counter clear register.
+pub type FsmLongCounterClear = EmbeddedByte;
+/// FSM output register.
+pub type FsmOutput = EmbeddedByte;
+/// FSM output register 1.
+pub type FsmOuts1 = EmbeddedByte;
+/// FSM output register 2.
+pub type FsmOuts2 = EmbeddedByte;
+/// FSM output register 3.
+pub type FsmOuts3 = EmbeddedByte;
+/// FSM output register 4.
+pub type FsmOuts4 = EmbeddedByte;
+/// FSM output register 5.
+pub type FsmOuts5 = EmbeddedByte;
+/// FSM output register 6.
+pub type FsmOuts6 = EmbeddedByte;
+/// FSM output register 7.
+pub type FsmOuts7 = EmbeddedByte;
+/// FSM output register 8.
+pub type FsmOuts8 = EmbeddedByte;
+/// FSM output register 9.
+pub type FsmOuts9 = EmbeddedByte;
+/// FSM output register 10.
+pub type FsmOuts10 = EmbeddedByte;
+/// FSM output register 11.
+pub type FsmOuts11 = EmbeddedByte;
+/// FSM output register 12.
+pub type FsmOuts12 = EmbeddedByte;
+/// FSM output register 13.
+pub type FsmOuts13 = EmbeddedByte;
+/// FSM output register 14.
+pub type FsmOuts14 = EmbeddedByte;
+/// FSM output register 15.
+pub type FsmOuts15 = EmbeddedByte;
+/// FSM output register 16.
+pub type FsmOuts16 = EmbeddedByte;
+/// MLC source register.
+pub type MlcSource = EmbeddedByte;
+/// MLC source register 0.
+pub type Mlc0Src = EmbeddedByte;
+/// MLC source register 1.
+pub type Mlc1Src = EmbeddedByte;
+/// MLC source register 2.
+pub type Mlc2Src = EmbeddedByte;
+/// MLC source register 3.
+pub type Mlc3Src = EmbeddedByte;
+/// MLC source register 4.
+pub type Mlc4Src = EmbeddedByte;
+/// MLC source register 5.
+pub type Mlc5Src = EmbeddedByte;
+/// MLC source register 6.
+pub type Mlc6Src = EmbeddedByte;
+/// MLC source register 7.
+pub type Mlc7Src = EmbeddedByte;
+
 /// Embedded FIFO configuration.
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
@@ -320,6 +414,15 @@ mod tests {
         assert_eq!(PageSel::default().into_bytes(), [0x01]);
         assert_eq!(EmbFuncOdrCfgB::default().into_bytes(), [0x4b]);
         assert_eq!(EmbFuncOdrCfgC::default().into_bytes(), [0x15]);
+        assert_eq!(EmbeddedByte::default().into_bytes(), [0]);
+
+        let mut raw = EmbeddedByte::new();
+        raw.set_value(0xa5);
+        assert_eq!(raw.into_bytes(), [0xa5]);
+
+        let mut fsm = FsmBits::new();
+        fsm.set_bits(0x81);
+        assert_eq!(fsm.into_bytes(), [0x81]);
 
         let addresses = [
             (EmbeddedRegister::PageSel, 0x02),
