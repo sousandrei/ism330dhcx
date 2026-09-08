@@ -4,10 +4,10 @@
 //! To declare a sensor is pretty simple:
 //!
 //! ```rust,ignore
-//! let sensor = Ism330Dhcx::new(i2c).unwrap();
+//! let sensor = Ism330Dhcx::new(&mut i2c).unwrap();
 //! ```
 //!
-//! The driver now owns the I2C bus.
+//! The driver borrows the I2C bus for each operation.
 //!
 //! To configure the sensor, use the high-level methods:
 //!
