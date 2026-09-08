@@ -50,36 +50,36 @@ impl GyroValue {
 }
 
 use crate::Ism330Dhcx;
+use crate::RegisterBus;
 use crate::registers::{
     Ctrl2G, Ctrl5C, Ctrl6C, Ctrl7G, FsGScale, Ftype, HpmG, OdrG, Register, StG,
 };
-use embedded_hal::i2c::I2c;
 
 /// Gyroscope sensor methods.
 pub trait Gyroscope {
     /// Set gyroscope output data rate.
     fn set_gyro_odr<I2C>(&mut self, i2c: &mut I2C, odr: OdrG) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get the configured gyroscope output data rate.
     fn get_gyro_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrG, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set gyroscope full-scale range.
     fn set_gyro_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsG) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get current gyroscope full-scale range.
     fn get_gyro_scale<I2C>(&self, i2c: &mut I2C) -> Result<FsG, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Enable Gyroscope High-Performance mode (disable g_hm_mode bit).
     fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_gyro_filter_type<I2C>(&self, i2c: &mut I2C, filter: Ftype) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_gyro_hpf<I2C>(
         &self,
         i2c: &mut I2C,
@@ -87,20 +87,20 @@ pub trait Gyroscope {
         cutoff: HpmG,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_gyro_self_test<I2C>(&self, i2c: &mut I2C, mode: StG) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get gyroscope reading.
     fn get_gyroscope<I2C>(&self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 impl Gyroscope for Ism330Dhcx {
     fn set_gyro_odr<I2C>(&mut self, i2c: &mut I2C, odr: OdrG) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl2G, |v| {
             let mut reg = Ctrl2G::from_bytes([v]);
@@ -111,14 +111,14 @@ impl Gyroscope for Ism330Dhcx {
 
     fn get_gyro_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrG, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Ctrl2G::from_bytes([self.read_reg(i2c, Register::Ctrl2G)?]).odr_g())
     }
 
     fn set_gyro_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsG) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl2G, |v| {
             let mut reg = Ctrl2G::from_bytes([v]);
@@ -141,7 +141,7 @@ impl Gyroscope for Ism330Dhcx {
 
     fn get_gyro_scale<I2C>(&self, i2c: &mut I2C) -> Result<FsG, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let v = self.read_reg(i2c, Register::Ctrl2G)?;
         let reg = Ctrl2G::from_bytes([v]);
@@ -162,7 +162,7 @@ impl Gyroscope for Ism330Dhcx {
 
     fn set_g_hm_mode<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl7G, |v| {
             let mut reg = Ctrl7G::from_bytes([v]);
@@ -174,7 +174,7 @@ impl Gyroscope for Ism330Dhcx {
 
     fn set_gyro_filter_type<I2C>(&self, i2c: &mut I2C, filter: Ftype) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl6C, |v| {
             let mut r = Ctrl6C::from_bytes([v]);
@@ -184,7 +184,7 @@ impl Gyroscope for Ism330Dhcx {
     }
     fn set_gyro_hpf<I2C>(&self, i2c: &mut I2C, enable: bool, cutoff: HpmG) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl7G, |v| {
             let mut r = Ctrl7G::from_bytes([v]);
@@ -195,7 +195,7 @@ impl Gyroscope for Ism330Dhcx {
     }
     fn set_gyro_self_test<I2C>(&self, i2c: &mut I2C, mode: StG) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl5C, |v| {
             let mut r = Ctrl5C::from_bytes([v]);
@@ -206,12 +206,12 @@ impl Gyroscope for Ism330Dhcx {
 
     fn get_gyroscope<I2C>(&self, i2c: &mut I2C) -> Result<GyroValue, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let scale = self.get_gyro_scale(i2c)?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[Register::OutXLG.addr()], &mut measurements)?;
+        self.read_register(i2c, Register::OutXLG.addr(), &mut measurements)?;
 
         Ok(GyroValue::from_msr(scale, &measurements))
     }

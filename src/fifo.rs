@@ -1,5 +1,5 @@
+use crate::RegisterBus;
 use core::convert::{TryFrom, TryInto};
-use embedded_hal::i2c::I2c;
 
 use crate::registers::{FsG, FsXl};
 use crate::{AccelValue, GyroValue};
@@ -68,10 +68,10 @@ impl FifoOut {
         accel_scale: FsXl,
     ) -> Result<Value, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut out = [0u8; 7];
-        i2c.write_read(self.address, &[Register::FifoDataOutTag.addr()], &mut out)?;
+        i2c.read_register(self.address, Register::FifoDataOutTag.addr(), &mut out)?;
 
         let (tag, out) = out.split_at(1);
         let tag = tag[0] >> 3;
@@ -101,7 +101,7 @@ pub trait Fifo {
     /// Set the FIFO watermark threshold in FIFO entries (0..=511).
     fn set_fifo_watermark<I2C>(&self, i2c: &mut I2C, watermark: u16) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Stop collecting FIFO samples when the watermark is reached.
     fn set_fifo_stop_on_watermark<I2C>(
         &self,
@@ -109,7 +109,7 @@ pub trait Fifo {
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set the rate used for uncompressed FIFO data.
     fn set_fifo_uncompressed_rate<I2C>(
         &self,
@@ -117,11 +117,11 @@ pub trait Fifo {
         rate: UncompressedDataRate,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Enable batching when the sensor output data rate changes.
     fn set_fifo_odr_change<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set FIFO timestamp batching decimation.
     fn set_fifo_timestamp_batching<I2C>(
         &self,
@@ -129,7 +129,7 @@ pub trait Fifo {
         decimation: TimestampBatchDecimation,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set FIFO temperature batching rate.
     fn set_fifo_temperature_batch_rate<I2C>(
         &self,
@@ -137,11 +137,11 @@ pub trait Fifo {
         rate: TemperatureBatchRate,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set FIFO mode.
     fn set_fifo_mode<I2C>(&mut self, i2c: &mut I2C, mode: FifoMode) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set accelerometer batch data rate.
     fn set_fifo_accel_batch_rate<I2C>(
         &mut self,
@@ -149,7 +149,7 @@ pub trait Fifo {
         rate: BdrXl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set gyroscope batch data rate.
     fn set_fifo_gyro_batch_rate<I2C>(
         &mut self,
@@ -157,45 +157,45 @@ pub trait Fifo {
         rate: BdrGy,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Enable FIFO compression.
     fn set_fifo_compression<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get FIFO status.
     fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<(FifoStatus1, FifoStatus2), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the number of unread FIFO entries (0..=1023).
     fn get_fifo_sample_count<I2C>(&self, i2c: &mut I2C) -> Result<u16, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Pop a value from the FIFO.
     fn fifo_pop<I2C>(&self, i2c: &mut I2C) -> Result<Value, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Enable pulsed data-ready mode.
     fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Reset the internal counter of batch events.
     fn reset_counter_bdr<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Select the accelerometer or gyroscope batch-event counter trigger.
     fn set_trig_counter_bdr<I2C>(&self, i2c: &mut I2C, gyro: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set the 11-bit batch-event counter threshold.
     fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 impl Fifo for Ism330Dhcx {
     fn set_fifo_watermark<I2C>(&self, i2c: &mut I2C, watermark: u16) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(watermark <= 0x01ff, "FIFO watermark must fit in 9 bits");
         self.write_reg(
@@ -212,7 +212,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_fifo_stop_on_watermark<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl2, |v| {
             let mut reg = FifoCtrl2::from_bytes([v]);
@@ -227,7 +227,7 @@ impl Fifo for Ism330Dhcx {
         rate: UncompressedDataRate,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl2, |v| {
             let mut reg = FifoCtrl2::from_bytes([v]);
@@ -238,7 +238,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_fifo_odr_change<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl2, |v| {
             let mut reg = FifoCtrl2::from_bytes([v]);
@@ -253,7 +253,7 @@ impl Fifo for Ism330Dhcx {
         decimation: TimestampBatchDecimation,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl4, |v| {
             let mut reg = FifoCtrl4::from_bytes([v]);
@@ -268,7 +268,7 @@ impl Fifo for Ism330Dhcx {
         rate: TemperatureBatchRate,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl4, |v| {
             let mut reg = FifoCtrl4::from_bytes([v]);
@@ -279,7 +279,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_fifo_mode<I2C>(&mut self, i2c: &mut I2C, mode: FifoMode) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl4, |v| {
             let mut reg = FifoCtrl4::from_bytes([v]);
@@ -294,7 +294,7 @@ impl Fifo for Ism330Dhcx {
         rate: BdrXl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl3, |v| {
             let mut reg = FifoCtrl3::from_bytes([v]);
@@ -309,7 +309,7 @@ impl Fifo for Ism330Dhcx {
         rate: BdrGy,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl3, |v| {
             let mut reg = FifoCtrl3::from_bytes([v]);
@@ -320,7 +320,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_fifo_compression<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::FifoCtrl2, |v| {
             let mut reg = FifoCtrl2::from_bytes([v]);
@@ -331,10 +331,10 @@ impl Fifo for Ism330Dhcx {
 
     fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<(FifoStatus1, FifoStatus2), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut out = [0u8; 2];
-        i2c.write_read(self.address, &[Register::FifoStatus1.addr()], &mut out)?;
+        self.read_register(i2c, Register::FifoStatus1.addr(), &mut out)?;
         Ok((
             FifoStatus1::from_bytes([out[0]]),
             FifoStatus2::from_bytes([out[1]]),
@@ -343,7 +343,7 @@ impl Fifo for Ism330Dhcx {
 
     fn get_fifo_sample_count<I2C>(&self, i2c: &mut I2C) -> Result<u16, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let (status1, status2) = self.get_fifo_status(i2c)?;
         Ok(u16::from(status1.diff_fifo()) | (u16::from(status2.diff_fifo()) << 8))
@@ -351,7 +351,7 @@ impl Fifo for Ism330Dhcx {
 
     fn fifo_pop<I2C>(&self, i2c: &mut I2C) -> Result<Value, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         use crate::accelerometer::Accelerometer;
         use crate::gyroscope::Gyroscope;
@@ -364,7 +364,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_dataready_pulsed<I2C>(&self, i2c: &mut I2C, pulsed: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
             let mut reg = CounterBdrReg1::from_bytes([value]);
@@ -375,7 +375,7 @@ impl Fifo for Ism330Dhcx {
 
     fn reset_counter_bdr<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
             let mut reg = CounterBdrReg1::from_bytes([value]);
@@ -386,7 +386,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_trig_counter_bdr<I2C>(&self, i2c: &mut I2C, gyro: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::CounterBdrReg1, |value| {
             let mut reg = CounterBdrReg1::from_bytes([value]);
@@ -397,7 +397,7 @@ impl Fifo for Ism330Dhcx {
 
     fn set_cnt_bdr_threshold<I2C>(&self, i2c: &mut I2C, threshold: u16) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let threshold = threshold & 0x07ff;
         self.modify_reg(i2c, Register::CounterBdrReg1, |value| {

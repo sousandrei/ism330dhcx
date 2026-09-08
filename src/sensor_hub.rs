@@ -1,16 +1,14 @@
-use embedded_hal::i2c::I2c;
-
-use crate::Ism330Dhcx;
 use crate::registers::{
     MasterConfig, Register, SensorHubRegister, Slv0Add, Slv0Config, StatusMaster,
 };
+use crate::{Ism330Dhcx, RegisterBus};
 
 /// Sensor-hub scheduling and external-sensor access.
 pub trait SensorHub {
     /// Enable or disable sensor-hub master operation.
     fn set_sensor_hub_enabled<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Configure slave 0 for periodic reads into `SENSOR_HUB_1..18`.
     fn configure_sensor_hub_read<I2C>(
         &self,
@@ -22,7 +20,7 @@ pub trait SensorHub {
         batch: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Configure a one-shot external-sensor register write.
     fn write_sensor_hub<I2C>(
         &self,
@@ -32,15 +30,15 @@ pub trait SensorHub {
         value: u8,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the most recently scheduled external-sensor data.
     fn read_sensor_hub<I2C>(&self, i2c: &mut I2C, buffer: &mut [u8]) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the sensor-hub operation status.
     fn sensor_hub_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusMaster, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 impl Ism330Dhcx {
@@ -50,7 +48,7 @@ impl Ism330Dhcx {
         operation: F,
     ) -> Result<T, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
         F: FnOnce(&Self, &mut I2C) -> Result<T, I2C::Error>,
     {
         let access = self.read_reg(i2c, Register::FuncCfgAccess)?;
@@ -67,23 +65,21 @@ impl Ism330Dhcx {
 impl SensorHub for Ism330Dhcx {
     fn set_sensor_hub_enabled<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.with_sensor_hub_access(i2c, |sensor, bus| {
             let mut raw = [0u8];
-            bus.write_read(
+            bus.read_register(
                 sensor.address,
-                &[SensorHubRegister::MasterConfig.addr()],
+                SensorHubRegister::MasterConfig.addr(),
                 &mut raw,
             )?;
             let mut config = MasterConfig::from_bytes(raw);
             config.set_master_on(enable);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[
-                    SensorHubRegister::MasterConfig.addr(),
-                    config.into_bytes()[0],
-                ],
+                SensorHubRegister::MasterConfig.addr(),
+                &[config.into_bytes()[0]],
             )
         })
     }
@@ -98,7 +94,7 @@ impl SensorHub for Ism330Dhcx {
         batch: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(address < 0x80, "sensor-hub address must be seven bits");
         assert!(
@@ -114,30 +110,28 @@ impl SensorHub for Ism330Dhcx {
             config.set_num_op(length - 1);
             config.set_batch_ext_sens_en(batch);
             config.set_shub_odr(odr);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[
-                    SensorHubRegister::Slv0Add.addr(),
-                    address_reg.into_bytes()[0],
-                ],
+                SensorHubRegister::Slv0Add.addr(),
+                &[address_reg.into_bytes()[0]],
             )?;
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[SensorHubRegister::Slv0Subadd.addr(), register],
+                SensorHubRegister::Slv0Subadd.addr(),
+                &[register],
             )?;
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[SensorHubRegister::Slv0Config.addr(), config.into_bytes()[0]],
+                SensorHubRegister::Slv0Config.addr(),
+                &[config.into_bytes()[0]],
             )?;
             let mut master = MasterConfig::new();
             master.set_master_on(true);
             master.set_start_config(true);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[
-                    SensorHubRegister::MasterConfig.addr(),
-                    master.into_bytes()[0],
-                ],
+                SensorHubRegister::MasterConfig.addr(),
+                &[master.into_bytes()[0]],
             )
         })
     }
@@ -150,7 +144,7 @@ impl SensorHub for Ism330Dhcx {
         value: u8,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(address < 0x80, "sensor-hub address must be seven bits");
         self.with_sensor_hub_access(i2c, |sensor, bus| {
@@ -160,57 +154,51 @@ impl SensorHub for Ism330Dhcx {
             master.set_master_on(true);
             master.set_start_config(true);
             master.set_write_once(true);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[
-                    SensorHubRegister::Slv0Add.addr(),
-                    address_reg.into_bytes()[0],
-                ],
+                SensorHubRegister::Slv0Add.addr(),
+                &[address_reg.into_bytes()[0]],
             )?;
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[SensorHubRegister::Slv0Subadd.addr(), register],
+                SensorHubRegister::Slv0Subadd.addr(),
+                &[register],
             )?;
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[SensorHubRegister::DataWriteSlv0.addr(), value],
+                SensorHubRegister::DataWriteSlv0.addr(),
+                &[value],
             )?;
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[
-                    SensorHubRegister::MasterConfig.addr(),
-                    master.into_bytes()[0],
-                ],
+                SensorHubRegister::MasterConfig.addr(),
+                &[master.into_bytes()[0]],
             )
         })
     }
 
     fn read_sensor_hub<I2C>(&self, i2c: &mut I2C, buffer: &mut [u8]) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(
             (1..=18).contains(&buffer.len()),
             "sensor-hub data length must be 1 through 18"
         );
         self.with_sensor_hub_access(i2c, |sensor, bus| {
-            bus.write_read(
-                sensor.address,
-                &[SensorHubRegister::SensorHub1.addr()],
-                buffer,
-            )
+            bus.read_register(sensor.address, SensorHubRegister::SensorHub1.addr(), buffer)
         })
     }
 
     fn sensor_hub_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusMaster, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut raw = [0u8];
         self.with_sensor_hub_access(i2c, |sensor, bus| {
-            bus.write_read(
+            bus.read_register(
                 sensor.address,
-                &[SensorHubRegister::StatusMaster.addr()],
+                SensorHubRegister::StatusMaster.addr(),
                 &mut raw,
             )
         })?;

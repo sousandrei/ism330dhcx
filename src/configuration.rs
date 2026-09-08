@@ -1,4 +1,4 @@
-use embedded_hal::i2c::I2c;
+use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::{Ctrl4C, Ctrl5C, Ctrl6C, Ctrl7G, Ctrl10C, PinCtrl, Register, Rounding};
@@ -13,32 +13,32 @@ pub trait Configuration {
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 
     /// Set output-register rounding mode.
     fn set_rounding<I2C>(&self, i2c: &mut I2C, rounding: Rounding) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 
     /// Get the configured output-register rounding mode.
     fn get_rounding<I2C>(&self, i2c: &mut I2C) -> Result<Rounding, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 
     /// Enable or disable timestamping.
     fn set_timestamp_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 
     /// Enable or disable the SDO pin pull-up.
     fn set_sdo_pu_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 
     /// Enable or disable the OIS auxiliary pin pull-down.
     fn set_ois_pu_dis<I2C>(&self, i2c: &mut I2C, disable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 /// Boolean fields in the core control registers.
@@ -88,7 +88,7 @@ impl Configuration for Ism330Dhcx {
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         match field {
             CoreField::DenXlEn => self.modify_reg(i2c, Register::Ctrl4C, |value| {
@@ -181,7 +181,7 @@ impl Configuration for Ism330Dhcx {
 
     fn set_rounding<I2C>(&self, i2c: &mut I2C, rounding: Rounding) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl5C, |value| {
             let mut reg = Ctrl5C::from_bytes([value]);
@@ -192,14 +192,14 @@ impl Configuration for Ism330Dhcx {
 
     fn get_rounding<I2C>(&self, i2c: &mut I2C) -> Result<Rounding, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Ctrl5C::from_bytes([self.read_reg(i2c, Register::Ctrl5C)?]).rounding())
     }
 
     fn set_timestamp_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl10C, |value| {
             let mut reg = Ctrl10C::from_bytes([value]);
@@ -210,7 +210,7 @@ impl Configuration for Ism330Dhcx {
 
     fn set_sdo_pu_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::PinCtrl, |value| {
             let mut reg = PinCtrl::from_bytes([value]);
@@ -221,7 +221,7 @@ impl Configuration for Ism330Dhcx {
 
     fn set_ois_pu_dis<I2C>(&self, i2c: &mut I2C, disable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::PinCtrl, |value| {
             let mut reg = PinCtrl::from_bytes([value]);

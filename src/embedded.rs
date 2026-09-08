@@ -1,4 +1,4 @@
-use embedded_hal::i2c::I2c;
+use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::{
@@ -11,7 +11,7 @@ pub trait EmbeddedFunctions {
     /// Select an embedded-function page (0 through 15).
     fn set_embedded_page<I2C>(&self, i2c: &mut I2C, page: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read an embedded-function register while preserving the access mode.
     fn read_embedded_register<I2C>(
         &self,
@@ -20,7 +20,7 @@ pub trait EmbeddedFunctions {
         buffer: &mut [u8],
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Write an embedded-function register while preserving the access mode.
     fn write_embedded_register<I2C>(
         &self,
@@ -29,57 +29,57 @@ pub trait EmbeddedFunctions {
         value: &[u8],
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_pedometer<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tilt<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_significant_motion<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_fsm<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_mlc<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_fifo_compression<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_pedometer_fifo<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_fsm_odr<I2C>(&self, i2c: &mut I2C, odr: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_mlc_odr<I2C>(&self, i2c: &mut I2C, odr: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn read_embedded_status<I2C>(&self, i2c: &mut I2C) -> Result<EmbFuncStatus, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn read_embedded_source<I2C>(&self, i2c: &mut I2C) -> Result<EmbFuncSrc, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn read_step_counter<I2C>(&self, i2c: &mut I2C) -> Result<u16, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn read_fsm_outputs<I2C>(&self, i2c: &mut I2C) -> Result<[u8; 16], I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn read_mlc_sources<I2C>(&self, i2c: &mut I2C) -> Result<[u8; 8], I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_fsm_enabled<I2C>(
         &self,
         i2c: &mut I2C,
@@ -87,79 +87,79 @@ pub trait EmbeddedFunctions {
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn clear_fsm_long_counter<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int1_step_detector<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int1_tilt<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int1_significant_motion<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int1_fsm_long_counter<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int2_step_detector<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int2_tilt<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int2_significant_motion<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_embedded_int2_fsm_long_counter<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn initialize_step_detector<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn initialize_tilt<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn initialize_significant_motion<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn initialize_fsm<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn initialize_mlc<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 impl Ism330Dhcx {
     fn with_embedded_access<I2C, T, F>(&self, i2c: &mut I2C, operation: F) -> Result<T, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
         F: FnOnce(&Self, &mut I2C) -> Result<T, I2C::Error>,
     {
         let access = self.read_reg(i2c, Register::FuncCfgAccess)?;
@@ -177,20 +177,17 @@ macro_rules! embedded_enable_setter {
     ($method:ident, $config:ident, $setter:ident, $register:ident) => {
         fn $method<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
         where
-            I2C: I2c,
+            I2C: RegisterBus,
         {
             self.with_embedded_access(i2c, |sensor, bus| {
                 let mut raw = [0u8];
-                bus.write_read(
-                    sensor.address,
-                    &[EmbeddedRegister::$register.addr()],
-                    &mut raw,
-                )?;
+                bus.read_register(sensor.address, EmbeddedRegister::$register.addr(), &mut raw)?;
                 let mut reg = $config::from_bytes(raw);
                 reg.$setter(enable);
-                bus.write(
+                bus.write_register(
                     sensor.address,
-                    &[EmbeddedRegister::$register.addr(), reg.into_bytes()[0]],
+                    EmbeddedRegister::$register.addr(),
+                    &[reg.into_bytes()[0]],
                 )
             })
         }
@@ -201,20 +198,17 @@ macro_rules! embedded_initializer {
     ($method:ident, $config:ident, $setter:ident, $register:ident) => {
         fn $method<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
         where
-            I2C: I2c,
+            I2C: RegisterBus,
         {
             self.with_embedded_access(i2c, |sensor, bus| {
                 let mut raw = [0u8];
-                bus.write_read(
-                    sensor.address,
-                    &[EmbeddedRegister::$register.addr()],
-                    &mut raw,
-                )?;
+                bus.read_register(sensor.address, EmbeddedRegister::$register.addr(), &mut raw)?;
                 let mut reg = $config::from_bytes(raw);
                 reg.$setter(true);
-                bus.write(
+                bus.write_register(
                     sensor.address,
-                    &[EmbeddedRegister::$register.addr(), reg.into_bytes()[0]],
+                    EmbeddedRegister::$register.addr(),
+                    &[reg.into_bytes()[0]],
                 )
             })
         }
@@ -224,15 +218,16 @@ macro_rules! embedded_initializer {
 impl EmbeddedFunctions for Ism330Dhcx {
     fn set_embedded_page<I2C>(&self, i2c: &mut I2C, page: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(page < 16, "embedded page must fit in four bits");
         self.with_embedded_access(i2c, |sensor, bus| {
             let mut reg = PageSel::new();
             reg.set_page_sel(page);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[EmbeddedRegister::PageSel.addr(), reg.into_bytes()[0]],
+                EmbeddedRegister::PageSel.addr(),
+                &[reg.into_bytes()[0]],
             )
         })
     }
@@ -244,10 +239,10 @@ impl EmbeddedFunctions for Ism330Dhcx {
         buffer: &mut [u8],
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.with_embedded_access(i2c, |sensor, bus| {
-            bus.write_read(sensor.address, &[register.addr()], buffer)
+            bus.read_register(sensor.address, register.addr(), buffer)
         })
     }
 
@@ -258,7 +253,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
         value: &[u8],
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(!value.is_empty(), "embedded register writes need a value");
         self.with_embedded_access(i2c, |sensor, bus| {
@@ -266,7 +261,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
             assert!(value.len() < bytes.len(), "embedded write is too long");
             bytes[0] = register.addr();
             bytes[1..value.len() + 1].copy_from_slice(value);
-            bus.write(sensor.address, &bytes[..value.len() + 1])
+            bus.write_register(sensor.address, bytes[0], &bytes[1..value.len() + 1])
         })
     }
 
@@ -295,49 +290,51 @@ impl EmbeddedFunctions for Ism330Dhcx {
 
     fn set_fsm_odr<I2C>(&self, i2c: &mut I2C, odr: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(odr < 4, "FSM ODR must fit in two bits");
         self.with_embedded_access(i2c, |sensor, bus| {
             let mut raw = [0u8];
-            bus.write_read(
+            bus.read_register(
                 sensor.address,
-                &[EmbeddedRegister::EmbFuncOdrCfgB.addr()],
+                EmbeddedRegister::EmbFuncOdrCfgB.addr(),
                 &mut raw,
             )?;
             let mut reg = EmbFuncOdrCfgB::from_bytes(raw);
             reg.set_odr(odr);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[EmbeddedRegister::EmbFuncOdrCfgB.addr(), reg.into_bytes()[0]],
+                EmbeddedRegister::EmbFuncOdrCfgB.addr(),
+                &[reg.into_bytes()[0]],
             )
         })
     }
 
     fn set_mlc_odr<I2C>(&self, i2c: &mut I2C, odr: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(odr < 4, "MLC ODR must fit in two bits");
         self.with_embedded_access(i2c, |sensor, bus| {
             let mut raw = [0u8];
-            bus.write_read(
+            bus.read_register(
                 sensor.address,
-                &[EmbeddedRegister::EmbFuncOdrCfgC.addr()],
+                EmbeddedRegister::EmbFuncOdrCfgC.addr(),
                 &mut raw,
             )?;
             let mut reg = EmbFuncOdrCfgC::from_bytes(raw);
             reg.set_odr(odr);
-            bus.write(
+            bus.write_register(
                 sensor.address,
-                &[EmbeddedRegister::EmbFuncOdrCfgC.addr(), reg.into_bytes()[0]],
+                EmbeddedRegister::EmbFuncOdrCfgC.addr(),
+                &[reg.into_bytes()[0]],
             )
         })
     }
 
     fn read_embedded_status<I2C>(&self, i2c: &mut I2C) -> Result<EmbFuncStatus, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut raw = [0u8];
         self.read_embedded_register(i2c, EmbeddedRegister::EmbFuncStatus, &mut raw)?;
@@ -346,7 +343,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
 
     fn read_embedded_source<I2C>(&self, i2c: &mut I2C) -> Result<EmbFuncSrc, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut raw = [0u8];
         self.read_embedded_register(i2c, EmbeddedRegister::EmbFuncSrc, &mut raw)?;
@@ -355,7 +352,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
 
     fn read_step_counter<I2C>(&self, i2c: &mut I2C) -> Result<u16, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut raw = [0u8; 2];
         self.read_embedded_register(i2c, EmbeddedRegister::StepCounterL, &mut raw)?;
@@ -364,7 +361,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
 
     fn read_fsm_outputs<I2C>(&self, i2c: &mut I2C) -> Result<[u8; 16], I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut raw = [0u8; 16];
         self.read_embedded_register(i2c, EmbeddedRegister::FsmOuts1, &mut raw)?;
@@ -373,7 +370,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
 
     fn read_mlc_sources<I2C>(&self, i2c: &mut I2C) -> Result<[u8; 8], I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut raw = [0u8; 8];
         self.read_embedded_register(i2c, EmbeddedRegister::Mlc0Src, &mut raw)?;
@@ -387,7 +384,7 @@ impl EmbeddedFunctions for Ism330Dhcx {
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         assert!(
             (1..=16).contains(&program),
@@ -400,19 +397,19 @@ impl EmbeddedFunctions for Ism330Dhcx {
         };
         self.with_embedded_access(i2c, |sensor, bus| {
             let mut raw = [0u8];
-            bus.write_read(sensor.address, &[register.addr()], &mut raw)?;
+            bus.read_register(sensor.address, register.addr(), &mut raw)?;
             raw[0] = if enable {
                 raw[0] | mask
             } else {
                 raw[0] & !mask
             };
-            bus.write(sensor.address, &[register.addr(), raw[0]])
+            bus.write_register(sensor.address, register.addr(), &[raw[0]])
         })
     }
 
     fn clear_fsm_long_counter<I2C>(&self, i2c: &mut I2C) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.write_embedded_register(i2c, EmbeddedRegister::FsmLongCounterClear, &[0x01])
     }

@@ -1,4 +1,4 @@
-use embedded_hal::i2c::I2c;
+use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::Register;
@@ -8,41 +8,41 @@ pub trait Offsets {
     /// Set the signed X-axis user offset.
     fn set_user_offset_x<I2C>(&self, i2c: &mut I2C, offset: i8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set the signed Y-axis user offset.
     fn set_user_offset_y<I2C>(&self, i2c: &mut I2C, offset: i8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set the signed Z-axis user offset.
     fn set_user_offset_z<I2C>(&self, i2c: &mut I2C, offset: i8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the signed X-axis user offset.
     fn get_user_offset_x<I2C>(&self, i2c: &mut I2C) -> Result<i8, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the signed Y-axis user offset.
     fn get_user_offset_y<I2C>(&self, i2c: &mut I2C) -> Result<i8, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the signed Z-axis user offset.
     fn get_user_offset_z<I2C>(&self, i2c: &mut I2C) -> Result<i8, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 macro_rules! offset_accessors {
     ($set:ident, $get:ident, $register:ident) => {
         fn $set<I2C>(&self, i2c: &mut I2C, offset: i8) -> Result<(), I2C::Error>
         where
-            I2C: I2c,
+            I2C: RegisterBus,
         {
             self.write_reg(i2c, Register::$register, offset as u8)
         }
 
         fn $get<I2C>(&self, i2c: &mut I2C) -> Result<i8, I2C::Error>
         where
-            I2C: I2c,
+            I2C: RegisterBus,
         {
             Ok(self.read_reg(i2c, Register::$register)? as i8)
         }

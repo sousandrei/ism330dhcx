@@ -1,4 +1,4 @@
-use embedded_hal::i2c::I2c;
+use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::{
@@ -9,60 +9,60 @@ use crate::registers::{
 pub trait Interrupts {
     fn set_int1_drdy_xl<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_drdy_g<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_fifo_threshold<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_fifo_overrun<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_fifo_full<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_counter_bdr<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_den_drdy<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_drdy_xl<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_drdy_g<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_drdy_temp<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_fifo_threshold<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_fifo_overrun<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_fifo_full<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_counter_bdr<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_embedded_function<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_embedded_function<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 /// Read interrupt routing and event-source registers.
@@ -70,47 +70,47 @@ pub trait InterruptStatus {
     /// Read the combined interrupt source register.
     fn get_interrupt_sources<I2C>(&self, i2c: &mut I2C) -> Result<AllIntSrc, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the wake-up source register.
     fn get_wake_up_source<I2C>(&self, i2c: &mut I2C) -> Result<WakeUpSrc, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the tap source register.
     fn get_tap_source<I2C>(&self, i2c: &mut I2C) -> Result<TapSrc, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read the 6D source register.
     fn get_6d_source<I2C>(&self, i2c: &mut I2C) -> Result<D6dSrc, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read INT1 routing configuration.
     fn get_int1_routing<I2C>(&self, i2c: &mut I2C) -> Result<Int1Ctrl, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read INT2 routing configuration.
     fn get_int2_routing<I2C>(&self, i2c: &mut I2C) -> Result<Int2Ctrl, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read embedded-event routing for INT1.
     fn get_int1_event_routing<I2C>(&self, i2c: &mut I2C) -> Result<Md1Cfg, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Read embedded-event routing for INT2.
     fn get_int2_event_routing<I2C>(&self, i2c: &mut I2C) -> Result<Md2Cfg, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 impl InterruptStatus for Ism330Dhcx {
     fn get_interrupt_sources<I2C>(&self, i2c: &mut I2C) -> Result<AllIntSrc, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(AllIntSrc::from_bytes([
             self.read_reg(i2c, Register::AllIntSrc)?
@@ -119,7 +119,7 @@ impl InterruptStatus for Ism330Dhcx {
 
     fn get_wake_up_source<I2C>(&self, i2c: &mut I2C) -> Result<WakeUpSrc, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(WakeUpSrc::from_bytes([
             self.read_reg(i2c, Register::WakeUpSrc)?
@@ -128,21 +128,21 @@ impl InterruptStatus for Ism330Dhcx {
 
     fn get_tap_source<I2C>(&self, i2c: &mut I2C) -> Result<TapSrc, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(TapSrc::from_bytes([self.read_reg(i2c, Register::TapSrc)?]))
     }
 
     fn get_6d_source<I2C>(&self, i2c: &mut I2C) -> Result<D6dSrc, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(D6dSrc::from_bytes([self.read_reg(i2c, Register::D6dSrc)?]))
     }
 
     fn get_int1_routing<I2C>(&self, i2c: &mut I2C) -> Result<Int1Ctrl, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Int1Ctrl::from_bytes([
             self.read_reg(i2c, Register::Int1Ctrl)?
@@ -151,7 +151,7 @@ impl InterruptStatus for Ism330Dhcx {
 
     fn get_int2_routing<I2C>(&self, i2c: &mut I2C) -> Result<Int2Ctrl, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Int2Ctrl::from_bytes([
             self.read_reg(i2c, Register::Int2Ctrl)?
@@ -160,21 +160,21 @@ impl InterruptStatus for Ism330Dhcx {
 
     fn get_int1_event_routing<I2C>(&self, i2c: &mut I2C) -> Result<Md1Cfg, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Md1Cfg::from_bytes([self.read_reg(i2c, Register::Md1Cfg)?]))
     }
 
     fn get_int2_event_routing<I2C>(&self, i2c: &mut I2C) -> Result<Md2Cfg, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Md2Cfg::from_bytes([self.read_reg(i2c, Register::Md2Cfg)?]))
     }
 
     fn get_status<I2C>(&self, i2c: &mut I2C) -> Result<StatusReg, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(StatusReg::from_bytes([
             self.read_reg(i2c, Register::StatusReg)?
@@ -183,10 +183,10 @@ impl InterruptStatus for Ism330Dhcx {
 
     fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let mut bytes = [0u8; 3];
-        i2c.write_read(self.address, &[Register::Timestamp0.addr()], &mut bytes)?;
+        self.read_register(i2c, Register::Timestamp0.addr(), &mut bytes)?;
         Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], 0]))
     }
 }
@@ -196,7 +196,7 @@ macro_rules! route_setters {
         $(
             fn $method<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
             where
-                I2C: I2c,
+                I2C: RegisterBus,
             {
                 self.modify_reg(i2c, Register::$register, |value| {
                     let mut reg = $config::from_bytes([value]);

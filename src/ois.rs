@@ -1,4 +1,4 @@
-use embedded_hal::i2c::I2c;
+use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::{Ctrl1Ois, Ctrl2Ois, Ctrl3Ois, IntOis, Register};
@@ -7,43 +7,43 @@ use crate::registers::{Ctrl1Ois, Ctrl2Ois, Ctrl3Ois, IntOis, Register};
 pub trait Ois {
     fn set_ois_spi2<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_gyro_scale<I2C>(&self, i2c: &mut I2C, scale: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_mode4<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_spi3<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_level1<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_high_pass<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_filter_type<I2C>(&self, i2c: &mut I2C, filter: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_filter_cutoff<I2C>(&self, i2c: &mut I2C, cutoff: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_accel_scale<I2C>(&self, i2c: &mut I2C, scale: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_self_test<I2C>(&self, i2c: &mut I2C, mode: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_ois_interrupt<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 macro_rules! ois_setters {
     ($(fn $method:ident, $register:ident, $config:ident, $setter:ident, $value:ty;)*) => {
         $(fn $method<I2C>(&self, i2c: &mut I2C, value: $value) -> Result<(), I2C::Error>
-        where I2C: I2c {
+        where I2C: RegisterBus {
             self.modify_reg(i2c, Register::$register, |raw| {
                 let mut reg = $config::from_bytes([raw]);
                 reg.$setter(value);

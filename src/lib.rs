@@ -7,7 +7,15 @@
 //! let sensor = Ism330Dhcx::new(&mut i2c).unwrap();
 //! ```
 //!
-//! The driver borrows the I2C bus for each operation.
+//! The driver borrows the register transport for each operation.
+//!
+//! For four-wire SPI, wrap an already-configured [`embedded_hal::spi::SpiDevice`]:
+//! ```rust,ignore
+//! let mut spi = SpiDeviceBus::new(spi_device);
+//! let sensor = Ism330Dhcx::new_spi(&mut spi).unwrap();
+//! ```
+//! SPI mode, clock frequency, and electrical setup are selected by the caller
+//! according to the datasheet and their HAL. Three-wire SPI is not supported.
 //!
 //! To configure the sensor, use the high-level methods:
 //!
@@ -40,6 +48,7 @@ pub mod offsets;
 pub mod ois;
 pub mod registers;
 pub mod sensor_hub;
+pub mod spi;
 
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
 pub use configuration::{Configuration, CoreField};
@@ -51,8 +60,10 @@ pub use motion::Motion;
 pub use offsets::Offsets;
 pub use ois::Ois;
 pub use sensor_hub::SensorHub;
+pub use spi::SpiDeviceBus;
 
 use embedded_hal::i2c::I2c;
+use embedded_hal::spi::SpiDevice;
 use registers::*;
 
 /// Datasheet write address for the device. (D6h)
@@ -63,6 +74,8 @@ pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
 pub enum Error<E> {
     /// I2C bus error.
     I2c(E),
+    /// SPI bus error.
+    Spi(E),
     /// Invalid device found (WHO_AM_I mismatch).
     InvalidDevice(u8),
 }
@@ -70,6 +83,50 @@ pub enum Error<E> {
 impl<E> From<E> for Error<E> {
     fn from(error: E) -> Self {
         Self::I2c(error)
+    }
+}
+
+/// Internal register transport implemented by I2C and SPI buses.
+pub trait RegisterBus {
+    type Error;
+
+    fn read_register(
+        &mut self,
+        address: u8,
+        register: u8,
+        data: &mut [u8],
+    ) -> Result<(), Self::Error>;
+
+    fn write_register(&mut self, address: u8, register: u8, data: &[u8])
+    -> Result<(), Self::Error>;
+}
+
+impl<I2C> RegisterBus for I2C
+where
+    I2C: I2c,
+{
+    type Error = I2C::Error;
+
+    fn read_register(
+        &mut self,
+        address: u8,
+        register: u8,
+        data: &mut [u8],
+    ) -> Result<(), Self::Error> {
+        self.write_read(address, &[register], data)
+    }
+
+    fn write_register(
+        &mut self,
+        address: u8,
+        register: u8,
+        data: &[u8],
+    ) -> Result<(), Self::Error> {
+        assert!(data.len() <= 32, "register write exceeds transport buffer");
+        let mut buffer = [0u8; 33];
+        buffer[0] = register;
+        buffer[1..data.len() + 1].copy_from_slice(data);
+        self.write(address, &buffer[..data.len() + 1])
     }
 }
 
@@ -109,40 +166,77 @@ impl Ism330Dhcx {
         Ok(sensor)
     }
 
-    pub(crate) fn read_reg<I2C>(&self, i2c: &mut I2C, reg: Register) -> Result<u8, I2C::Error>
+    /// Create a new driver using an already-configured four-wire SPI device.
+    pub fn new_spi<SPI>(spi: &mut SpiDeviceBus<SPI>) -> Result<Self, Error<SPI::Error>>
     where
-        I2C: I2c,
+        SPI: SpiDevice<u8>,
     {
         let mut buffer = [0u8];
-        i2c.write_read(self.address, &[reg.addr()], &mut buffer)?;
+        spi.read_register(0, Register::WhoAmI.addr(), &mut buffer)
+            .map_err(Error::Spi)?;
+
+        if buffer[0] != 0x6b {
+            return Err(Error::InvalidDevice(buffer[0]));
+        }
+
+        let sensor = Self {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+        sensor.set_bdu(spi, true).map_err(Error::Spi)?;
+        sensor.set_if_inc(spi, true).map_err(Error::Spi)?;
+
+        Ok(sensor)
+    }
+
+    pub(crate) fn read_register<B: RegisterBus>(
+        &self,
+        bus: &mut B,
+        register: u8,
+        data: &mut [u8],
+    ) -> Result<(), B::Error> {
+        bus.read_register(self.address, register, data)
+    }
+
+    pub(crate) fn write_register<B: RegisterBus>(
+        &self,
+        bus: &mut B,
+        register: u8,
+        data: &[u8],
+    ) -> Result<(), B::Error> {
+        bus.write_register(self.address, register, data)
+    }
+
+    pub(crate) fn read_reg<B: RegisterBus>(
+        &self,
+        bus: &mut B,
+        reg: Register,
+    ) -> Result<u8, B::Error> {
+        let mut buffer = [0u8];
+        self.read_register(bus, reg.addr(), &mut buffer)?;
         Ok(buffer[0])
     }
 
-    pub(crate) fn write_reg<I2C>(
+    pub(crate) fn write_reg<B: RegisterBus>(
         &self,
-        i2c: &mut I2C,
+        bus: &mut B,
         reg: Register,
         value: u8,
-    ) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        i2c.write(self.address, &[reg.addr(), value])
+    ) -> Result<(), B::Error> {
+        self.write_register(bus, reg.addr(), &[value])
     }
 
-    pub(crate) fn modify_reg<I2C, F>(
+    pub(crate) fn modify_reg<B: RegisterBus, F>(
         &self,
-        i2c: &mut I2C,
+        bus: &mut B,
         reg: Register,
         f: F,
-    ) -> Result<(), I2C::Error>
+    ) -> Result<(), B::Error>
     where
-        I2C: I2c,
         F: FnOnce(u8) -> u8,
     {
-        let value = self.read_reg(i2c, reg)?;
+        let value = self.read_reg(bus, reg)?;
         let new_value = f(value);
-        self.write_reg(i2c, reg, new_value)
+        self.write_reg(bus, reg, new_value)
     }
 
     /// Set the I2C address.
@@ -155,11 +249,8 @@ impl Ism330Dhcx {
     // ===========================================
 
     /// Reboot memory content.
-    pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, boot: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_boot<B: RegisterBus>(&mut self, bus: &mut B, boot: bool) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_boot(boot);
             reg.into_bytes()[0]
@@ -169,11 +260,8 @@ impl Ism330Dhcx {
     /// Block Data Update.
     ///
     /// If true, output registers are not updated until MSB and LSB have been read.
-    pub fn set_bdu<I2C>(&self, i2c: &mut I2C, bdu: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_bdu<B: RegisterBus>(&self, bus: &mut B, bdu: bool) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_bdu(bdu);
             reg.into_bytes()[0]
@@ -181,11 +269,8 @@ impl Ism330Dhcx {
     }
 
     /// Register address automatically incremented during a multiple byte access with a serial interface.
-    pub fn set_if_inc<I2C>(&self, i2c: &mut I2C, if_inc: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_if_inc<B: RegisterBus>(&self, bus: &mut B, if_inc: bool) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_if_inc(if_inc);
             reg.into_bytes()[0]
@@ -193,11 +278,8 @@ impl Ism330Dhcx {
     }
 
     /// Reset the device software.
-    pub fn set_sw_reset<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_sw_reset<B: RegisterBus>(&self, bus: &mut B, enable: bool) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_sw_reset(enable);
             reg.into_bytes()[0]
@@ -205,11 +287,8 @@ impl Ism330Dhcx {
     }
 
     /// Select the serial interface mode (`true` selects 3-wire SPI).
-    pub fn set_sim<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_sim<B: RegisterBus>(&self, bus: &mut B, enable: bool) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_sim(enable);
             reg.into_bytes()[0]
@@ -217,11 +296,8 @@ impl Ism330Dhcx {
     }
 
     /// Select push-pull (`false`) or open-drain (`true`) interrupt pins.
-    pub fn set_pp_od<I2C>(&self, i2c: &mut I2C, open_drain: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_pp_od<B: RegisterBus>(&self, bus: &mut B, open_drain: bool) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_pp_od(open_drain);
             reg.into_bytes()[0]
@@ -229,11 +305,12 @@ impl Ism330Dhcx {
     }
 
     /// Select active-high (`false`) or active-low (`true`) interrupt pins.
-    pub fn set_h_lactive<I2C>(&self, i2c: &mut I2C, active_low: bool) -> Result<(), I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+    pub fn set_h_lactive<B: RegisterBus>(
+        &self,
+        bus: &mut B,
+        active_low: bool,
+    ) -> Result<(), B::Error> {
+        self.modify_reg(bus, Register::Ctrl3C, |v| {
             let mut reg = Ctrl3C::from_bytes([v]);
             reg.set_h_lactive(active_low);
             reg.into_bytes()[0]
@@ -245,16 +322,9 @@ impl Ism330Dhcx {
     // ===========================================
 
     /// Get temperature in Celsius.
-    pub fn get_temperature<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
-    where
-        I2C: I2c,
-    {
+    pub fn get_temperature<B: RegisterBus>(&self, bus: &mut B) -> Result<f32, B::Error> {
         let mut measurements = [0u8; 2];
-        i2c.write_read(
-            self.address,
-            &[Register::OutTempL.addr()],
-            &mut measurements,
-        )?;
+        self.read_register(bus, Register::OutTempL.addr(), &mut measurements)?;
 
         let raw_temp = (measurements[1] as i16) << 8 | measurements[0] as i16;
         let temp: f32 = (raw_temp as f32 / 256.0) + 25.0;
@@ -263,15 +333,12 @@ impl Ism330Dhcx {
     }
 
     /// Set chain full scale.
-    pub fn set_chain_full_scale<I2C>(
+    pub fn set_chain_full_scale<B: RegisterBus>(
         &mut self,
-        i2c: &mut I2C,
+        bus: &mut B,
         scale: FsG,
-    ) -> Result<&mut Self, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        self.set_gyro_scale(i2c, scale)?;
+    ) -> Result<&mut Self, B::Error> {
+        self.set_gyro_scale(bus, scale)?;
         Ok(self)
     }
 }

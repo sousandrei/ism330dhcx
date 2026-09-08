@@ -1,4 +1,4 @@
-use embedded_hal::i2c::I2c;
+use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::{
@@ -10,135 +10,135 @@ use crate::registers::{
 pub trait Motion {
     fn set_tap_x<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_y<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_z<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_lir<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_slope_fds<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_sleep_status_on_int<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_int_clear_on_read<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_threshold_x<I2C>(&self, i2c: &mut I2C, threshold: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_priority<I2C>(&self, i2c: &mut I2C, priority: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_threshold_y<I2C>(&self, i2c: &mut I2C, threshold: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_inactivity<I2C>(&self, i2c: &mut I2C, inactivity: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_interrupts<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_threshold_z<I2C>(&self, i2c: &mut I2C, threshold: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_6d_threshold<I2C>(&self, i2c: &mut I2C, threshold: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_4d<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_shock<I2C>(&self, i2c: &mut I2C, duration: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_quiet<I2C>(&self, i2c: &mut I2C, duration: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_tap_duration<I2C>(&self, i2c: &mut I2C, duration: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_wake_up_threshold<I2C>(&self, i2c: &mut I2C, threshold: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_wake_up_user_offset<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_wake_up_single_double_tap<I2C>(
         &self,
         i2c: &mut I2C,
         enable: bool,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_sleep_duration<I2C>(&self, i2c: &mut I2C, duration: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_wake_threshold_weight<I2C>(&self, i2c: &mut I2C, weight: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_wake_duration<I2C>(&self, i2c: &mut I2C, duration: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_free_fall_duration<I2C>(&self, i2c: &mut I2C, duration: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_free_fall_threshold<I2C>(&self, i2c: &mut I2C, threshold: u8) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_significant_motion<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_sleep_change<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_single_tap<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_wake_up<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_free_fall<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_double_tap<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_6d<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int1_sensor_hub<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_sleep_change<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_single_tap<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_wake_up<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_free_fall<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_double_tap<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_6d<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_int2_timestamp<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 macro_rules! motion_setters {
@@ -146,7 +146,7 @@ macro_rules! motion_setters {
         $(
             fn $method<I2C>(&self, i2c: &mut I2C, value: $value) -> Result<(), I2C::Error>
             where
-                I2C: I2c,
+                I2C: RegisterBus,
             {
                 self.modify_reg(i2c, Register::$register, |raw| {
                     let mut reg = $config::from_bytes([raw]);

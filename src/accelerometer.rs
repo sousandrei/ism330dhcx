@@ -50,35 +50,35 @@ impl AccelValue {
 }
 
 use crate::Ism330Dhcx;
+use crate::RegisterBus;
 use crate::registers::{Ctrl1Xl, Ctrl5C, Ctrl8Xl, Ctrl9Xl, OdrXl, Register, StXl};
-use embedded_hal::i2c::I2c;
 
 /// Accelerometer sensor methods.
 pub trait Accelerometer {
     /// Set accelerometer output data rate.
     fn set_accel_odr<I2C>(&mut self, i2c: &mut I2C, odr: OdrXl) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get the configured accelerometer output data rate.
     fn get_accel_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrXl, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set accelerometer full-scale range.
     fn set_accel_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsXl) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get current accelerometer full-scale range.
     fn get_accel_scale<I2C>(&self, i2c: &mut I2C) -> Result<FsXl, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Enable low-pass filter 2 for accelerometer.
     fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get whether accelerometer low-pass filter 2 is enabled.
     fn get_lpf2_xl_en<I2C>(&self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Configure the accelerometer high-pass/low-pass filter cutoff.
     fn set_hpcf_xl<I2C>(
         &self,
@@ -86,62 +86,62 @@ pub trait Accelerometer {
         cutoff: crate::registers::HpcfXl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set the accelerometer low-pass filter output used by 6D detection.
     fn set_low_pass_on_6d<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_hp_slope_xl_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_fast_settling_mode_xl<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_slope_fds<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_hp_ref_mode<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Select accelerometer self-test mode.
     fn set_accel_self_test<I2C>(&self, i2c: &mut I2C, mode: StXl) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set DEN value on X axis.
     fn set_den_x<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set DEN value on Y axis.
     fn set_den_y<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set DEN value on Z axis.
     fn set_den_z<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Set DEN device configuration.
     fn set_den_device_conf<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_den_lh<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_den_xl_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     fn set_den_xl_g<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
     /// Get accelerometer reading.
     fn get_accelerometer<I2C>(&self, i2c: &mut I2C) -> Result<AccelValue, I2C::Error>
     where
-        I2C: I2c;
+        I2C: RegisterBus;
 }
 
 impl Accelerometer for Ism330Dhcx {
     fn set_accel_odr<I2C>(&mut self, i2c: &mut I2C, odr: OdrXl) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl1Xl, |v| {
             let mut reg = Ctrl1Xl::from_bytes([v]);
@@ -152,14 +152,14 @@ impl Accelerometer for Ism330Dhcx {
 
     fn get_accel_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrXl, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Ctrl1Xl::from_bytes([self.read_reg(i2c, Register::Ctrl1Xl)?]).odr_xl())
     }
 
     fn set_accel_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsXl) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl1Xl, |v| {
             let mut reg = Ctrl1Xl::from_bytes([v]);
@@ -170,7 +170,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn get_accel_scale<I2C>(&self, i2c: &mut I2C) -> Result<FsXl, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let v = self.read_reg(i2c, Register::Ctrl1Xl)?;
         let reg = Ctrl1Xl::from_bytes([v]);
@@ -179,7 +179,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl1Xl, |v| {
             let mut reg = Ctrl1Xl::from_bytes([v]);
@@ -190,7 +190,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn get_lpf2_xl_en<I2C>(&self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         Ok(Ctrl1Xl::from_bytes([self.read_reg(i2c, Register::Ctrl1Xl)?]).lpf2_xl_en())
     }
@@ -201,7 +201,7 @@ impl Accelerometer for Ism330Dhcx {
         cutoff: crate::registers::HpcfXl,
     ) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
             let mut r = Ctrl8Xl::from_bytes([v]);
@@ -212,7 +212,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_low_pass_on_6d<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
             let mut r = Ctrl8Xl::from_bytes([v]);
@@ -222,7 +222,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_hp_slope_xl_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
             let mut r = Ctrl8Xl::from_bytes([v]);
@@ -232,7 +232,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_fast_settling_mode_xl<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
             let mut r = Ctrl8Xl::from_bytes([v]);
@@ -242,7 +242,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_slope_fds<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
             let mut r = Ctrl8Xl::from_bytes([v]);
@@ -252,7 +252,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_hp_ref_mode<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl8Xl, |v| {
             let mut r = Ctrl8Xl::from_bytes([v]);
@@ -262,7 +262,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_accel_self_test<I2C>(&self, i2c: &mut I2C, mode: StXl) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl5C, |v| {
             let mut r = Ctrl5C::from_bytes([v]);
@@ -273,7 +273,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_den_x<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut reg = crate::registers::Ctrl9Xl::from_bytes([v]);
@@ -284,7 +284,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_den_y<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut reg = crate::registers::Ctrl9Xl::from_bytes([v]);
@@ -295,7 +295,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_den_z<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut reg = crate::registers::Ctrl9Xl::from_bytes([v]);
@@ -306,7 +306,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_den_device_conf<I2C>(&mut self, i2c: &mut I2C, val: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut reg = crate::registers::Ctrl9Xl::from_bytes([v]);
@@ -317,7 +317,7 @@ impl Accelerometer for Ism330Dhcx {
 
     fn set_den_lh<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut r = Ctrl9Xl::from_bytes([v]);
@@ -327,7 +327,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_den_xl_en<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut r = Ctrl9Xl::from_bytes([v]);
@@ -337,7 +337,7 @@ impl Accelerometer for Ism330Dhcx {
     }
     fn set_den_xl_g<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         self.modify_reg(i2c, Register::Ctrl9Xl, |v| {
             let mut r = Ctrl9Xl::from_bytes([v]);
@@ -348,12 +348,12 @@ impl Accelerometer for Ism330Dhcx {
 
     fn get_accelerometer<I2C>(&self, i2c: &mut I2C) -> Result<AccelValue, I2C::Error>
     where
-        I2C: I2c,
+        I2C: RegisterBus,
     {
         let scale = self.get_accel_scale(i2c)?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[Register::OutXLA.addr()], &mut measurements)?;
+        self.read_register(i2c, Register::OutXLA.addr(), &mut measurements)?;
 
         Ok(AccelValue::from_msr(scale, &measurements))
     }

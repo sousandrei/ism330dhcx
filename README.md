@@ -28,6 +28,17 @@ To declare a sensor is pretty simple:
 let sensor = Ism330Dhcx::new(&mut i2c).unwrap()
 ```
 
+For four-wire SPI, configure the SPI device and chip select with your HAL, then
+wrap it in `SpiDeviceBus`:
+
+```rust
+let mut spi = SpiDeviceBus::new(spi_device);
+let sensor = Ism330Dhcx::new_spi(&mut spi).unwrap();
+```
+
+The caller selects SPI mode, clock frequency, electrical setup, and chip-select
+handling according to the datasheet and HAL. Three-wire SPI is not supported.
+
 If you want to use another address for the chip, you can do:
 
 ```rust
@@ -47,8 +58,8 @@ sensor.set_accel_odr(&mut i2c, OdrXl::Hz52).unwrap();
 sensor.set_boot(&mut i2c, true).unwrap();
 ```
 
-The driver borrows the I2C bus for each operation, so the same bus can be
-shared with other devices. Supported feature groups include accelerometer and
+The driver borrows the register transport for each operation, so the same bus
+can be shared with other devices. Supported feature groups include accelerometer and
 gyroscope configuration, user offsets, FIFO, motion events, interrupt/status
 reads, embedded functions, sensor-hub access, timestamp reads, and OIS
 configuration.
@@ -90,7 +101,7 @@ If you are using or plan to use this crate, do not hesitate to open an issue or 
 
 The complete datasheet register map is represented under `src/registers/`.
 Feature modules provide the public driver API and use the register definitions
-for I2C access.
+for I2C and four-wire SPI access.
 
 ## <a name="license"></a> License
 
