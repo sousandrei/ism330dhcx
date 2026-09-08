@@ -59,7 +59,7 @@ pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;
 pub use offsets::Offsets;
 pub use ois::Ois;
-pub use sensor_hub::SensorHub;
+pub use sensor_hub::{SensorHub, SensorHubReadConfig, SensorHubSlave};
 pub use spi::SpiDeviceBus;
 
 use embedded_hal::i2c::I2c;

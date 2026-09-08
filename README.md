@@ -85,6 +85,28 @@ let mut external_data = [0; 4];
 sensor.read_sensor_hub(&mut i2c, &mut external_data).unwrap();
 ```
 
+Additional external sensors can be configured independently through
+`SensorHubSlave`:
+
+```rust
+sensor
+    .configure_sensor_hub_slave(
+        &mut i2c,
+        SensorHubReadConfig {
+            slave: SensorHubSlave::Slave1,
+            address: 0x68,
+            register: 0x20,
+            length: 6,
+            odr: 0,
+            batch: true,
+        },
+    )
+    .unwrap();
+```
+
+Sensor-hub pull-ups, pass-through, auxiliary-sensor mode, reset, and operation
+status are exposed through the `SensorHub` trait.
+
 For bits that operate together, the driver provides typed register fields. For
 example, to set the accelerometer data rate you specify the desired data rate
 and the driver updates the corresponding four bits.
