@@ -55,6 +55,26 @@ pub enum OdrXl {
     Hz6667 = 0b1010,
 }
 
+impl OdrXl {
+    /// Calculate the actual output data rate using `INTERNAL_FREQ_FINE`.
+    pub fn actual_hz(self, frequency_fine: i8) -> f32 {
+        let coefficient = match self {
+            Self::Off => return 0.0,
+            Self::Hz12_5 => 512.0,
+            Self::Hz26 => 256.0,
+            Self::Hz52 => 128.0,
+            Self::Hz104 => 64.0,
+            Self::Hz208 => 32.0,
+            Self::Hz416 => 16.0,
+            Self::Hz833 => 8.0,
+            Self::Hz1667 => 4.0,
+            Self::Hz3333 => 2.0,
+            Self::Hz6667 => 1.0,
+        };
+        (6667.0 + 0.0015 * frequency_fine as f32 * 6667.0) / coefficient
+    }
+}
+
 /// Control register 1 (XL) - Accelerometer settings.
 #[bitfield]
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]

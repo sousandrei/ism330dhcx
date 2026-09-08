@@ -2,11 +2,15 @@ use crate::RegisterBus;
 
 use crate::Ism330Dhcx;
 use crate::registers::{
-    AllIntSrc, D6dSrc, Int1Ctrl, Int2Ctrl, Md1Cfg, Md2Cfg, Register, StatusReg, TapSrc, WakeUpSrc,
+    AllIntSrc, Ctrl1Xl, Ctrl2G, D6dSrc, Int1Ctrl, Int2Ctrl, Md1Cfg, Md2Cfg, Register, StatusReg,
+    TapSrc, WakeUpSrc,
 };
 
 /// Interrupt routing configuration.
 pub trait Interrupts {
+    fn set_int1_boot<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: RegisterBus;
     fn set_int1_drdy_xl<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
     where
         I2C: RegisterBus;
@@ -105,6 +109,31 @@ pub trait InterruptStatus {
     fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
     where
         I2C: RegisterBus;
+    /// Read the signed internal frequency correction value.
+    fn get_internal_frequency_fine<I2C>(&self, i2c: &mut I2C) -> Result<i8, I2C::Error>
+    where
+        I2C: RegisterBus;
+    /// Return the configured accelerometer ODR corrected by the internal clock.
+    fn get_actual_accel_odr<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus;
+    /// Return the configured gyroscope ODR corrected by the internal clock.
+    fn get_actual_gyro_odr<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus;
+    /// Return the corrected timestamp tick period in microseconds.
+    fn get_timestamp_resolution_us<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus;
+    /// Read the timestamp and convert it to seconds using the corrected period.
+    fn get_timestamp_seconds<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus;
+}
+
+/// Calculate the timestamp tick period from `INTERNAL_FREQ_FINE`.
+pub fn timestamp_resolution_us(frequency_fine: i8) -> f32 {
+    1_000_000.0 / (40_000.0 * (1.0 + 0.0015 * frequency_fine as f32))
 }
 
 impl InterruptStatus for Ism330Dhcx {
@@ -189,6 +218,49 @@ impl InterruptStatus for Ism330Dhcx {
         self.read_register(i2c, Register::Timestamp0.addr(), &mut bytes)?;
         Ok(u32::from_le_bytes([bytes[0], bytes[1], bytes[2], 0]))
     }
+
+    fn get_internal_frequency_fine<I2C>(&self, i2c: &mut I2C) -> Result<i8, I2C::Error>
+    where
+        I2C: RegisterBus,
+    {
+        Ok(self.read_reg(i2c, Register::InternalFreqFine)? as i8)
+    }
+
+    fn get_actual_accel_odr<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus,
+    {
+        let fine = self.get_internal_frequency_fine(i2c)?;
+        let ctrl = Ctrl1Xl::from_bytes([self.read_reg(i2c, Register::Ctrl1Xl)?]);
+        Ok(ctrl.odr_xl().actual_hz(fine))
+    }
+
+    fn get_actual_gyro_odr<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus,
+    {
+        let fine = self.get_internal_frequency_fine(i2c)?;
+        let ctrl = Ctrl2G::from_bytes([self.read_reg(i2c, Register::Ctrl2G)?]);
+        Ok(ctrl.odr_g().actual_hz(fine))
+    }
+
+    fn get_timestamp_resolution_us<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus,
+    {
+        Ok(timestamp_resolution_us(
+            self.get_internal_frequency_fine(i2c)?,
+        ))
+    }
+
+    fn get_timestamp_seconds<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: RegisterBus,
+    {
+        let timestamp = self.get_timestamp(i2c)?;
+        let resolution_us = self.get_timestamp_resolution_us(i2c)?;
+        Ok(timestamp as f32 * resolution_us / 1_000_000.0)
+    }
 }
 
 macro_rules! route_setters {
@@ -210,6 +282,7 @@ macro_rules! route_setters {
 
 impl Interrupts for Ism330Dhcx {
     route_setters! {
+        fn set_int1_boot, Int1Ctrl, Int1Ctrl, set_int1_boot;
         fn set_int1_drdy_xl, Int1Ctrl, Int1Ctrl, set_int1_drdy_xl;
         fn set_int1_drdy_g, Int1Ctrl, Int1Ctrl, set_int1_drdy_g;
         fn set_int1_fifo_threshold, Int1Ctrl, Int1Ctrl, set_int1_fifo_th;
@@ -268,6 +341,57 @@ mod tests {
         ]);
 
         sensor.set_int2_embedded_function(&mut i2c, true).unwrap();
+        i2c.done();
+    }
+
+    #[test]
+    fn routes_boot_status_to_int1() {
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Int1Ctrl.addr()],
+                vec![0x00],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Int1Ctrl.addr(), 0x04]),
+        ]);
+
+        sensor.set_int1_boot(&mut i2c, true).unwrap();
+        i2c.done();
+    }
+
+    #[test]
+    fn calculates_corrected_odr_and_timestamp_period() {
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::InternalFreqFine.addr()],
+                vec![10],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl1Xl.addr()],
+                vec![0x30],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Timestamp0.addr()],
+                vec![0x34, 0x12, 0],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::InternalFreqFine.addr()],
+                vec![10],
+            ),
+        ]);
+
+        assert!((sensor.get_actual_accel_odr(&mut i2c).unwrap() - 52.87).abs() < 0.01);
+        assert!((sensor.get_timestamp_seconds(&mut i2c).unwrap() - 0.1148).abs() < 0.001);
         i2c.done();
     }
 }

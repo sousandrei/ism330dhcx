@@ -60,7 +60,7 @@ pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;
 pub use offsets::Offsets;
-pub use ois::Ois;
+pub use ois::{Ois, OisOutput};
 pub use self_test::{SelfTestDelay, SelfTestResult};
 pub use sensor_hub::{SensorHub, SensorHubReadConfig, SensorHubSlave};
 pub use spi::SpiDeviceBus;

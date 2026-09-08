@@ -64,6 +64,21 @@ gyroscope configuration, user offsets, FIFO, motion events, interrupt/status
 reads, embedded functions, sensor-hub access, timestamp reads, and OIS
 configuration.
 
+OIS (optical image stabilization) is a dedicated low-latency sensor signal
+chain for camera or motion-stabilization systems. It has independent gyro and
+accelerometer scaling, filtering, self-test, interrupt, and output settings.
+OIS configuration uses typed full-scale, filter, and self-test enums. The
+driver also exposes OIS status and raw shared output-register reads. Those
+registers contain OIS-chain values only when accessed through the sensor's
+auxiliary SPI interface; reads through host I2C or primary SPI return the
+general-purpose sensor chain. The auxiliary SPI path is separate from the
+host-side SPI transport wrapped by `SpiDeviceBus`.
+
+The `InterruptStatus` API provides the signed `INTERNAL_FREQ_FINE` value,
+corrected accelerometer and gyroscope ODRs, corrected timestamp resolution,
+and timestamp conversion to seconds. `set_int1_boot` routes boot status to
+INT1.
+
 Motion events can be configured through the `Motion` trait and routed to either
 interrupt pin through the event-routing methods:
 
