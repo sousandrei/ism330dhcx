@@ -1,7 +1,7 @@
 #![allow(unused_parens)]
 use modular_bitfield::{
     bitfield,
-    specifiers::{B1, B10, B3},
+    specifiers::{B1, B3, B10},
 };
 
 /// FIFO status registers.

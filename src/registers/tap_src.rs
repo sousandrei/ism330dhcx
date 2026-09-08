@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
-use crate::registers::Register;
 use crate::Ism330Dhcx;
+use crate::registers::Register;
 use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B1};
 #[bitfield]

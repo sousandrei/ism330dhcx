@@ -1,6 +1,6 @@
 #![allow(unused_parens)]
-use crate::registers::Register;
 use crate::Ism330Dhcx;
+use crate::registers::Register;
 use embedded_hal::i2c::I2c;
 use modular_bitfield::{bitfield, specifiers::B6};
 
@@ -61,8 +61,8 @@ impl FuncCfgAccessExt for Ism330Dhcx {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Ism330Dhcx;
     use crate::DEFAULT_I2C_ADDRESS;
+    use crate::Ism330Dhcx;
     use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]

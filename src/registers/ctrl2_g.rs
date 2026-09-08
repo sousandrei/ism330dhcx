@@ -1,8 +1,8 @@
 #![allow(unused_parens)]
-use modular_bitfield::{BitfieldSpecifier, bitfield};
+use modular_bitfield::{Specifier, bitfield};
 
 /// Gyroscope full-scale selection.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 2]
 pub enum FsGScale {
     /// ±250 dps
@@ -41,7 +41,7 @@ impl FsG {
 }
 
 /// Gyroscope output data rate.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 4]
 pub enum OdrG {
     /// Power-down

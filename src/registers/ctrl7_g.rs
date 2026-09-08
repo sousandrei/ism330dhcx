@@ -1,8 +1,8 @@
 #![allow(unused_parens)]
-use modular_bitfield::{bitfield, specifiers::B1, BitfieldSpecifier};
+use modular_bitfield::{Specifier, bitfield, specifiers::B1};
 
 /// Gyroscope high-pass filter cutoff selection.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 2]
 pub enum HpmG {
     /// 16 mHz

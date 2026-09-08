@@ -1,8 +1,8 @@
 #![allow(unused_parens)]
-use modular_bitfield::{bitfield, specifiers::B1, BitfieldSpecifier};
+use modular_bitfield::{Specifier, bitfield, specifiers::B1};
 
 /// Accelerometer full-scale selection.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 2]
 pub enum FsXl {
     /// ±2 g
@@ -28,7 +28,7 @@ impl FsXl {
 }
 
 /// Accelerometer output data rate selection.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 4]
 pub enum OdrXl {
     /// Power-down

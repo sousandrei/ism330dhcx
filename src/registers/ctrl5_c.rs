@@ -1,7 +1,7 @@
 #![allow(non_snake_case)]
-use modular_bitfield::{bitfield, specifiers::B1, specifiers::B2, BitfieldSpecifier};
+use modular_bitfield::{Specifier, bitfield, specifiers::B1, specifiers::B2};
 
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 2]
 pub enum StXl {
     Normal = 0b00,
@@ -9,7 +9,7 @@ pub enum StXl {
     Negative = 0b10,
 }
 
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 2]
 pub enum StG {
     Normal = 0b00,

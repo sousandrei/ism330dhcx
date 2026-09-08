@@ -1,6 +1,6 @@
-use modular_bitfield::{bitfield, BitfieldSpecifier};
+use modular_bitfield::{Specifier, bitfield};
 
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 3]
 pub enum Ftype {
     Bw0 = 0b00,

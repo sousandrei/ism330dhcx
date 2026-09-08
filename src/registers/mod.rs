@@ -33,7 +33,6 @@ pub mod wake_up_ths;
 
 pub use all_int_src::*;
 pub use counter_bdr::*;
-pub use ctrl10_c::*;
 pub use ctrl1_xl::*;
 pub use ctrl2_g::*;
 pub use ctrl3_c::*;
@@ -43,6 +42,7 @@ pub use ctrl6_c::*;
 pub use ctrl7_g::*;
 pub use ctrl8_xl::*;
 pub use ctrl9_xl::*;
+pub use ctrl10_c::*;
 pub use d6d_src::*;
 pub use fifo_ctrl::*;
 pub use fifo_status::*;

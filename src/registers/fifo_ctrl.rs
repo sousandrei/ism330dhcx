@@ -1,8 +1,7 @@
 #![allow(unused_parens)]
 use modular_bitfield::{
-    bitfield,
+    Specifier, bitfield,
     specifiers::{B5, B6},
-    BitfieldSpecifier,
 };
 
 /// FIFO control register 2.
@@ -24,7 +23,7 @@ impl Default for FifoCtrl2 {
 }
 
 /// Gyroscope batch data rate.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 4]
 pub enum BdrGy {
     /// Not batched
@@ -54,7 +53,7 @@ pub enum BdrGy {
 }
 
 /// Accelerometer batch data rate.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 4]
 pub enum BdrXl {
     /// Not batched
@@ -100,7 +99,7 @@ impl Default for FifoCtrl3 {
 }
 
 /// FIFO mode selection.
-#[derive(BitfieldSpecifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 3]
 pub enum FifoMode {
     /// Bypass mode. FIFO disabled.
