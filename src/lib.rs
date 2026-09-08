@@ -100,14 +100,24 @@ impl Ism330Dhcx {
         Ok(buffer[0])
     }
 
-    pub(crate) fn write_reg<I2C>(&self, i2c: &mut I2C, reg: Register, value: u8) -> Result<(), I2C::Error>
+    pub(crate) fn write_reg<I2C>(
+        &self,
+        i2c: &mut I2C,
+        reg: Register,
+        value: u8,
+    ) -> Result<(), I2C::Error>
     where
         I2C: I2c,
     {
         i2c.write(self.address, &[reg.addr(), value])
     }
 
-    pub(crate) fn modify_reg<I2C, F>(&self, i2c: &mut I2C, reg: Register, f: F) -> Result<(), I2C::Error>
+    pub(crate) fn modify_reg<I2C, F>(
+        &self,
+        i2c: &mut I2C,
+        reg: Register,
+        f: F,
+    ) -> Result<(), I2C::Error>
     where
         I2C: I2c,
         F: FnOnce(u8) -> u8,
@@ -253,13 +263,31 @@ mod tests {
         // Read WhoAmI, then BDU and IF_INC modification (read Ctrl3C, write Ctrl3C)
         // Note: set_bdu(true) and set_if_inc(true) will each read and write Ctrl3C.
         let mut i2c = Mock::new(&[
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::WhoAmI.addr()], vec![0x6b]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::WhoAmI.addr()],
+                vec![0x6b],
+            ),
             // set_bdu(true)
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0b00000000]),
-            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0b01000000]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0b00000000],
+            ),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr(), 0b01000000],
+            ),
             // set_if_inc(true)
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0b01000000]),
-            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0b01000100]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0b01000000],
+            ),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr(), 0b01000100],
+            ),
             // set_fifo_mode
             Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![0x0A], vec![0b00000000]),
             Transaction::write(DEFAULT_I2C_ADDRESS, vec![0x0A, 0b00000001]),

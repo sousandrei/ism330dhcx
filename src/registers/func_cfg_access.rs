@@ -61,8 +61,8 @@ impl FuncCfgAccessExt for Ism330Dhcx {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Ism330Dhcx;
     use crate::DEFAULT_I2C_ADDRESS;
+    use crate::Ism330Dhcx;
     use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]
@@ -83,17 +83,32 @@ mod tests {
     #[test]
     fn test_set_shub_reg_access() {
         let mut i2c = Mock::new(&[
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::WhoAmI.addr()], vec![0x6b]),
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0x00]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::WhoAmI.addr()],
+                vec![0x6b],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0x00],
+            ),
             Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0x40]),
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0x40]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0x40],
+            ),
             Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0x44]),
             Transaction::write_read(
                 DEFAULT_I2C_ADDRESS,
                 vec![Register::FuncCfgAccess.addr()],
                 vec![0x00],
             ),
-            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::FuncCfgAccess.addr(), 0x40]),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::FuncCfgAccess.addr(), 0x40],
+            ),
         ]);
 
         let sensor = Ism330Dhcx::new(&mut i2c).unwrap();

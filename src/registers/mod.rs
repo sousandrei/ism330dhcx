@@ -1,7 +1,5 @@
 //! Register modules and address definitions.
 
-pub mod func_cfg_access;
-pub mod pin_ctrl;
 pub mod counter_bdr;
 pub mod ctrl1_xl;
 pub mod ctrl2_g;
@@ -10,9 +8,9 @@ pub mod ctrl7_g;
 pub mod ctrl9_xl;
 pub mod fifo_ctrl;
 pub mod fifo_status;
+pub mod func_cfg_access;
+pub mod pin_ctrl;
 
-pub use func_cfg_access::*;
-pub use pin_ctrl::*;
 pub use counter_bdr::*;
 pub use ctrl1_xl::*;
 pub use ctrl2_g::*;
@@ -21,6 +19,8 @@ pub use ctrl7_g::*;
 pub use ctrl9_xl::*;
 pub use fifo_ctrl::*;
 pub use fifo_status::*;
+pub use func_cfg_access::*;
+pub use pin_ctrl::*;
 
 /// Register addresses.
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]

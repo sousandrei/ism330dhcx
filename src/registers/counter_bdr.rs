@@ -125,8 +125,8 @@ impl CounterBdrExt for Ism330Dhcx {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Ism330Dhcx;
     use crate::DEFAULT_I2C_ADDRESS;
+    use crate::Ism330Dhcx;
     use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
 
     #[test]
@@ -147,10 +147,22 @@ mod tests {
     #[test]
     fn test_set_cnt_bdr_threshold() {
         let mut i2c = Mock::new(&[
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::WhoAmI.addr()], vec![0x6b]),
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0x00]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::WhoAmI.addr()],
+                vec![0x6b],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0x00],
+            ),
             Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0x40]),
-            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr()], vec![0x40]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0x40],
+            ),
             Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0x44]),
             // Threshold = 0x5AA = 101 10101010 => MSB=101(5), LSB=10101010(AA)
             Transaction::write_read(
@@ -158,8 +170,14 @@ mod tests {
                 vec![Register::CounterBdrReg1.addr()],
                 vec![0x00],
             ),
-            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::CounterBdrReg1.addr(), 0x05]),
-            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::CounterBdrReg2.addr(), 0xAA]),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::CounterBdrReg1.addr(), 0x05],
+            ),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::CounterBdrReg2.addr(), 0xAA],
+            ),
         ]);
 
         let sensor = Ism330Dhcx::new(&mut i2c).unwrap();

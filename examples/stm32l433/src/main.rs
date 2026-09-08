@@ -21,7 +21,7 @@ async fn main(_spawner: Spawner) {
     //==========================================
     // Declaring I2C1
 
-    let i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Default::default());
+    let mut i2c = I2c::new_blocking(p.I2C1, p.PB8, p.PB7, Default::default());
 
     //==============================================
     // Declaring sensor
