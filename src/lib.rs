@@ -24,6 +24,7 @@
 #![cfg_attr(not(test), no_std)]
 
 pub mod accelerometer;
+pub mod embedded;
 pub mod fifo;
 pub mod gyroscope;
 pub mod interrupt;
@@ -31,6 +32,7 @@ pub mod motion;
 pub mod registers;
 
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
+pub use embedded::EmbeddedFunctions;
 pub use fifo::Fifo;
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::Interrupts;
