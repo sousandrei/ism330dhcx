@@ -6,22 +6,22 @@ version = "0.1.0"
 [dependencies]
 ism330dhcx = { path = "../../" }
 
-defmt = "0.3"
-defmt-rtt = "0.4"
+defmt = "1.1.1"
+defmt-rtt = "1.3.0"
 
-chrono = { version = "^0.4", default-features = false }
-cortex-m = { version = "0.7.7", features = ["critical-section-single-core"] }
+chrono = { version = "^0.4.45", default-features = false }
+cortex-m = { version = "0.7.9", features = ["critical-section-single-core"] }
 cortex-m-rt = "0.7.5"
 embedded-hal = "1.0.0"
 panic-probe = { version = "1.0.0", features = ["print-defmt"] }
 
-embassy-executor = { version = "0.9.1", features = [
-    "arch-cortex-m",
+embassy-executor = { version = "0.10.0", features = [
+    "platform-cortex-m",
     "executor-thread",
     "defmt",
 ] }
 
-embassy-stm32 = { version = "0.4.0", features = [
+embassy-stm32 = { version = "0.6.0", features = [
     "defmt",
     "unstable-pac",
     "stm32l433rc",
@@ -31,7 +31,7 @@ embassy-stm32 = { version = "0.4.0", features = [
     "chrono",
 ] }
 
-embassy-time = { version = "0.5.0", features = [
+embassy-time = { version = "0.5.1", features = [
     "defmt",
     "defmt-timestamp-uptime",
     "tick-hz-32_768",
