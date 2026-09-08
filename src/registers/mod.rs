@@ -50,6 +50,34 @@ pub enum Register {
     Ctrl2G = 0x11,
     /// Control register 3
     Ctrl3C = 0x12,
+    /// Temperature output register (low)
+    OutTempL = 0x20,
+    /// Temperature output register (high)
+    OutTempH = 0x21,
+    /// Gyroscope X-axis output register (low)
+    OutXLG = 0x22,
+    /// Gyroscope X-axis output register (high)
+    OutXHG = 0x23,
+    /// Gyroscope Y-axis output register (low)
+    OutYLG = 0x24,
+    /// Gyroscope Y-axis output register (high)
+    OutYHG = 0x25,
+    /// Gyroscope Z-axis output register (low)
+    OutZLG = 0x26,
+    /// Gyroscope Z-axis output register (high)
+    OutZHG = 0x27,
+    /// Accelerometer X-axis output register (low)
+    OutXLA = 0x28,
+    /// Accelerometer X-axis output register (high)
+    OutXHA = 0x29,
+    /// Accelerometer Y-axis output register (low)
+    OutYLA = 0x2A,
+    /// Accelerometer Y-axis output register (high)
+    OutYHA = 0x2B,
+    /// Accelerometer Z-axis output register (low)
+    OutZLA = 0x2C,
+    /// Accelerometer Z-axis output register (high)
+    OutZHA = 0x2D,
     /// Gyroscope control register 7
     Ctrl7G = 0x16,
     /// Accelerometer control register 9
@@ -58,6 +86,20 @@ pub enum Register {
     FifoStatus1 = 0x3A,
     /// FIFO status register 2
     FifoStatus2 = 0x3B,
+    /// FIFO data output tag register
+    FifoDataOutTag = 0x78,
+    /// FIFO data output X-axis register (low)
+    FifoDataOutXL = 0x79,
+    /// FIFO data output X-axis register (high)
+    FifoDataOutXH = 0x7A,
+    /// FIFO data output Y-axis register (low)
+    FifoDataOutYL = 0x7B,
+    /// FIFO data output Y-axis register (high)
+    FifoDataOutYH = 0x7C,
+    /// FIFO data output Z-axis register (low)
+    FifoDataOutZL = 0x7D,
+    /// FIFO data output Z-axis register (high)
+    FifoDataOutZH = 0x7E,
 }
 
 impl Register {

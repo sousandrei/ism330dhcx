@@ -152,8 +152,54 @@ impl Gyroscope for Ism330Dhcx {
         let scale = self.get_gyro_scale(i2c)?;
 
         let mut measurements = [0u8; 6];
-        i2c.write_read(self.address, &[Register::Ctrl2G.addr()], &mut measurements)?;
+        i2c.write_read(self.address, &[Register::OutXLG.addr()], &mut measurements)?;
 
         Ok(GyroValue::from_msr(scale, &measurements))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{DEFAULT_I2C_ADDRESS, Ism330Dhcx};
+    use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
+
+    #[test]
+    fn test_get_gyroscope_reads_output_register() {
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::WhoAmI.addr()],
+                vec![0x6b],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0x00],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0x40]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0x40],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl3C.addr(), 0x44]),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl2G.addr()],
+                vec![0x00],
+            ),
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::OutXLG.addr()],
+                vec![0x34, 0x12, 0x78, 0x56, 0xbc, 0x9a],
+            ),
+        ]);
+
+        let sensor = Ism330Dhcx::new(&mut i2c).unwrap();
+        let reading = sensor.get_gyroscope(&mut i2c).unwrap();
+
+        assert_eq!(reading.count(), [0x1234, 0x5678, -0x6544]);
+        i2c.done();
     }
 }

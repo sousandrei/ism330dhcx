@@ -184,7 +184,11 @@ impl Ism330Dhcx {
         I2C: I2c,
     {
         let mut measurements = [0u8; 2];
-        i2c.write_read(self.address, &[0x20], &mut measurements)?;
+        i2c.write_read(
+            self.address,
+            &[Register::OutTempL.addr()],
+            &mut measurements,
+        )?;
 
         let raw_temp = (measurements[1] as i16) << 8 | measurements[0] as i16;
         let temp: f32 = (raw_temp as f32 / 256.0) + 25.0;

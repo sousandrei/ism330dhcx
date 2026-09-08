@@ -44,8 +44,6 @@ pub enum Value {
     Other(u8, [u8; 6]),
 }
 
-const ADDR: u8 = 0x78;
-
 /// FIFO output handler.
 pub struct FifoOut {
     pub address: u8,
@@ -72,7 +70,7 @@ impl FifoOut {
         I2C: I2c,
     {
         let mut out = [0u8; 7];
-        i2c.write_read(self.address, &[ADDR], &mut out)?;
+        i2c.write_read(self.address, &[Register::FifoDataOutTag.addr()], &mut out)?;
 
         let (tag, out) = out.split_at(1);
         let tag = tag[0] >> 3;
@@ -216,7 +214,7 @@ mod tests {
     fn test_pop_gyro() {
         let mut i2c = Mock::new(&[Transaction::write_read(
             0x6b,
-            vec![0x78],
+            vec![Register::FifoDataOutTag.addr()],
             vec![0x01 << 3, 0, 1, 0, 2, 0, 4],
         )]);
 
