@@ -29,7 +29,9 @@ pub mod fifo;
 pub mod gyroscope;
 pub mod interrupt;
 pub mod motion;
+pub mod ois;
 pub mod registers;
+pub mod sensor_hub;
 
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
 pub use embedded::EmbeddedFunctions;
@@ -37,10 +39,12 @@ pub use fifo::Fifo;
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::Interrupts;
 pub use motion::Motion;
+pub use ois::Ois;
 pub use registers::{
     AllIntSrcConfig, Ctrl10CConfig, D6dSrcConfig, StatusRegConfig, TapSrcConfig, TimestampConfig,
     WakeUpSrcConfig,
 };
+pub use sensor_hub::SensorHub;
 
 use embedded_hal::i2c::I2c;
 use registers::*;

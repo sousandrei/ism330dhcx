@@ -22,7 +22,9 @@ pub mod int_ctrl;
 pub mod int_dur2;
 pub mod md_cfg;
 pub mod ofs_usr;
+pub mod ois;
 pub mod pin_ctrl;
+pub mod sensor_hub;
 pub mod status_reg;
 pub mod tap_cfg;
 pub mod tap_src;
@@ -54,7 +56,9 @@ pub use int_ctrl::*;
 pub use int_dur2::*;
 pub use md_cfg::*;
 pub use ofs_usr::*;
+pub use ois::*;
 pub use pin_ctrl::*;
+pub use sensor_hub::*;
 pub use status_reg::*;
 pub use tap_cfg::*;
 pub use tap_src::*;
@@ -182,6 +186,14 @@ pub enum Register {
     YOfsUsr = 0x74,
     /// User Z-axis offset register
     ZOfsUsr = 0x75,
+    /// OIS interrupt and self-test register
+    IntOis = 0x6F,
+    /// OIS control register 1
+    Ctrl1Ois = 0x70,
+    /// OIS control register 2
+    Ctrl2Ois = 0x71,
+    /// OIS control register 3
+    Ctrl3Ois = 0x72,
     /// FIFO status register 1
     FifoStatus1 = 0x3A,
     /// FIFO status register 2
