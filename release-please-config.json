@@ -1,0 +1,10 @@
+{
+    "packages": {
+        ".": {
+            "release-type": "rust",
+            "handle-minor-pre-major": true,
+            "handle-breaking-pre-major": true,
+            "bump-minor-pre-major": true
+        }
+    }
+}

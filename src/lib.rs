@@ -44,7 +44,7 @@ pub mod sensor_hub;
 pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
 pub use configuration::{Configuration, CoreField};
 pub use embedded::EmbeddedFunctions;
-pub use fifo::Fifo;
+pub use fifo::{Fifo, Value};
 pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
 pub use interrupt::{InterruptStatus, Interrupts};
 pub use motion::Motion;
