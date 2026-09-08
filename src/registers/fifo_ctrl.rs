@@ -94,8 +94,8 @@ pub enum BdrGy {
 pub enum BdrXl {
     /// Not batched
     Off = 0b0000,
-    /// 6.5 Hz
-    Hz6_5 = 0b1011,
+    /// 1.6 Hz
+    Hz1_6 = 0b1011,
     /// 12.5 Hz
     Hz12_5 = 0b0001,
     /// 26 Hz
