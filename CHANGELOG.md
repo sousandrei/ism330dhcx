@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.8.0](https://github.com/sousandrei/ism330dhcx/compare/v0.7.1...v0.8.0) (2026-09-08)
+
+
+### Features
+
+* add accelerometer and gyroscope self-test execution ([c0bb6fe](https://github.com/sousandrei/ism330dhcx/commit/c0bb6fe2b554e6ae57d875ff0ca93ecd4bbb7eef))
+* add FSM and MLC support ([e92dc28](https://github.com/sousandrei/ism330dhcx/commit/e92dc28d1053aba78a4ddb89e383521fd99e8836))
+* add full fifo support ([2f2058d](https://github.com/sousandrei/ism330dhcx/commit/2f2058d09895da9aef4b4f315d213fc29cb0a8b2))
+* add OIS and timing correction APIs ([cbe9748](https://github.com/sousandrei/ism330dhcx/commit/cbe97488a2fc0fb6e93de6a1778a2ae090fc8cec))
+* add shared I2C and SPI transport support ([c5299b3](https://github.com/sousandrei/ism330dhcx/commit/c5299b3b5e8d02e8327b7ba001daadbb34e24512))
+* add shared I2C and SPI transport support ([e0602f8](https://github.com/sousandrei/ism330dhcx/commit/e0602f85d37771d98b2ec631c489b728d1071fd2))
+
+
+### Bug Fixes
+
+* accelerometer batch data rate ([4f8992a](https://github.com/sousandrei/ism330dhcx/commit/4f8992a3885679391887c73172e87dc1c47f9f6c))
+
 ## [0.7.1](https://github.com/sousandrei/ism330dhcx/compare/v0.7.0...v0.7.1) (2026-09-08)
 
 
