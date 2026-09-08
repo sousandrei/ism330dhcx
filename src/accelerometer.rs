@@ -59,6 +59,10 @@ pub trait Accelerometer {
     fn set_accel_odr<I2C>(&mut self, i2c: &mut I2C, odr: OdrXl) -> Result<(), I2C::Error>
     where
         I2C: I2c;
+    /// Get the configured accelerometer output data rate.
+    fn get_accel_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrXl, I2C::Error>
+    where
+        I2C: I2c;
     /// Set accelerometer full-scale range.
     fn set_accel_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsXl) -> Result<(), I2C::Error>
     where
@@ -69,6 +73,10 @@ pub trait Accelerometer {
         I2C: I2c;
     /// Enable low-pass filter 2 for accelerometer.
     fn set_lpf2_xl_en<I2C>(&mut self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c;
+    /// Get whether accelerometer low-pass filter 2 is enabled.
+    fn get_lpf2_xl_en<I2C>(&self, i2c: &mut I2C) -> Result<bool, I2C::Error>
     where
         I2C: I2c;
     /// Configure the accelerometer high-pass/low-pass filter cutoff.
@@ -142,6 +150,13 @@ impl Accelerometer for Ism330Dhcx {
         })
     }
 
+    fn get_accel_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrXl, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        Ok(Ctrl1Xl::from_bytes([self.read_reg(i2c, Register::Ctrl1Xl)?]).odr_xl())
+    }
+
     fn set_accel_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsXl) -> Result<(), I2C::Error>
     where
         I2C: I2c,
@@ -171,6 +186,13 @@ impl Accelerometer for Ism330Dhcx {
             reg.set_lpf2_xl_en(enable);
             reg.into_bytes()[0]
         })
+    }
+
+    fn get_lpf2_xl_en<I2C>(&self, i2c: &mut I2C) -> Result<bool, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        Ok(Ctrl1Xl::from_bytes([self.read_reg(i2c, Register::Ctrl1Xl)?]).lpf2_xl_en())
     }
 
     fn set_hpcf_xl<I2C>(

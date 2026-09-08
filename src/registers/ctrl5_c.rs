@@ -1,4 +1,18 @@
-use modular_bitfield::{Specifier, bitfield, specifiers::B1, specifiers::B2};
+use modular_bitfield::{Specifier, bitfield, specifiers::B1};
+
+/// Output-register rounding selection.
+#[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
+#[bits = 2]
+pub enum Rounding {
+    /// Disable output-register rounding.
+    None = 0b00,
+    /// Round accelerometer output only.
+    Accelerometer = 0b01,
+    /// Round gyroscope output only.
+    Gyroscope = 0b10,
+    /// Round accelerometer and gyroscope output.
+    AccelerometerGyroscope = 0b11,
+}
 
 #[derive(Specifier, Debug, Copy, Clone, Eq, PartialEq, defmt::Format)]
 #[bits = 2]
@@ -24,7 +38,7 @@ pub struct Ctrl5C {
     pub st_g: StG,
     #[skip]
     pub reserved: B1,
-    pub rounding: B2,
+    pub rounding: Rounding,
     pub rounding_status: bool,
 }
 impl Default for Ctrl5C {

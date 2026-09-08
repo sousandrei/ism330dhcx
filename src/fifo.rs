@@ -5,6 +5,7 @@ use crate::registers::{FsG, FsXl};
 use crate::{AccelValue, GyroValue};
 
 /// Sensor tag identifying the data source in the FIFO.
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u8)]
 pub enum SensorTag {
     /// Empty tag.
@@ -83,7 +84,7 @@ impl FifoOut {
                 Ok(Value::Accel(AccelValue::from_msr(accel_scale, out)))
             }
             Ok(SensorTag::Other(u)) => Ok(Value::Other(u, *out)),
-            _ => unreachable!(),
+            Err(_) => Ok(Value::Other(tag, *out)),
         }
     }
 }
@@ -96,7 +97,7 @@ use crate::registers::{
 
 /// FIFO methods.
 pub trait Fifo {
-    /// Set the FIFO watermark threshold in samples (0..=511).
+    /// Set the FIFO watermark threshold in FIFO entries (0..=511).
     fn set_fifo_watermark<I2C>(&self, i2c: &mut I2C, watermark: u16) -> Result<(), I2C::Error>
     where
         I2C: I2c;
@@ -162,6 +163,10 @@ pub trait Fifo {
         I2C: I2c;
     /// Get FIFO status.
     fn get_fifo_status<I2C>(&self, i2c: &mut I2C) -> Result<(FifoStatus1, FifoStatus2), I2C::Error>
+    where
+        I2C: I2c;
+    /// Read the number of unread FIFO entries (0..=1023).
+    fn get_fifo_sample_count<I2C>(&self, i2c: &mut I2C) -> Result<u16, I2C::Error>
     where
         I2C: I2c;
     /// Pop a value from the FIFO.
@@ -319,6 +324,14 @@ impl Fifo for Ism330Dhcx {
         ))
     }
 
+    fn get_fifo_sample_count<I2C>(&self, i2c: &mut I2C) -> Result<u16, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let (status1, status2) = self.get_fifo_status(i2c)?;
+        Ok(u16::from(status1.diff_fifo()) | (u16::from(status2.diff_fifo()) << 8))
+    }
+
     fn fifo_pop<I2C>(&self, i2c: &mut I2C) -> Result<Value, I2C::Error>
     where
         I2C: I2c,
@@ -395,6 +408,35 @@ mod tests {
         assert_eq!(status2.diff_fifo(), 0b11);
         assert!(status2.fifo_wtm_ia());
         assert!(status2.fifo_ovr_latched());
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_fifo_sample_count_combines_status_registers() {
+        let sensor = crate::Ism330Dhcx {
+            address: crate::DEFAULT_I2C_ADDRESS,
+        };
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            crate::DEFAULT_I2C_ADDRESS,
+            vec![Register::FifoStatus1.addr()],
+            vec![0xaa, 0x03],
+        )]);
+
+        assert_eq!(sensor.get_fifo_sample_count(&mut i2c).unwrap(), 0x3aa);
+        i2c.done();
+    }
+
+    #[test]
+    fn test_reserved_fifo_tag_is_returned_as_other() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            crate::DEFAULT_I2C_ADDRESS,
+            vec![Register::FifoDataOutTag.addr()],
+            vec![0x1f << 3, 0, 1, 2, 3, 4, 5],
+        )]);
+        let mut fifo = FifoOut::new(crate::DEFAULT_I2C_ADDRESS);
+
+        let value = fifo.pop(&mut i2c, FsG::Dps250, FsXl::G2).unwrap();
+        assert!(matches!(value, Value::Other(0x1f, _)));
         i2c.done();
     }
 

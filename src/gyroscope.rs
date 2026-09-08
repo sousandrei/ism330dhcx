@@ -61,6 +61,10 @@ pub trait Gyroscope {
     fn set_gyro_odr<I2C>(&mut self, i2c: &mut I2C, odr: OdrG) -> Result<(), I2C::Error>
     where
         I2C: I2c;
+    /// Get the configured gyroscope output data rate.
+    fn get_gyro_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrG, I2C::Error>
+    where
+        I2C: I2c;
     /// Set gyroscope full-scale range.
     fn set_gyro_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsG) -> Result<(), I2C::Error>
     where
@@ -103,6 +107,13 @@ impl Gyroscope for Ism330Dhcx {
             reg.set_odr_g(odr);
             reg.into_bytes()[0]
         })
+    }
+
+    fn get_gyro_odr<I2C>(&self, i2c: &mut I2C) -> Result<OdrG, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        Ok(Ctrl2G::from_bytes([self.read_reg(i2c, Register::Ctrl2G)?]).odr_g())
     }
 
     fn set_gyro_scale<I2C>(&mut self, i2c: &mut I2C, scale: FsG) -> Result<(), I2C::Error>
