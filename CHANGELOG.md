@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/sousandrei/ism330dhcx/compare/v0.7.0...v0.7.1) (2026-09-08)
+
+
+### Bug Fixes
+
+* use f32 precision ([e0f9592](https://github.com/sousandrei/ism330dhcx/commit/e0f959260a9ed80e9fd123c8ca2bc7e0b0402883))
+
 ## [0.7.0](https://github.com/sousandrei/ism330dhcx/compare/v0.6.0...v0.7.0) (2026-09-08)
 
 
