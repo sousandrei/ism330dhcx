@@ -58,6 +58,23 @@ sensor.set_accel_odr(&mut i2c, OdrXl::Hz52).unwrap();
 sensor.set_boot(&mut i2c, true).unwrap();
 ```
 
+Representative I2C feature access:
+
+```rust
+sensor.set_fifo_watermark(&mut i2c, 32).unwrap();
+sensor.set_int2_drdy_g(&mut i2c, true).unwrap();
+let fifo_entry = sensor.fifo_pop_entry(&mut i2c).unwrap();
+```
+
+The same feature APIs work with the SPI transport:
+
+```rust
+let mut spi = SpiDeviceBus::new(spi_device);
+let sensor = Ism330Dhcx::new_spi(&mut spi).unwrap();
+sensor.set_fifo_watermark(&mut spi, 32).unwrap();
+let actual_odr = sensor.get_actual_accel_odr(&mut spi).unwrap();
+```
+
 The driver borrows the register transport for each operation, so the same bus
 can be shared with other devices. Supported feature groups include accelerometer and
 gyroscope configuration, user offsets, FIFO, motion events, interrupt/status
