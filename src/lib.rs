@@ -4,10 +4,10 @@
 //! To declare a sensor is pretty simple:
 //!
 //! ```rust,ignore
-//! let sensor = Ism330Dhcx::new(i2c).unwrap();
+//! let sensor = Ism330Dhcx::new(&mut i2c).unwrap();
 //! ```
 //!
-//! The driver now owns the I2C bus.
+//! The driver borrows the I2C bus for each operation.
 //!
 //! To configure the sensor, use the high-level methods:
 //!
@@ -16,6 +16,12 @@
 //! sensor.set_boot(true).unwrap();
 //! ```
 //!
+//! Register layouts, typed fields, reset values, and address namespaces are
+//! defined in [`registers`]. Feature modules expose the public I2C API through
+//! [`Accelerometer`], [`Gyroscope`], [`Configuration`], [`Fifo`], [`Motion`],
+//! [`InterruptStatus`], [`EmbeddedFunctions`], [`SensorHub`], [`Offsets`], and
+//! [`Ois`].
+//!
 //! # Reference
 //!
 //! - [Sensor page](https://www.st.com/en/mems-and-sensors/ism330dhcx.html)
@@ -23,48 +29,34 @@
 
 #![cfg_attr(not(test), no_std)]
 
+pub mod accelerometer;
+pub mod configuration;
+pub mod embedded;
+pub mod fifo;
+pub mod gyroscope;
+pub mod interrupt;
+pub mod motion;
+pub mod offsets;
+pub mod ois;
 pub mod registers;
+pub mod sensor_hub;
 
-pub use registers::{
-    AccelValue, Accelerometer, FifoOut, GyroValue, Gyroscope, SENSORS_DPS_TO_RADS,
-    SENSORS_GRAVITY_STANDARD, TagSensor, Temperature, Value,
-    all_int_src::AllIntSrcConfig,
-    counter_bdr::{CounterBdrReg1Config, CounterBdrReg2Config},
-    ctrl1_xl::Ctrl1XlConfig,
-    ctrl2_g::Ctrl2GConfig,
-    ctrl3_c::Ctrl3CConfig,
-    ctrl4_c::Ctrl4CConfig,
-    ctrl5_c::Ctrl5CConfig,
-    ctrl6_c::Ctrl6CConfig,
-    ctrl7_g::Ctrl7GConfig,
-    ctrl8_xl::Ctrl8XlConfig,
-    ctrl9_xl::Ctrl9XlConfig,
-    ctrl10_c::Ctrl10CConfig,
-    fifo::{Fifo, FifoCtrl2Config, FifoCtrl3Config, FifoCtrl4Config},
-    free_fall::FreeFallConfig,
-    func_cfg_access::FuncCfgAccessConfig,
-    int_ctrl::{Int1CtrlConfig, Int2CtrlConfig},
-    int_dur2::IntDur2Config,
-    internal_freq_fine::InternalFreqFineConfig,
-    md_cfg::{Md1CfgConfig, Md2CfgConfig},
-    ofs_usr::OfsUsrConfig,
-    pin_ctrl::PinCtrlConfig,
-    status_reg::StatusRegConfig,
-    tap_cfg::{TapCfg0Config, TapCfg1Config, TapCfg2Config},
-    tap_ths_6d::TapThs6dConfig,
-    timestamp::TimestampConfig,
-    wake_up_dur::WakeUpDurConfig,
-    wake_up_src::WakeUpSrcConfig,
-    wake_up_ths::WakeUpThsConfig,
-};
+pub use accelerometer::{AccelValue, Accelerometer, SENSORS_GRAVITY_STANDARD};
+pub use configuration::{Configuration, CoreField};
+pub use embedded::EmbeddedFunctions;
+pub use fifo::{Fifo, Value};
+pub use gyroscope::{GyroValue, Gyroscope, SENSORS_DPS_TO_RADS};
+pub use interrupt::{InterruptStatus, Interrupts};
+pub use motion::Motion;
+pub use offsets::Offsets;
+pub use ois::Ois;
+pub use sensor_hub::SensorHub;
 
 use embedded_hal::i2c::I2c;
 use registers::*;
 
 /// Datasheet write address for the device. (D6h)
 pub const DEFAULT_I2C_ADDRESS: u8 = 0x6bu8;
-
-// SENSORS_GRAVITY_STANDARD moved to accelerometer.rs
 
 /// Errors for the ISM330DHCX driver.
 #[derive(Debug, Copy, Clone, defmt::Format)]
@@ -157,13 +149,227 @@ impl Ism330Dhcx {
     pub fn set_address(&mut self, address: u8) {
         self.address = address;
     }
+
+    // ===========================================
+    // Configuration
+    // ===========================================
+
+    /// Reboot memory content.
+    pub fn set_boot<I2C>(&mut self, i2c: &mut I2C, boot: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_boot(boot);
+            reg.into_bytes()[0]
+        })
+    }
+
+    /// Block Data Update.
+    ///
+    /// If true, output registers are not updated until MSB and LSB have been read.
+    pub fn set_bdu<I2C>(&self, i2c: &mut I2C, bdu: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_bdu(bdu);
+            reg.into_bytes()[0]
+        })
+    }
+
+    /// Register address automatically incremented during a multiple byte access with a serial interface.
+    pub fn set_if_inc<I2C>(&self, i2c: &mut I2C, if_inc: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_if_inc(if_inc);
+            reg.into_bytes()[0]
+        })
+    }
+
+    /// Reset the device software.
+    pub fn set_sw_reset<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_sw_reset(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    /// Select the serial interface mode (`true` selects 3-wire SPI).
+    pub fn set_sim<I2C>(&self, i2c: &mut I2C, enable: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_sim(enable);
+            reg.into_bytes()[0]
+        })
+    }
+
+    /// Select push-pull (`false`) or open-drain (`true`) interrupt pins.
+    pub fn set_pp_od<I2C>(&self, i2c: &mut I2C, open_drain: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_pp_od(open_drain);
+            reg.into_bytes()[0]
+        })
+    }
+
+    /// Select active-high (`false`) or active-low (`true`) interrupt pins.
+    pub fn set_h_lactive<I2C>(&self, i2c: &mut I2C, active_low: bool) -> Result<(), I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.modify_reg(i2c, Register::Ctrl3C, |v| {
+            let mut reg = Ctrl3C::from_bytes([v]);
+            reg.set_h_lactive(active_low);
+            reg.into_bytes()[0]
+        })
+    }
+
+    // ===========================================
+    // Sensors
+    // ===========================================
+
+    /// Get temperature in Celsius.
+    pub fn get_temperature<I2C>(&self, i2c: &mut I2C) -> Result<f32, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        let mut measurements = [0u8; 2];
+        i2c.write_read(
+            self.address,
+            &[Register::OutTempL.addr()],
+            &mut measurements,
+        )?;
+
+        let raw_temp = (measurements[1] as i16) << 8 | measurements[0] as i16;
+        let temp: f32 = (raw_temp as f32 / 256.0) + 25.0;
+
+        Ok(temp)
+    }
+
+    /// Set chain full scale.
+    pub fn set_chain_full_scale<I2C>(
+        &mut self,
+        i2c: &mut I2C,
+        scale: FsG,
+    ) -> Result<&mut Self, I2C::Error>
+    where
+        I2C: I2c,
+    {
+        self.set_gyro_scale(i2c, scale)?;
+        Ok(self)
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::registers::Register;
+    use approx::*;
     use embedded_hal_mock::eh1::i2c::{Mock, Transaction};
+
+    #[test]
+    fn parse_acceleromtere_2g() {
+        use registers::FsXl;
+
+        // Table 19 in AN5398
+        assert_eq!(
+            AccelValue::from_msr(FsXl::G2, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_m_ss(),
+            [0., 0., 0.]
+        );
+
+        let a = AccelValue::from_msr(FsXl::G2, &[0x69, 0x16, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        assert_abs_diff_eq!(a[0], 0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+
+        let a = AccelValue::from_msr(FsXl::G2, &[0x09, 0x40, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        assert_abs_diff_eq!(a[0], 1.0 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+
+        let a = AccelValue::from_msr(FsXl::G2, &[0x97, 0xe9, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        assert_abs_diff_eq!(a[0], -0.350 * SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+
+        let a = AccelValue::from_msr(FsXl::G2, &[0xf7, 0xbf, 0x0, 0x0, 0x0, 0x0]).as_m_ss();
+        assert_abs_diff_eq!(a[0], -SENSORS_GRAVITY_STANDARD, epsilon = 0.01);
+    }
+
+    #[test]
+    fn parse_gyro_250dps() {
+        use registers::FsG;
+
+        // Table 19 in AN5398
+        assert_eq!(
+            GyroValue::from_msr(FsG::Dps250, &[0x0, 0x0, 0x0, 0x0, 0x0, 0x0]).as_rad(),
+            [0., 0., 0.]
+        );
+
+        let a = GyroValue::from_msr(FsG::Dps250, &[0xa4, 0x2c, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        assert_abs_diff_eq!(a[0], 100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+
+        let a = GyroValue::from_msr(FsG::Dps250, &[0x49, 0x59, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        assert_abs_diff_eq!(a[0], 200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+
+        let a = GyroValue::from_msr(FsG::Dps250, &[0x5c, 0xd3, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        assert_abs_diff_eq!(a[0], -100. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+
+        let a = GyroValue::from_msr(FsG::Dps250, &[0xb7, 0xa6, 0x0, 0x0, 0x0, 0x0]).as_rad();
+        assert_abs_diff_eq!(a[0], -200. * SENSORS_DPS_TO_RADS, epsilon = 0.01);
+    }
+
+    #[test]
+    fn test_set_fifo_mode() {
+        // Read WhoAmI, then BDU and IF_INC modification (read Ctrl3C, write Ctrl3C)
+        // Note: set_bdu(true) and set_if_inc(true) will each read and write Ctrl3C.
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::WhoAmI.addr()],
+                vec![0x6b],
+            ),
+            // set_bdu(true)
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0b00000000],
+            ),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr(), 0b01000000],
+            ),
+            // set_if_inc(true)
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr()],
+                vec![0b01000000],
+            ),
+            Transaction::write(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl3C.addr(), 0b01000100],
+            ),
+            // set_fifo_mode
+            Transaction::write_read(DEFAULT_I2C_ADDRESS, vec![0x0A], vec![0b00000000]),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![0x0A, 0b00000001]),
+        ]);
+
+        // Pass the mock by reference to the sensor
+        let mut sensor = Ism330Dhcx::new(&mut i2c).unwrap();
+        sensor.set_fifo_mode(&mut i2c, FifoMode::FifoMode).unwrap();
+
+        // Verify expectations
+        i2c.done();
+    }
 
     #[test]
     fn test_new_invalid_device() {
@@ -176,6 +382,149 @@ mod tests {
         let sensor = Ism330Dhcx::new(&mut i2c);
         let err = sensor.err().unwrap();
         assert!(matches!(err, Error::InvalidDevice(0xFF)));
+        i2c.done();
+    }
+
+    macro_rules! ctrl3_modify_test {
+        ($name:ident, $method:ident, $read:expr, $expected:expr) => {
+            #[test]
+            fn $name() {
+                let mut i2c = Mock::new(&[
+                    Transaction::write_read(
+                        DEFAULT_I2C_ADDRESS,
+                        vec![Register::Ctrl3C.addr()],
+                        vec![$read],
+                    ),
+                    Transaction::write(
+                        DEFAULT_I2C_ADDRESS,
+                        vec![Register::Ctrl3C.addr(), $expected],
+                    ),
+                ]);
+                let sensor = Ism330Dhcx {
+                    address: DEFAULT_I2C_ADDRESS,
+                };
+
+                sensor.$method(&mut i2c, true).unwrap();
+                i2c.done();
+            }
+        };
+    }
+
+    ctrl3_modify_test!(test_set_sw_reset, set_sw_reset, 0xa4, 0xa5);
+    ctrl3_modify_test!(test_set_sim, set_sim, 0xa4, 0xac);
+    ctrl3_modify_test!(test_set_pp_od, set_pp_od, 0xa4, 0xb4);
+    ctrl3_modify_test!(test_set_h_lactive, set_h_lactive, 0x84, 0xa4);
+
+    #[test]
+    fn test_set_timestamp_en() {
+        let mut i2c = Mock::new(&[
+            Transaction::write_read(
+                DEFAULT_I2C_ADDRESS,
+                vec![Register::Ctrl10C.addr()],
+                vec![0x80],
+            ),
+            Transaction::write(DEFAULT_I2C_ADDRESS, vec![Register::Ctrl10C.addr(), 0xa0]),
+        ]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        sensor.set_timestamp_en(&mut i2c, true).unwrap();
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_timestamp_reads_three_bytes() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::Timestamp0.addr()],
+            vec![0x34, 0x12, 0xab],
+        )]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        assert_eq!(sensor.get_timestamp(&mut i2c).unwrap(), 0x00ab_1234);
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_status_reads_status_register() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::StatusReg.addr()],
+            vec![0x07],
+        )]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        let status = sensor.get_status(&mut i2c).unwrap();
+        assert!(status.xl_da());
+        assert!(status.g_da());
+        assert!(status.t_da());
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_all_interrupt_sources_reads_register() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::AllIntSrc.addr()],
+            vec![0x81],
+        )]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        let source = sensor.get_interrupt_sources(&mut i2c).unwrap();
+        assert!(source.ff_ia());
+        assert!(!source.d6d_ia());
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_wake_up_source_reads_register() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::WakeUpSrc.addr()],
+            vec![0x08],
+        )]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        assert!(sensor.get_wake_up_source(&mut i2c).unwrap().wu_ia());
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_tap_source_reads_register() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::TapSrc.addr()],
+            vec![0x40],
+        )]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        assert!(sensor.get_tap_source(&mut i2c).unwrap().tap_ia());
+        i2c.done();
+    }
+
+    #[test]
+    fn test_get_6d_source_reads_register() {
+        let mut i2c = Mock::new(&[Transaction::write_read(
+            DEFAULT_I2C_ADDRESS,
+            vec![Register::D6dSrc.addr()],
+            vec![0x40],
+        )]);
+        let sensor = Ism330Dhcx {
+            address: DEFAULT_I2C_ADDRESS,
+        };
+
+        assert!(sensor.get_6d_source(&mut i2c).unwrap().d6d_ia());
         i2c.done();
     }
 }

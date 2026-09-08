@@ -20,10 +20,10 @@ version = "0.6.0"
 
 
 [dependencies]
-defmt = "1.0.1"
+defmt = "1.1.0"
 embedded-hal = "1.0.0"
 embedded-io = "0.7.1"
-bitfield = "0.17.0"
+modular-bitfield = "0.13.1"
 
 [dev-dependencies]
 approx = "0.5.1"

@@ -1,49 +1,33 @@
-use crate::Ism330Dhcx;
-use crate::registers::Register;
-use bitfield::bitfield;
-use embedded_hal::i2c::I2c;
+use modular_bitfield::bitfield;
 
-bitfield! {
-    /// Timestamp registers (40h - 43h)
-    pub struct Timestamp(u32);
-    impl Debug;
-    pub value, set_value: 32, 0;
+macro_rules! timestamp_register {
+    ($name:ident, $doc:literal) => {
+        #[bitfield]
+        #[derive(Debug, Copy, Clone, Eq, PartialEq)]
+        #[doc = $doc]
+        pub struct $name {
+            pub value: u8,
+        }
+        impl Default for $name {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+    };
 }
+timestamp_register!(Timestamp0, "Timestamp register 0.");
+timestamp_register!(Timestamp1, "Timestamp register 1.");
+timestamp_register!(Timestamp2, "Timestamp register 2.");
+timestamp_register!(Timestamp3, "Timestamp register 3.");
 
-impl Timestamp {
-    pub fn new() -> Self {
-        Self(0)
-    }
-    pub fn from_bytes(bytes: [u32; 1]) -> Self {
-        Self(bytes[0])
-    }
-    pub fn into_bytes(self) -> [u32; 1] {
-        [self.0]
-    }
-}
-
-impl Default for Timestamp {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Configuration methods for TIMESTAMP registers.
-pub trait TimestampConfig {
-    /// Read the internal 24-bit timestamp (returned as u32).
-    fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
-    where
-        I2C: I2c;
-}
-
-impl TimestampConfig for Ism330Dhcx {
-    fn get_timestamp<I2C>(&self, i2c: &mut I2C) -> Result<u32, I2C::Error>
-    where
-        I2C: I2c,
-    {
-        let mut buffer = [0u8; 4];
-        i2c.write_read(self.address, &[Register::Timestamp0.addr()], &mut buffer)?;
-        // The timestamp is 24-bit, but stored in 4 bytes (last byte is ignored/zero)
-        Ok(u32::from_le_bytes(buffer) & 0x00FFFFFF)
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn layout_and_default() {
+        assert_eq!(Timestamp0::default().into_bytes(), [0]);
+        let mut r = Timestamp3::new();
+        r.set_value(0xa5);
+        assert_eq!(r.into_bytes(), [0xa5]);
     }
 }

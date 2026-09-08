@@ -13,22 +13,18 @@ pub mod ctrl7_g;
 pub mod ctrl8_xl;
 pub mod ctrl9_xl;
 pub mod d6d_src;
-pub mod emb_func_status;
-pub mod fifo;
+pub mod embedded;
+pub mod fifo_ctrl;
+pub mod fifo_status;
 pub mod free_fall;
-pub mod fsm_status;
 pub mod func_cfg_access;
 pub mod int_ctrl;
 pub mod int_dur2;
-pub mod internal_freq_fine;
 pub mod md_cfg;
-pub mod mlc_status;
 pub mod ofs_usr;
-pub mod out_g;
-pub mod out_temp;
-pub mod out_xl;
+pub mod ois;
 pub mod pin_ctrl;
-pub mod status_master;
+pub mod sensor_hub;
 pub mod status_reg;
 pub mod tap_cfg;
 pub mod tap_src;
@@ -51,22 +47,18 @@ pub use ctrl8_xl::*;
 pub use ctrl9_xl::*;
 pub use ctrl10_c::*;
 pub use d6d_src::*;
-pub use emb_func_status::*;
-pub use fifo::*;
+pub use embedded::*;
+pub use fifo_ctrl::*;
+pub use fifo_status::*;
 pub use free_fall::*;
-pub use fsm_status::*;
 pub use func_cfg_access::*;
 pub use int_ctrl::*;
 pub use int_dur2::*;
-pub use internal_freq_fine::*;
 pub use md_cfg::*;
-pub use mlc_status::*;
 pub use ofs_usr::*;
-pub use out_g::*;
-pub use out_temp::*;
-pub use out_xl::*;
+pub use ois::*;
 pub use pin_ctrl::*;
-pub use status_master::*;
+pub use sensor_hub::*;
 pub use status_reg::*;
 pub use tap_cfg::*;
 pub use tap_src::*;
@@ -82,8 +74,16 @@ pub use wake_up_ths::*;
 pub enum Register {
     /// Enable embedded functions register
     FuncCfgAccess = 0x01,
-    /// SDO, OCS_AUX, SDO_AUX pins pull-up enable/disable register
+    /// Pin control register
     PinCtrl = 0x02,
+    /// Counter batch data rate register 1
+    CounterBdrReg1 = 0x0B,
+    /// Counter batch data rate register 2
+    CounterBdrReg2 = 0x0C,
+    /// Interrupt routing register 1
+    Int1Ctrl = 0x0D,
+    /// Interrupt routing register 2
+    Int2Ctrl = 0x0E,
     /// FIFO control register 1
     FifoCtrl1 = 0x07,
     /// FIFO control register 2
@@ -92,14 +92,6 @@ pub enum Register {
     FifoCtrl3 = 0x09,
     /// FIFO control register 4
     FifoCtrl4 = 0x0A,
-    /// Counter batch data rate register 1
-    CounterBdrReg1 = 0x0B,
-    /// Counter batch data rate register 2
-    CounterBdrReg2 = 0x0C,
-    /// INT1 pin control register
-    Int1Ctrl = 0x0D,
-    /// INT2 pin control register
-    Int2Ctrl = 0x0E,
     /// Who am I register
     WhoAmI = 0x0F,
     /// Accelerometer control register 1
@@ -114,24 +106,6 @@ pub enum Register {
     Ctrl5C = 0x14,
     /// Control register 6
     Ctrl6C = 0x15,
-    /// Gyroscope control register 7
-    Ctrl7G = 0x16,
-    /// Accelerometer control register 8
-    Ctrl8Xl = 0x17,
-    /// Accelerometer control register 9
-    Ctrl9Xl = 0x18,
-    /// Control register 10
-    Ctrl10C = 0x19,
-    /// All interrupt source register
-    AllIntSrc = 0x1A,
-    /// Wake-up source register
-    WakeUpSrc = 0x1B,
-    /// Tap source register
-    TapSrc = 0x1C,
-    /// 6D source register
-    D6dSrc = 0x1D,
-    /// Status register
-    StatusReg = 0x1E,
     /// Temperature output register (low)
     OutTempL = 0x20,
     /// Temperature output register (high)
@@ -160,20 +134,34 @@ pub enum Register {
     OutZLA = 0x2C,
     /// Accelerometer Z-axis output register (high)
     OutZHA = 0x2D,
-    /// Embedded function status register
+    /// Embedded-function status register on the main page
     EmbFuncStatusMainpage = 0x35,
-    /// FSM status register A
+    /// FSM status register A on the main page
     FsmStatusAMainpage = 0x36,
-    /// FSM status register B
+    /// FSM status register B on the main page
     FsmStatusBMainpage = 0x37,
-    /// MLC status register
+    /// MLC status register on the main page
     MlcStatusMainpage = 0x38,
-    /// Master status register
+    /// Sensor-hub master status register on the main page
     StatusMasterMainpage = 0x39,
-    /// FIFO status register 1
-    FifoStatus1 = 0x3A,
-    /// FIFO status register 2
-    FifoStatus2 = 0x3B,
+    /// Gyroscope control register 7
+    Ctrl7G = 0x16,
+    /// Accelerometer control register 8
+    Ctrl8Xl = 0x17,
+    /// Accelerometer control register 9
+    Ctrl9Xl = 0x18,
+    /// Control register 10
+    Ctrl10C = 0x19,
+    /// All interrupt source register
+    AllIntSrc = 0x1A,
+    /// Wake-up source register
+    WakeUpSrc = 0x1B,
+    /// Tap source register
+    TapSrc = 0x1C,
+    /// 6D source register
+    D6dSrc = 0x1D,
+    /// Status register
+    StatusReg = 0x1E,
     /// Timestamp register 0
     Timestamp0 = 0x40,
     /// Timestamp register 1
@@ -188,7 +176,7 @@ pub enum Register {
     TapCfg1 = 0x57,
     /// Tap configuration register 2
     TapCfg2 = 0x58,
-    /// Tap threshold and 6D orientation threshold register
+    /// Tap threshold and 6D configuration register
     TapThs6d = 0x59,
     /// Interrupt duration register 2
     IntDur2 = 0x5A,
@@ -196,15 +184,21 @@ pub enum Register {
     WakeUpThs = 0x5B,
     /// Wake-up duration register
     WakeUpDur = 0x5C,
-    /// Free-fall threshold register
+    /// Free-fall configuration register
     FreeFall = 0x5D,
-    /// Functions routing on INT1 register
+    /// Interrupt routing register 1 for embedded events
     Md1Cfg = 0x5E,
-    /// Functions routing on INT2 register
+    /// Interrupt routing register 2 for embedded events
     Md2Cfg = 0x5F,
-    /// Internal frequency fine-tuning register
+    /// Internal frequency correction register
     InternalFreqFine = 0x63,
-    /// OIS interrupt register
+    /// User X-axis offset register
+    XOfsUsr = 0x73,
+    /// User Y-axis offset register
+    YOfsUsr = 0x74,
+    /// User Z-axis offset register
+    ZOfsUsr = 0x75,
+    /// OIS interrupt and self-test register
     IntOis = 0x6F,
     /// OIS control register 1
     Ctrl1Ois = 0x70,
@@ -212,25 +206,23 @@ pub enum Register {
     Ctrl2Ois = 0x71,
     /// OIS control register 3
     Ctrl3Ois = 0x72,
-    /// User offset correction register X
-    XOfsUsr = 0x73,
-    /// User offset correction register Y
-    YOfsUsr = 0x74,
-    /// User offset correction register Z
-    ZOfsUsr = 0x75,
+    /// FIFO status register 1
+    FifoStatus1 = 0x3A,
+    /// FIFO status register 2
+    FifoStatus2 = 0x3B,
     /// FIFO data output tag register
     FifoDataOutTag = 0x78,
-    /// FIFO data output X (low)
+    /// FIFO data output X-axis register (low)
     FifoDataOutXL = 0x79,
-    /// FIFO data output X (high)
+    /// FIFO data output X-axis register (high)
     FifoDataOutXH = 0x7A,
-    /// FIFO data output Y (low)
+    /// FIFO data output Y-axis register (low)
     FifoDataOutYL = 0x7B,
-    /// FIFO data output Y (high)
+    /// FIFO data output Y-axis register (high)
     FifoDataOutYH = 0x7C,
-    /// FIFO data output Z (low)
+    /// FIFO data output Z-axis register (low)
     FifoDataOutZL = 0x7D,
-    /// FIFO data output Z (high)
+    /// FIFO data output Z-axis register (high)
     FifoDataOutZH = 0x7E,
 }
 
@@ -238,5 +230,96 @@ impl Register {
     /// Returns the register address as a u8.
     pub fn addr(self) -> u8 {
         self as u8
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Register;
+
+    #[test]
+    fn register_addresses_match_datasheet() {
+        let addresses = [
+            (Register::FuncCfgAccess, 0x01),
+            (Register::PinCtrl, 0x02),
+            (Register::FifoCtrl1, 0x07),
+            (Register::FifoCtrl2, 0x08),
+            (Register::FifoCtrl3, 0x09),
+            (Register::FifoCtrl4, 0x0A),
+            (Register::CounterBdrReg1, 0x0B),
+            (Register::CounterBdrReg2, 0x0C),
+            (Register::Int1Ctrl, 0x0D),
+            (Register::Int2Ctrl, 0x0E),
+            (Register::WhoAmI, 0x0F),
+            (Register::Ctrl1Xl, 0x10),
+            (Register::Ctrl2G, 0x11),
+            (Register::Ctrl3C, 0x12),
+            (Register::Ctrl4C, 0x13),
+            (Register::Ctrl5C, 0x14),
+            (Register::Ctrl6C, 0x15),
+            (Register::Ctrl7G, 0x16),
+            (Register::Ctrl8Xl, 0x17),
+            (Register::Ctrl9Xl, 0x18),
+            (Register::Ctrl10C, 0x19),
+            (Register::AllIntSrc, 0x1A),
+            (Register::WakeUpSrc, 0x1B),
+            (Register::TapSrc, 0x1C),
+            (Register::D6dSrc, 0x1D),
+            (Register::StatusReg, 0x1E),
+            (Register::OutTempL, 0x20),
+            (Register::OutTempH, 0x21),
+            (Register::OutXLG, 0x22),
+            (Register::OutXHG, 0x23),
+            (Register::OutYLG, 0x24),
+            (Register::OutYHG, 0x25),
+            (Register::OutZLG, 0x26),
+            (Register::OutZHG, 0x27),
+            (Register::OutXLA, 0x28),
+            (Register::OutXHA, 0x29),
+            (Register::OutYLA, 0x2A),
+            (Register::OutYHA, 0x2B),
+            (Register::OutZLA, 0x2C),
+            (Register::OutZHA, 0x2D),
+            (Register::EmbFuncStatusMainpage, 0x35),
+            (Register::FsmStatusAMainpage, 0x36),
+            (Register::FsmStatusBMainpage, 0x37),
+            (Register::MlcStatusMainpage, 0x38),
+            (Register::StatusMasterMainpage, 0x39),
+            (Register::FifoStatus1, 0x3A),
+            (Register::FifoStatus2, 0x3B),
+            (Register::Timestamp0, 0x40),
+            (Register::Timestamp1, 0x41),
+            (Register::Timestamp2, 0x42),
+            (Register::Timestamp3, 0x43),
+            (Register::TapCfg0, 0x56),
+            (Register::TapCfg1, 0x57),
+            (Register::TapCfg2, 0x58),
+            (Register::TapThs6d, 0x59),
+            (Register::IntDur2, 0x5A),
+            (Register::WakeUpThs, 0x5B),
+            (Register::WakeUpDur, 0x5C),
+            (Register::FreeFall, 0x5D),
+            (Register::Md1Cfg, 0x5E),
+            (Register::Md2Cfg, 0x5F),
+            (Register::InternalFreqFine, 0x63),
+            (Register::IntOis, 0x6F),
+            (Register::Ctrl1Ois, 0x70),
+            (Register::Ctrl2Ois, 0x71),
+            (Register::Ctrl3Ois, 0x72),
+            (Register::XOfsUsr, 0x73),
+            (Register::YOfsUsr, 0x74),
+            (Register::ZOfsUsr, 0x75),
+            (Register::FifoDataOutTag, 0x78),
+            (Register::FifoDataOutXL, 0x79),
+            (Register::FifoDataOutXH, 0x7A),
+            (Register::FifoDataOutYL, 0x7B),
+            (Register::FifoDataOutYH, 0x7C),
+            (Register::FifoDataOutZL, 0x7D),
+            (Register::FifoDataOutZH, 0x7E),
+        ];
+
+        for (register, address) in addresses {
+            assert_eq!(register.addr(), address);
+        }
     }
 }

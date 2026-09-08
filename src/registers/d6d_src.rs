@@ -1,41 +1,38 @@
-use bitfield::bitfield;
-
-bitfield! {
-    /// Portrait, landscape, face-up and face-down source register (1Dh)
-    pub struct D6dSrc(u8);
-    impl Debug;
-    /// X-axis low event.
-    pub xl, set_xl: 0;
-    /// X-axis high event.
-    pub xh, set_xh: 1;
-    /// Y-axis low event.
-    pub yl, set_yl: 2;
-    /// Y-axis high event.
-    pub yh, set_yh: 3;
-    /// Z-axis low event.
-    pub zl, set_zl: 4;
-    /// Z-axis high event.
-    pub zh, set_zh: 5;
-    /// 6D orientation change event status.
-    pub d6d_ia, set_d6d_ia: 6;
-    /// DEN data-ready signal.
-    pub den_drdy, set_den_drdy: 7;
+use modular_bitfield::bitfield;
+#[bitfield]
+#[derive(Debug, Copy, Clone, Eq, PartialEq)]
+pub struct D6dSrc {
+    pub xl: bool,
+    pub xh: bool,
+    pub yl: bool,
+    pub yh: bool,
+    pub zl: bool,
+    pub zh: bool,
+    pub d6d_ia: bool,
+    pub den_drdy: bool,
 }
-
-impl D6dSrc {
-    pub fn new() -> Self {
-        Self(0)
-    }
-    pub fn from_bytes(bytes: [u8; 1]) -> Self {
-        Self(bytes[0])
-    }
-    pub fn into_bytes(self) -> [u8; 1] {
-        [self.0]
-    }
-}
-
 impl Default for D6dSrc {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn layout_and_default() {
+        assert_eq!(D6dSrc::default().into_bytes(), [0]);
+        let mut r = D6dSrc::new();
+        r.set_d6d_ia(true);
+        assert_eq!(r.into_bytes(), [0x40]);
+        r.set_den_drdy(true);
+        r.set_zh(true);
+        r.set_zl(true);
+        r.set_yh(true);
+        r.set_yl(true);
+        r.set_xh(true);
+        r.set_xl(true);
+        assert_eq!(r.into_bytes(), [0xff]);
     }
 }

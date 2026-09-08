@@ -8,9 +8,8 @@ use embassy_executor::Spawner;
 use embassy_stm32::i2c::I2c;
 use embassy_time::Timer;
 
-use ism330dhcx::registers::fifo::{BdrGy, BdrXl, FifoMode};
-use ism330dhcx::registers::{FsG, FsXl, OdrG, OdrXl};
-use ism330dhcx::{Accelerometer, Ctrl3CConfig, Fifo, Gyroscope, Ism330Dhcx};
+use ism330dhcx::registers::{BdrGy, BdrXl, FifoMode, FsG, FsXl, OdrG, OdrXl};
+use ism330dhcx::{Accelerometer, Fifo, Gyroscope, Ism330Dhcx, Value};
 
 #[embassy_executor::main]
 async fn main(_spawner: Spawner) {
@@ -54,21 +53,20 @@ async fn main(_spawner: Spawner) {
     defmt::info!("FIFO initialized");
 
     loop {
-        let status = sensor.get_fifo_status(&mut i2c).unwrap();
-        let diff = status.diff_fifo();
+        let diff = sensor.get_fifo_sample_count(&mut i2c).unwrap();
 
         if diff > 0 {
             defmt::info!("FIFO has {} samples", diff);
 
             for _ in 0..diff {
                 match sensor.fifo_pop(&mut i2c).unwrap() {
-                    ism330dhcx::Value::Accel(accel) => {
+                    Value::Accel(accel) => {
                         defmt::info!("Accel: {:?}", accel.as_m_ss());
                     }
-                    ism330dhcx::Value::Gyro(gyro) => {
+                    Value::Gyro(gyro) => {
                         defmt::info!("Gyro: {:?}", gyro.as_dps());
                     }
-                    ism330dhcx::Value::Empty => {}
+                    Value::Empty => {}
                     _ => {}
                 }
             }
